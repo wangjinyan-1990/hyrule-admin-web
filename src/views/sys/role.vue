@@ -1,0 +1,396 @@
+<template>
+  <div>
+    <!-- 搜索栏 -->
+    <el-card id="search">
+      <el-row>
+        <el-col :span="18">
+          <el-input v-model="searchModel.roleName" placeholder="角色名称"></el-input>
+          <el-button @click="getRoleList" type="primary" round icon="el-icon-search">查询</el-button>
+          <el-button @click="resetSearch" type="info" round icon="el-icon-refresh">重置</el-button>
+        </el-col>
+        <!-- align是对齐，right就是右对齐 -->
+        <el-col :span="6" align="right">
+          <el-tooltip content="新增" placement="top">
+            <el-button @click="handleAdd" type="primary" icon="el-icon-plus" circle></el-button>
+          </el-tooltip>
+          <el-tooltip content="编辑" placement="top">
+            <el-button @click="handleEdit" type="warning" icon="el-icon-edit" circle :disabled="!selectedRow"></el-button>
+          </el-tooltip>
+          <el-tooltip content="删除" placement="top">
+            <el-button @click="handleDelete" type="danger" icon="el-icon-delete" circle :disabled="!selectedRow"></el-button>
+          </el-tooltip>
+          <el-tooltip content="用户管理" placement="top">
+            <el-button @click="handleUserManage" type="success" icon="el-icon-user" circle :disabled="!selectedRow"></el-button>
+          </el-tooltip>
+        </el-col>
+      </el-row>
+    </el-card>
+
+    <!-- 结果栏 -->
+    <el-card>
+      <el-table :data="roleList" stripe style="width: 100%" @row-dblclick="handleEdit" @current-change="handleRowChange" highlight-current-row>
+        <el-table-column type="index" width="55" label="序号"></el-table-column>
+        <el-table-column prop="roleId" label="角色ID" width="80" v-if="false"></el-table-column>
+        <el-table-column prop="roleName" label="角色名称" width="200"></el-table-column>
+        <el-table-column prop="remark" label="备注" min-width="300"></el-table-column>
+      </el-table>
+    </el-card>
+    <el-pagination
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+      :current-page="searchModel.pageNo"
+      :page-sizes="[100, 200, 300, 400]"
+      :page-size="searchModel.pageSize"
+      layout="total, sizes, prev, pager, next, jumper"
+      :total="total">
+    </el-pagination>
+
+    <!-- 新增/编辑角色对话框 -->
+    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="500px" @close="resetForm">
+      <el-form ref="roleFormRef" :model="roleForm" :rules="rules" label-width="90px">
+        <el-form-item label="角色名称" prop="roleName">
+          <el-input v-model="roleForm.roleName" placeholder="请输入角色名称"></el-input>
+        </el-form-item>
+        <el-form-item label="排序号" prop="sortNo">
+          <el-input-number v-model="roleForm.sortNo" :min="1" :max="9999" placeholder="请输入排序号"></el-input-number>
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="roleForm.remark" type="textarea" :rows="3" placeholder="请输入备注"></el-input>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitForm">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 角色用户管理弹窗 -->
+    <el-dialog title="角色用户管理" :visible.sync="userManageVisible" width="800px" @close="resetUserManage">
+      <div>
+        <el-row style="margin-bottom: 10px;">
+          <el-col :span="18">
+            <el-input v-model="userSearchModel.userName" placeholder="用户名" style="width: 200px; margin-right: 10px;"></el-input>
+            <el-button @click="getRoleUsers" type="primary" round icon="el-icon-search">查询</el-button>
+            <el-button @click="resetUserSearch" type="info" round icon="el-icon-refresh">重置</el-button>
+          </el-col>
+          <el-col :span="6" align="right">
+            <el-tooltip content="添加用户" placement="top">
+              <el-button @click="handleAddUser" type="primary" icon="el-icon-plus" circle></el-button>
+            </el-tooltip>
+          </el-col>
+        </el-row>
+
+        <el-table :data="roleUserList" stripe style="width: 100%" @current-change="handleUserRowChange" highlight-current-row>
+          <el-table-column type="index" width="55" label="序号"></el-table-column>
+          <el-table-column prop="userId" label="用户ID" width="80" v-if="false"></el-table-column>
+          <el-table-column prop="userName" label="用户名" width="150"></el-table-column>
+          <el-table-column prop="loginName" label="登录名" width="150"></el-table-column>
+          <el-table-column prop="phone" label="电话" width="150"></el-table-column>
+          <el-table-column label="操作" width="100">
+            <template slot-scope="scope">
+              <el-tooltip content="移除角色" placement="top">
+                <el-button @click="handleRemoveUser(scope.row)" type="danger" icon="el-icon-delete" circle size="mini"></el-button>
+              </el-tooltip>
+            </template>
+          </el-table-column>
+        </el-table>
+
+        <el-pagination
+          @size-change="handleUserSizeChange"
+          @current-change="handleUserCurrentChange"
+          :current-page="userSearchModel.pageNo"
+          :page-sizes="[10, 20, 50, 100]"
+          :page-size="userSearchModel.pageSize"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="userTotal"
+          style="margin-top: 10px;">
+        </el-pagination>
+      </div>
+    </el-dialog>
+
+    <!-- 用户选择组件 -->
+    <UserSelector
+      v-model="addUserVisible"
+      :excludeUserIds="roleUserIds"
+      @confirm="handleUserSelect"
+      @close="resetAddUser">
+    </UserSelector>
+  </div>
+</template>
+
+<style>
+  .app-main{
+    /* 边距 */
+    padding: 10px;
+  }
+
+  #search .el-input{
+    width: 200px;
+    margin-right: 10px;
+  }
+
+  .el-card{
+    /* 底部边距 */
+    margin-bottom: 10px ;
+  }
+
+  /* 表格选中行高亮颜色 */
+  .el-table__body tr.current-row > td {
+    background-color: #b3d9ff !important;
+  }
+
+  /* 鼠标悬停时保持选中行的颜色不变 */
+  .el-table__body tr.current-row:hover > td {
+    background-color: #b3d9ff !important;
+  }
+
+  /* 未选中行的悬停效果 */
+  .el-table__body tr:not(.current-row):hover > td {
+    background-color: #f5f7fa !important;
+  }
+</style>
+
+<script>
+import roleApi from '@/api/sys/role'
+import UserSelector from './common/UserSelector.vue'
+
+export default {
+  components: {
+    UserSelector
+  },
+  data(){
+    return{
+      total: 0,
+      searchModel: {
+        pageNo: 1,
+        pageSize: 10
+      },
+      roleList: [],
+      dialogVisible: false,
+      isEdit: false,
+      selectedRow: null,
+      // 用户管理相关
+      userManageVisible: false,
+      userSearchModel: {
+        pageNo: 1,
+        pageSize: 10
+      },
+      roleUserList: [],
+      userTotal: 0,
+      selectedUserRow: null,
+      // 添加用户相关
+      addUserVisible: false,
+      roleForm: {
+        roleId: '',
+        roleName: '',
+        sortNo: 1,
+        remark: ''
+      },
+      rules: {
+        roleName: [
+          { required: true, message: '请输入角色名称', trigger: 'blur' },
+          { min: 2, max: 100, message: '长度在2到100个字符', trigger: 'blur' }
+        ],
+        sortNo: [
+          { required: true, message: '请输入排序号', trigger: 'blur' }
+        ]
+      }
+    }
+  },
+
+  computed: {
+    dialogTitle() {
+      return this.isEdit ? '编辑角色' : '新增角色';
+    },
+    roleUserIds() {
+      return this.roleUserList.map(user => user.userId);
+    }
+  },
+
+  created(){
+    this.getRoleList();
+  },
+
+  methods:{
+    handleSizeChange(pageSize){
+      this.searchModel.pageSize = pageSize;
+      this.getRoleList();
+    },
+    handleCurrentChange(pageNo){
+      this.searchModel.pageNo = pageNo;
+      this.getRoleList();
+    },
+    getRoleList(){
+      roleApi.getRoleList(this.searchModel).then(response =>{
+        this.roleList = response.data.rows;
+        this.total = response.data.total;
+      });
+    },
+    resetSearch(){
+      this.searchModel.roleName = '';
+      this.searchModel.pageNo = 1;
+      this.getRoleList();
+    },
+    handleAdd(){
+      this.isEdit = false;
+      this.selectedRow = null;
+      this.dialogVisible = true;
+      this.resetForm();
+    },
+    handleEdit(row){
+      if (row && row.roleId) {
+        // 双击行编辑
+        this.selectedRow = row;
+      } else if (!this.selectedRow) {
+        this.$message.warning('请先选择要编辑的角色');
+        return;
+      }
+      this.isEdit = true;
+      this.dialogVisible = true;
+      this.loadRoleData();
+    },
+    handleDelete(){
+      if (!this.selectedRow) {
+        this.$message.warning('请先选择要删除的角色');
+        return;
+      }
+      this.$confirm('确定要删除该角色吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        roleApi.deleteRole(this.selectedRow.roleId).then(() => {
+          this.$message.success('删除成功');
+          this.selectedRow = null;
+          this.getRoleList();
+        }).catch(() => {
+          this.$message.error('删除失败');
+        });
+      }).catch(() => {
+        this.$message.info('已取消删除');
+      });
+    },
+    handleRowChange(currentRow){
+      this.selectedRow = currentRow;
+    },
+    loadRoleData(){
+      if (this.selectedRow) {
+        this.roleForm = {
+          roleId: this.selectedRow.roleId,
+          roleName: this.selectedRow.roleName,
+          sortNo: this.selectedRow.sortNo,
+          remark: this.selectedRow.remark || ''
+        };
+      }
+    },
+    resetForm(){
+      if (this.$refs.roleFormRef) {
+        this.$refs.roleFormRef.resetFields();
+      }
+      this.roleForm = { roleId: '', roleName: '', sortNo: 1, remark: '' };
+    },
+    submitForm(){
+      this.$refs.roleFormRef.validate(valid => {
+        if (!valid) return;
+        const payload = {
+          roleName: this.roleForm.roleName,
+          sortNo: this.roleForm.sortNo,
+          remark: this.roleForm.remark
+        };
+
+        if (this.isEdit) {
+          // 编辑角色
+          payload.roleId = this.roleForm.roleId;
+          roleApi.updateRole(payload).then(() => {
+            this.$message.success('编辑成功');
+            this.dialogVisible = false;
+            this.getRoleList();
+          }).catch(() => {
+            this.$message.error('编辑失败');
+          });
+        } else {
+          // 新增角色
+          roleApi.createRole(payload).then(() => {
+            this.$message.success('新增成功');
+            this.dialogVisible = false;
+            this.getRoleList();
+          }).catch(() => {
+            this.$message.error('新增失败');
+          });
+        }
+      });
+    },
+    // 用户管理相关方法
+    handleUserManage(){
+      if (!this.selectedRow) {
+        this.$message.warning('请先选择要管理的角色');
+        return;
+      }
+      this.userManageVisible = true;
+      this.resetUserManage();
+      this.getRoleUsers();
+    },
+    resetUserManage(){
+      this.userSearchModel = {
+        pageNo: 1,
+        pageSize: 10
+      };
+      this.roleUserList = [];
+      this.userTotal = 0;
+      this.selectedUserRow = null;
+    },
+    getRoleUsers(){
+      roleApi.getRoleUsers(this.selectedRow.roleId, this.userSearchModel).then(response => {
+        this.roleUserList = response.data.rows;
+        this.userTotal = response.data.total;
+      });
+    },
+    resetUserSearch(){
+      this.userSearchModel.userName = '';
+      this.userSearchModel.pageNo = 1;
+      this.getRoleUsers();
+    },
+    handleUserSizeChange(pageSize){
+      this.userSearchModel.pageSize = pageSize;
+      this.getRoleUsers();
+    },
+    handleUserCurrentChange(pageNo){
+      this.userSearchModel.pageNo = pageNo;
+      this.getRoleUsers();
+    },
+    handleUserRowChange(currentRow){
+      this.selectedUserRow = currentRow;
+    },
+    handleRemoveUser(user){
+      this.$confirm('确定要移除该用户的角色吗？', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        roleApi.removeUserRole(this.selectedRow.roleId, user.userId).then(() => {
+          this.$message.success('移除成功');
+          this.getRoleUsers();
+        }).catch(() => {
+          this.$message.error('移除失败');
+        });
+      }).catch(() => {
+        this.$message.info('已取消移除');
+      });
+    },
+    handleAddUser(){
+      this.addUserVisible = true;
+    },
+    resetAddUser(){
+      // 重置添加用户相关状态
+    },
+    handleUserSelect(user){
+      roleApi.addUserRole(this.selectedRow.roleId, user.userId).then(() => {
+        this.$message.success('添加成功');
+        this.getRoleUsers();
+      }).catch(() => {
+        this.$message.error('添加失败');
+      });
+    }
+  }
+};
+</script>
