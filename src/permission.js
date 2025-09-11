@@ -17,6 +17,11 @@ router.beforeEach(async(to, from, next) => {
   // set page title
   document.title = getPageTitle(to.meta.title)
 
+  // 记录最近一次的有效访问路径，避免刷新后落入 /404
+  if (to.path !== '/404') {
+    try { sessionStorage.setItem('lastPath', to.fullPath || to.path) } catch (e) {}
+  }
+
   // determine whether the user has logged in
   const hasToken = getToken()
 
@@ -28,13 +33,29 @@ router.beforeEach(async(to, from, next) => {
     } else {
       const hasGetUserInfo = store.getters.name
       if (hasGetUserInfo) {
-        next()
+        // 如果误入 /404，且已登录，尝试跳回上次页面或首页
+        if (to.path === '/404') {
+          const lastPath = sessionStorage.getItem('lastPath')
+          next({ path: lastPath && lastPath !== '/404' ? lastPath : '/' })
+        } else {
+          next()
+        }
       } else {
         try {
           // get user info
-          await store.dispatch('user/getInfo')
+          await store.dispatch('user/getUserInfo')
+          // load menus and dynamically add routes (fix 404 after refresh)
+          const menus = await store.dispatch('menu/getUserMenus')
+          const accessRoutes = await store.dispatch('menu/generateRoutes', menus)
+          router.addRoutes(accessRoutes)
 
-          next()
+          // 刷新后定位到原路径；若原路径是 /404，则退回到上次路径或首页
+          if (to.path === '/404') {
+            const lastPath = sessionStorage.getItem('lastPath')
+            next({ path: lastPath && lastPath !== '/404' ? lastPath : '/', replace: true })
+          } else {
+            next({ ...to, replace: true })
+          }
         } catch (error) {
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')

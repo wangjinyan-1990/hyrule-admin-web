@@ -75,9 +75,6 @@
 </template>
 
 <style>
-  body {
-    background-color: #ff0000;
-  }
   .app-main{
     /* 边距 */
     padding: 10px;
@@ -97,12 +94,12 @@
   .el-table__body tr.current-row > td {
     background-color: #b3d9ff !important;
   }
-  
+
   /* 鼠标悬停时保持选中行的颜色不变 */
   .el-table__body tr.current-row:hover > td {
     background-color: #b3d9ff !important;
   }
-  
+
   /* 未选中行的悬停效果 */
   .el-table__body tr:not(.current-row):hover > td {
     background-color: #f5f7fa !important;
@@ -231,7 +228,7 @@ export default {
           phone: this.userForm.phone,
           status: this.userForm.status
         };
-        
+
         if (this.isEdit) {
           // 编辑用户
           payload.userId = this.userForm.userId;

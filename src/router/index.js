@@ -30,7 +30,12 @@ export const constantRoutes = [
       meta: { title: '首页', icon: 'dashboard' }
     }]
   },
+  // 404 page must be placed at the end !!!
+  { path: '*', redirect: '/404', hidden: true }
+]
 
+// 异步路由：根据权限或后端菜单动态过滤
+export const asyncRoutes = [
   {
     path: '/sys',
     component: Layout,
@@ -49,6 +54,12 @@ export const constantRoutes = [
         name: 'role',
         component: () => import('@/views/sys/role'),
         meta: { title: '角色管理', icon: 'roleManage' }
+      },
+      {
+        path: 'menu',
+        name: 'menu',
+        component: () => import('@/views/sys/menu'),
+        meta: { title: '菜单管理', icon: 'menuManage' }
       }
     ]
   },
@@ -59,7 +70,6 @@ export const constantRoutes = [
     redirect: '/test/test1',
     name: 'test',
     meta: { title: '测试模块', icon: 'form' },
-    // 这个是二级路由
     children: [
       {
         path: 'test1',
@@ -78,8 +88,7 @@ export const constantRoutes = [
         name: 'test3',
         component: () => import('@/views/test/test3'),
         meta: { title: '功能3', icon: 'el-icon-s-help' }
-      },
-
+      }
     ]
   },
 
@@ -123,14 +132,11 @@ export const constantRoutes = [
     component: Layout,
     redirect: '/nested/menu1',
     name: 'Nested',
-    meta: {
-      title: 'Nested',
-      icon: 'nested'
-    },
+    meta: { title: 'Nested', icon: 'nested' },
     children: [
       {
         path: 'menu1',
-        component: () => import('@/views/nested/menu1/index'), // Parent router-view
+        component: () => import('@/views/nested/menu1/index'),
         name: 'Menu1',
         meta: { title: 'Menu1' },
         children: [
@@ -186,10 +192,7 @@ export const constantRoutes = [
         meta: { title: 'External Link', icon: 'link' }
       }
     ]
-  },
-
-  // 404 page must be placed at the end !!!
-  { path: '*', redirect: '/404', hidden: true }
+  }
 ]
 
 const createRouter = () => new Router({

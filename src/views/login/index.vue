@@ -100,14 +100,38 @@ export default {
         this.$refs.password.focus()
       })
     },
+
     handleLogin() {
-      this.$refs.loginForm.validate(valid => {
+      this.$refs.loginForm.validate((valid) => {
         if (valid) {
           this.loading = true
-          this.$store.dispatch('user/login', this.loginForm).then(() => {
+          // 使用 Promise 方式避免 async/await 问题
+          this.$store.dispatch('user/login', {
+            loginName: this.loginForm.loginName,
+            password: this.loginForm.password
+          })
+          .then(() => {
+            // 登录成功后获取用户信息
+            return this.$store.dispatch('user/getUserInfo')
+          })
+          .then(() => {
+            // 获取用户菜单
+            return this.$store.dispatch('menu/getUserMenus')
+          })
+          .then((menus) => {
+            // 根据菜单生成路由
+            return this.$store.dispatch('menu/generateRoutes', menus)
+          })
+          .then((accessRoutes) => {
+            // 动态添加路由
+            this.$router.addRoutes(accessRoutes)
+            // 跳转到主页
             this.$router.push({ path: this.redirect || '/' })
-            this.loading = false
-          }).catch(() => {
+          })
+          .catch((error) => {
+            this.$message.error(error.message || '登录失败')
+          })
+          .finally(() => {
             this.loading = false
           })
         } else {
