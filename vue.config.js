@@ -57,6 +57,32 @@ module.exports = {
       }
     ])
 
+    // 优化字体加载
+    config.module
+      .rule('fonts')
+      .test(/\.(woff2?|eot|ttf|otf)(\?.*)?$/i)
+      .use('url-loader')
+      .loader('url-loader')
+      .options({
+        limit: 4096,
+        fallback: {
+          loader: 'file-loader',
+          options: {
+            name: 'fonts/[name].[hash:8].[ext]'
+          }
+        }
+      })
+
+    // 自定义WebpackDevServer配置
+    config.devServer
+      .headers({
+        'Cache-Control': 'public, max-age=31536000'
+      })
+      .before((app, server) => {
+        // 可以在这里添加自定义中间件
+        console.log('Custom middleware setup for WebpackDevServer')
+      })
+
     // when there are many pages, it will cause too many meaningless requests
     config.plugins.delete('prefetch')
 

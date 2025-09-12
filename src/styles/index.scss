@@ -12,6 +12,13 @@ body {
   font-family: Helvetica Neue, Helvetica, PingFang SC, Hiragino Sans GB, Microsoft YaHei, Arial, sans-serif;
 }
 
+// 优化字体加载性能
+@font-face {
+  font-family: 'element-icons';
+  src: url('https://unpkg.com/element-ui@2.13.2/lib/theme-chalk/fonts/element-icons.woff') format('woff');
+  font-display: swap; // 使用 swap 策略，优先显示文本，字体加载完成后替换
+}
+
 label {
   font-weight: 700;
 }

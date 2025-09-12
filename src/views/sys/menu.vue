@@ -21,7 +21,7 @@
         <el-table-column prop="title" label="菜单名称" min-width="260" />
         <el-table-column prop="path" label="路径" min-width="200" />
         <el-table-column prop="name" label="路由名" min-width="160" />
-        <el-table-column prop="component" label="组件" min-width="220" />
+        <el-table-column prop="redirect" label="目标路径" min-width="220" />
         <el-table-column prop="icon" label="图标" width="120">
           <template slot-scope="scope">
             <svg-icon v-if="scope.row.icon" :icon-class="scope.row.icon" />
