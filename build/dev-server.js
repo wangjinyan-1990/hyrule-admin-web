@@ -43,4 +43,3 @@ const server = new WebpackDevServer(compiler, Object.assign({
 server.startCallback(() => {
   console.log('Development server started successfully!')
 })
-

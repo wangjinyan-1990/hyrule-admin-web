@@ -1,4 +1,4 @@
-import { getUserMenus } from '@/api/menu'
+import menuApi from '@/api/menu'
 import { constantRoutes, asyncRoutes } from '@/router'
 
 // 判断是否有权限访问路由
@@ -51,7 +51,7 @@ const actions = {
   // 获取用户菜单
   getUserMenus({ commit, state }) {
     return new Promise((resolve, reject) => {
-      getUserMenus().then(response => {
+      menuApi.getUserMenus().then(response => {
         const { data } = response
         resolve(data)
       }).catch(error => {

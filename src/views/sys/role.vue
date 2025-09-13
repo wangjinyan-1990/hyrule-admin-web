@@ -19,8 +19,11 @@
           <el-tooltip content="删除" placement="top">
             <el-button @click="handleDelete" type="danger" icon="el-icon-delete" circle :disabled="!selectedRow"></el-button>
           </el-tooltip>
-          <el-tooltip content="用户管理" placement="top">
+          <el-tooltip content="角色-用户管理" placement="top">
             <el-button @click="handleUserManage" type="success" icon="el-icon-user" circle :disabled="!selectedRow"></el-button>
+          </el-tooltip>
+          <el-tooltip content="角色-菜单管理" placement="top">
+            <el-button @click="handleMenuManage" type="primary" icon="el-icon-menu" circle :disabled="!selectedRow"></el-button>
           </el-tooltip>
         </el-col>
       </el-row>
@@ -108,6 +111,28 @@
       </div>
     </el-dialog>
 
+    <!-- 角色菜单管理弹窗 -->
+    <el-dialog title="角色菜单管理" :visible.sync="menuManageVisible" width="560px" @close="resetMenuManage">
+      <div style="max-height: 60vh; overflow: auto;">
+        <el-tree
+          ref="menuTreeRef"
+          :data="menuTreeData"
+          node-key="menuId"
+          show-checkbox
+          :default-checked-keys="checkedMenuIds"
+          :props="{ label: 'title', children: 'children' }"
+          :expand-on-click-node="false"
+          :check-strictly="false"
+          :default-expand-all="true"
+          :check-on-click-node="true">
+        </el-tree>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="menuManageVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitRoleMenus">保 存</el-button>
+      </span>
+    </el-dialog>
+
     <!-- 用户选择组件 -->
     <UserSelector
       v-model="addUserVisible"
@@ -152,6 +177,7 @@
 
 <script>
 import roleApi from '@/api/sys/role'
+import menuApi from '@/api/menu'
 import UserSelector from './common/UserSelector.vue'
 
 export default {
@@ -180,6 +206,10 @@ export default {
       selectedUserRow: null,
       // 添加用户相关
       addUserVisible: false,
+      // 菜单管理相关
+      menuManageVisible: false,
+      menuTreeData: [],
+      checkedMenuIds: [],
       roleForm: {
         roleId: '',
         roleName: '',
@@ -329,6 +359,68 @@ export default {
       this.userManageVisible = true;
       this.resetUserManage();
       this.getRoleUsers();
+    },
+    // 菜单管理
+    async handleMenuManage(){
+      if (!this.selectedRow) {
+        this.$message.warning('请先选择要管理的角色');
+        return;
+      }
+      this.menuManageVisible = true;
+      await this.loadAllMenus();
+      await this.loadRoleCheckedMenus();
+    },
+    async loadAllMenus(){
+      try {
+        const res = await menuApi.getAllMenus()
+        const list = Array.isArray(res && res.data) ? res.data : []
+        // 过滤隐藏菜单 hidden===1
+        const visible = list.filter(m => m.hidden !== 1)
+        // 构造成树
+        const idToNode = {}
+        visible.forEach(m => { idToNode[m.menuId] = { ...m, children: [] } })
+        const roots = []
+        visible.forEach(m => {
+          if (m.parentId && idToNode[m.parentId]) {
+            idToNode[m.parentId].children.push(idToNode[m.menuId])
+          } else {
+            roots.push(idToNode[m.menuId])
+          }
+        })
+        this.menuTreeData = roots
+      } catch (e) {
+        this.menuTreeData = []
+      }
+    },
+    async loadRoleCheckedMenus(){
+      try {
+        const res = await menuApi.getRoleMenus(this.selectedRow.roleId)
+        const ids = Array.isArray(res && res.data) ? res.data : []
+        this.checkedMenuIds = ids
+        this.$nextTick(() => {
+          if (this.$refs.menuTreeRef) {
+            this.$refs.menuTreeRef.setCheckedKeys(ids)
+          }
+        })
+      } catch (e) {
+        this.checkedMenuIds = []
+      }
+    },
+    resetMenuManage(){
+      this.menuTreeData = [];
+      this.checkedMenuIds = [];
+    },
+    async submitRoleMenus(){
+      const checked = this.$refs.menuTreeRef.getCheckedKeys();
+      const half = this.$refs.menuTreeRef.getHalfCheckedKeys ? this.$refs.menuTreeRef.getHalfCheckedKeys() : [];
+      const keys = Array.from(new Set([...(checked || []), ...(half || [])]));
+      try {
+        await menuApi.saveRoleMenus(this.selectedRow.roleId, keys);
+        this.$message.success('保存成功');
+        this.menuManageVisible = false;
+      } catch (e) {
+        this.$message.error('保存失败');
+      }
     },
     resetUserManage(){
       this.userSearchModel = {

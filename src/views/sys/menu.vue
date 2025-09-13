@@ -6,6 +6,102 @@
       </el-button>
     </el-card>
 
+    <!-- 新增一级菜单弹窗 -->
+    <el-dialog title="新增一级菜单" :visible.sync="addDialogVisible" width="520px" @closed="resetAddForm">
+      <el-form ref="addFormRef" :model="addForm" :rules="addRules" label-width="100px">
+        <el-form-item label="菜单名称" prop="title">
+          <el-input v-model="addForm.title" maxlength="30" placeholder="例如：系统管理" />
+        </el-form-item>
+        <el-form-item label="路由名" prop="name">
+          <el-input v-model="addForm.name" maxlength="50" placeholder="例如：SysManage" />
+        </el-form-item>
+        <el-form-item label="路径" prop="path">
+          <el-input v-model="addForm.path" placeholder="例如：/sys" />
+        </el-form-item>
+        <el-form-item label="重定向" prop="redirect">
+          <el-input v-model="addForm.redirect" placeholder="例如：/sys/user" />
+        </el-form-item>
+        <el-form-item label="组件" prop="component">
+          <el-input v-model="addForm.component" placeholder="例如：layout/index 或 views/sys/index" />
+        </el-form-item>
+        <el-form-item label="图标" prop="icon">
+          <el-input v-model="addForm.icon" placeholder="例如：sys、user、menuManage 等" />
+          <div v-if="addForm.icon" style="margin-top: 6px;">
+            <svg-icon :icon-class="addForm.icon" />
+          </div>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="addDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="adding" @click="submitAdd">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 新建下级菜单弹窗 -->
+    <el-dialog title="新建下级菜单" :visible.sync="childDialogVisible" width="520px" @closed="resetChildForm">
+      <el-form ref="childFormRef" :model="childForm" :rules="childRules" label-width="120px">
+        <el-form-item label="上级菜单">
+          <el-input :value="currentParent && currentParent.title" disabled />
+        </el-form-item>
+        <el-form-item label="菜单名称" prop="title">
+          <el-input v-model="childForm.title" maxlength="30" placeholder="例如：用户管理" />
+        </el-form-item>
+        <el-form-item label="路由名" prop="name">
+          <el-input v-model="childForm.name" maxlength="50" placeholder="例如：UserManage" />
+        </el-form-item>
+        <el-form-item label="路径" prop="path">
+          <el-input v-model="childForm.path" placeholder="例如：/sys/user" />
+        </el-form-item>
+        <el-form-item label="重定向" prop="redirect">
+          <el-input v-model="childForm.redirect" placeholder="可留空" />
+        </el-form-item>
+        <el-form-item label="组件" prop="component">
+          <el-input v-model="childForm.component" placeholder="例如：views/sys/user/index" />
+        </el-form-item>
+        <el-form-item label="图标" prop="icon">
+          <el-input v-model="childForm.icon" placeholder="例如：user" />
+          <div v-if="childForm.icon" style="margin-top: 6px;">
+            <svg-icon :icon-class="childForm.icon" />
+          </div>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="childDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="addingChild" @click="submitAddChild">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 修改菜单弹窗 -->
+    <el-dialog title="修改菜单" :visible.sync="editDialogVisible" width="520px" @closed="resetEditForm">
+      <el-form ref="editFormRef" :model="editForm" :rules="editRules" label-width="100px">
+        <el-form-item label="菜单名称" prop="title">
+          <el-input v-model="editForm.title" maxlength="30" />
+        </el-form-item>
+        <el-form-item label="路由名" prop="name">
+          <el-input v-model="editForm.name" maxlength="50" />
+        </el-form-item>
+        <el-form-item label="路径" prop="path">
+          <el-input v-model="editForm.path" />
+        </el-form-item>
+        <el-form-item label="重定向" prop="redirect">
+          <el-input v-model="editForm.redirect" />
+        </el-form-item>
+        <el-form-item label="组件" prop="component">
+          <el-input v-model="editForm.component" />
+        </el-form-item>
+        <el-form-item label="图标" prop="icon">
+          <el-input v-model="editForm.icon" />
+          <div v-if="editForm.icon" style="margin-top: 6px;">
+            <svg-icon :icon-class="editForm.icon" />
+          </div>
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" :loading="editing" @click="submitEdit">保 存</el-button>
+      </span>
+    </el-dialog>
+
     <el-card shadow="never">
       <el-table
         :data="menuTree"
@@ -18,9 +114,9 @@
         v-loading="loading"
         ref="menuTable"
       >
-        <el-table-column prop="title" label="菜单名称" min-width="260" />
-        <el-table-column prop="path" label="路径" min-width="200" />
-        <el-table-column prop="name" label="路由名" min-width="160" />
+        <el-table-column prop="title" label="菜单名称" min-width="120" />
+        <el-table-column prop="path" label="路径" min-width="120" />
+        <el-table-column prop="name" label="路由名" min-width="120" />
         <el-table-column prop="redirect" label="目标路径" min-width="220" />
         <el-table-column prop="icon" label="图标" width="120">
           <template slot-scope="scope">
@@ -50,7 +146,7 @@
 </template>
 
 <script>
-import { getAllMenus, createMenu, updateMenu, deleteMenu, getMenusByParentId } from '@/api/menu'
+import menuApi from '@/api/menu'
 import { buildMenuTree } from '@/utils/menu'
 
 export default {
@@ -59,7 +155,78 @@ export default {
     return {
       loading: false,
       menus: [],
-      menuTree: []
+      menuTree: [],
+      // 新增一级菜单
+      addDialogVisible: false,
+      adding: false,
+      addForm: {
+        title: '',
+        name: '',
+        path: '',
+        redirect: '',
+        component: '',
+        icon: ''
+      },
+      addRules: {
+        title: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+        name: [{ required: true, message: '请输入路由名', trigger: 'blur' }],
+        path: [
+          { required: true, message: '请输入路径', trigger: 'blur' },
+          { validator: (rule, value, callback) => {
+              if (!/^\//.test(value)) return callback(new Error('路径需以/开头'))
+              callback()
+            }, trigger: 'blur' }
+        ],
+        component: [{ required: true, message: '请输入组件路径', trigger: 'blur' }]
+      },
+      // 新建下级
+      childDialogVisible: false,
+      addingChild: false,
+      currentParent: null,
+      childForm: {
+        title: '',
+        name: '',
+        path: '',
+        redirect: '',
+        component: '',
+        icon: ''
+      },
+      childRules: {
+        title: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+        name: [{ required: true, message: '请输入路由名', trigger: 'blur' }],
+        path: [
+          { required: true, message: '请输入路径', trigger: 'blur' },
+          { validator: (rule, value, callback) => {
+              if (!/^\//.test(value)) return callback(new Error('路径需以/开头'))
+              callback()
+            }, trigger: 'blur' }
+        ],
+        component: [{ required: true, message: '请输入组件路径', trigger: 'blur' }]
+      },
+      // 编辑
+      editDialogVisible: false,
+      editing: false,
+      editForm: {
+        menuId: undefined,
+        title: '',
+        name: '',
+        path: '',
+        redirect: '',
+        component: '',
+        icon: ''
+      },
+      editRules: {
+        title: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+        name: [{ required: true, message: '请输入路由名', trigger: 'blur' }],
+        path: [
+          { required: true, message: '请输入路径', trigger: 'blur' },
+          { validator: (rule, value, callback) => {
+              if (!/^\//.test(value)) return callback(new Error('路径需以/开头'))
+              callback()
+            }, trigger: 'blur' }
+        ],
+        component: [{ required: true, message: '请输入组件路径', trigger: 'blur' }]
+      }
     }
   },
   created() {
@@ -73,7 +240,7 @@ export default {
     async loadMenus() {
       this.loading = true
       try {
-        const res = await getAllMenus()
+        const res = await menuApi.getAllMenus()
         const data = res && res.data ? res.data : []
         this.menus = Array.isArray(data) ? data : []
         const fullTree = buildMenuTree(this.menus, null)
@@ -110,7 +277,7 @@ export default {
       try {
         const parent = row
         if (!parent || !parent.menuId) return resolve([])
-        const res = await getMenusByParentId(parent.menuId)
+        const res = await menuApi.getMenusByParentId(parent.menuId)
         const children = (res && res.data) ? res.data : []
         const normalized = children.map(c => ({
           ...c,
@@ -122,48 +289,124 @@ export default {
       }
     },
     onAddTopLevel() {
-      this.$prompt('请输入一级菜单名称', '新增菜单', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-      }).then(({ value }) => {
-        const payload = { title: value, name: value, path: `/${Date.now()}`, parentId: 0, hidden: 0 }
-        return createMenu(payload)
-      }).then(() => {
+      this.addDialogVisible = true
+    },
+    resetAddForm() {
+      this.$nextTick(() => {
+        if (this.$refs.addFormRef) this.$refs.addFormRef.resetFields()
+        this.addForm = { title: '', name: '', path: '', redirect: '', icon: '' }
+        this.adding = false
+      })
+    },
+    submitAdd() {
+      this.$refs.addFormRef.validate(async valid => {
+        if (!valid) return
+        try {
+          this.adding = true
+          const payload = {
+            title: this.addForm.title,
+            name: this.addForm.name,
+            path: this.addForm.path,
+            redirect: this.addForm.redirect,
+            icon: this.addForm.icon,
+            component: 'Layout',
+            isLeaf: '0',
+            parentId: 0,
+            hidden: 0
+          }
+          await menuApi.createMenu(payload)
         this.$message.success('新增成功')
+          this.addDialogVisible = false
         this.loadMenus()
-      }).catch(() => {})
+        } catch (e) {
+          this.$message.error(e && e.message ? e.message : '新增失败')
+        } finally {
+          this.adding = false
+        }
+      })
     },
     onAddChild(row) {
-      this.$prompt('请输入子菜单名称', '添加下级', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-      }).then(({ value }) => {
-        const payload = { title: value, name: value, path: `${row.path}/${Date.now()}`, parentId: row.menuId, hidden: 0 }
-        return createMenu(payload)
-      }).then(() => {
-        this.$message.success('新增成功')
-        this.loadMenus()
-      }).catch(() => {})
+      this.currentParent = row
+      const base = row && row.path ? row.path.replace(/\/?$/, '/') : '/'
+      this.childForm = { title: '', name: '', path: `${base}`, redirect: '', component: '', icon: '' }
+      this.childDialogVisible = true
+    },
+    resetChildForm() {
+      this.$nextTick(() => {
+        if (this.$refs.childFormRef) this.$refs.childFormRef.resetFields()
+        this.childForm = { title: '', name: '', path: '', redirect: '', component: '', icon: '' }
+        this.addingChild = false
+        this.currentParent = null
+      })
+    },
+    submitAddChild() {
+      this.$refs.childFormRef.validate(async valid => {
+        if (!valid) return
+        try {
+          this.addingChild = true
+          const payload = {
+            title: this.childForm.title,
+            name: this.childForm.name,
+            path: this.childForm.path,
+            redirect: this.childForm.redirect,
+            component: this.childForm.component,
+            icon: this.childForm.icon,
+            isLeaf: '1',
+            parentId: this.currentParent ? this.currentParent.menuId : 0,
+            hidden: 0
+          }
+          await menuApi.createMenu(payload)
+          this.$message.success('新增成功')
+          this.childDialogVisible = false
+          this.loadMenus()
+        } catch (e) {
+          this.$message.error(e && e.message ? e.message : '新增失败')
+        } finally {
+          this.addingChild = false
+        }
+      })
     },
     onEdit(row) {
-      this.$prompt('请输入新名称', '修改菜单', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputValue: row.title
-      }).then(({ value }) => {
-        const payload = { ...row, title: value }
-        return updateMenu(payload)
-      }).then(() => {
-        this.$message.success('修改成功')
-        this.loadMenus()
-      }).catch(() => {})
+      this.editForm = {
+        menuId: row.menuId,
+        title: row.title || '',
+        name: row.name || '',
+        path: row.path || '',
+        redirect: row.redirect || '',
+        component: row.component || '',
+        icon: row.icon || ''
+      }
+      this.editDialogVisible = true
+    },
+    resetEditForm() {
+      this.$nextTick(() => {
+        if (this.$refs.editFormRef) this.$refs.editFormRef.resetFields()
+        this.editForm = { menuId: undefined, title: '', name: '', path: '', redirect: '', component: '', icon: '' }
+        this.editing = false
+      })
+    },
+    submitEdit() {
+      this.$refs.editFormRef.validate(async valid => {
+        if (!valid) return
+        try {
+          this.editing = true
+          await menuApi.updateMenu(this.editForm)
+          this.$message.success('修改成功')
+          this.editDialogVisible = false
+          this.loadMenus()
+        } catch (e) {
+          this.$message.error(e && e.message ? e.message : '修改失败')
+        } finally {
+          this.editing = false
+        }
+      })
     },
     onDelete(row) {
       this.$confirm(`确认删除【${row.title}】?`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => deleteMenu(row.menuId))
+      }).then(() => menuApi.deleteMenu(row.menuId))
         .then(() => {
           this.$message.success('删除成功')
           this.loadMenus()

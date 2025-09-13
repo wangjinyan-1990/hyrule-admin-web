@@ -4,6 +4,10 @@
 
     <breadcrumb class="breadcrumb-container" />
 
+    <div class="tags-container">
+      <TagsView />
+    </div>
+
     <div class="right-menu">
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
@@ -35,11 +39,13 @@
 import { mapGetters } from 'vuex'
 import Breadcrumb from '@/components/Breadcrumb'
 import Hamburger from '@/components/Hamburger'
+import TagsView from '@/components/TagsView/index.vue'
 
 export default {
   components: {
     Breadcrumb,
-    Hamburger
+    Hamburger,
+    TagsView
   },
   computed: {
     ...mapGetters([
@@ -82,6 +88,13 @@ export default {
 
   .breadcrumb-container {
     float: left;
+  }
+
+  .tags-container {
+    float: left;
+    width: calc(100% - 520px);
+    margin-left: 8px;
+    overflow: hidden;
   }
 
   .right-menu {

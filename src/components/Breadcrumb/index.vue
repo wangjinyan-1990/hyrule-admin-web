@@ -1,9 +1,8 @@
 <template>
   <el-breadcrumb class="app-breadcrumb" separator="/">
     <transition-group name="breadcrumb">
-      <el-breadcrumb-item v-for="(item,index) in levelList" :key="item.path">
-        <span v-if="item.redirect==='noRedirect'||index==levelList.length-1" class="no-redirect">{{ item.meta.title }}</span>
-        <a v-else @click.prevent="handleLink(item)">{{ item.meta.title }}</a>
+      <el-breadcrumb-item v-for="(item,index) in firstOnly" :key="item.path">
+        <a @click.prevent="handleLink(item)">{{ item.meta.title }}</a>
       </el-breadcrumb-item>
     </transition-group>
   </el-breadcrumb>
@@ -18,6 +17,13 @@ export default {
       levelList: null
     }
   },
+  computed: {
+    firstOnly() {
+      if (!this.levelList || this.levelList.length === 0) return []
+      // 只展示第一个（首页）
+      return [this.levelList[0]]
+    }
+  },
   watch: {
     $route() {
       this.getBreadcrumb()
@@ -28,15 +34,8 @@ export default {
   },
   methods: {
     getBreadcrumb() {
-      // only show routes with meta.title
-      let matched = this.$route.matched.filter(item => item.meta && item.meta.title)
-      const first = matched[0]
-
-      if (!this.isDashboard(first)) {
-        matched = [{ path: '/dashboard', meta: { title: '首页' }}].concat(matched)
-      }
-
-      this.levelList = matched.filter(item => item.meta && item.meta.title && item.meta.breadcrumb !== false)
+      // 始终只展示首页
+      this.levelList = [{ path: '/dashboard', meta: { title: '首页' }}]
     },
     isDashboard(route) {
       const name = route && route.name
