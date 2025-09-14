@@ -60,6 +60,12 @@ export const asyncRoutes = [
         name: 'menu',
         component: () => import('@/views/sys/menu'),
         meta: { title: '菜单管理', icon: 'menuManage' }
+      },
+      {
+        path: 'org',
+        name: 'org',
+        component: () => import('@/views/sys/org'),
+        meta: { title: '机构管理', icon: 'orgManage' }
       }
     ]
   },
@@ -74,7 +80,7 @@ export const asyncRoutes = [
       {
         path: 'test1',
         name: 'test1',
-        component: () => import('@/views/test/test1'),
+        component: () => import('@/views/test/testSystem'),
         meta: { title: '功能1', icon: 'el-icon-s-help' }
       },
       {

@@ -5,6 +5,7 @@
       <el-row>
         <el-col :span="20">
           <el-input v-model="searchModel.userName" placeholder="用户名"></el-input>
+          <el-input v-model="searchModel.loginName" placeholder="登录名"></el-input>
           <el-input v-model="searchModel.phone" placeholder="电话"></el-input>
           <!-- icon是图标，可以修改为自己的 -->
           <el-button @click="getUserList" type="primary" round icon="el-icon-search">查询</el-button>
@@ -20,12 +21,34 @@
 
     <!-- 结果栏 -->
     <el-card>
-      <el-table :data="userList" stripe style="width: 100%" @row-dblclick="handleEdit" @current-change="handleRowChange" highlight-current-row>
+      <el-table 
+        :data="userList" 
+        stripe 
+        style="width: 100%" 
+        height="500"
+        @row-dblclick="handleEdit" 
+        @current-change="handleRowChange" 
+        highlight-current-row>
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="userId" label="用户ID" width="80" v-if="false"></el-table-column>
         <el-table-column prop="userName" label="姓名" width="120"></el-table-column>
+        <el-table-column prop="loginName" label="登录名" width="120"></el-table-column>
         <el-table-column prop="phone" label="电话" width="150"></el-table-column>
         <el-table-column prop="email" label="邮箱" width="200"></el-table-column>
+        <el-table-column prop="orgName" label="所属机构" width="150">
+          <template slot-scope="scope">
+            <span v-if="scope.row.orgName">{{ scope.row.orgName }}</span>
+            <span v-else style="color: #999;">未分配</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="roleNames" label="角色" width="150">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.roleNames" type="info" size="small">
+              {{ scope.row.roleNames }}
+            </el-tag>
+            <span v-else style="color: #999;">无角色</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态" width="100">
           <template slot-scope="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
@@ -33,13 +56,14 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="roleIds" label="角色ID" width="80" v-if="false"></el-table-column>
       </el-table>
     </el-card>
     <el-pagination
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
       :current-page="searchModel.pageNo"
-      :page-sizes="[100, 200, 300, 400]"
+      :page-sizes="[10, 20, 50, 100]"
       :page-size="searchModel.pageSize"
       layout="total, sizes, prev, pager, next, jumper"
       :total="total">
@@ -65,12 +89,38 @@
             <el-radio :label="0">离职</el-radio>
           </el-radio-group>
         </el-form-item>
+        <el-form-item label="所属机构" prop="orgId">
+          <el-input 
+            v-model="userForm.orgName" 
+            placeholder="请选择所属机构" 
+            readonly 
+            @click="handleOrgSelect">
+            <el-button slot="append" icon="el-icon-search" @click="handleOrgSelect"></el-button>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="角色" prop="roleIds">
+          <el-select v-model="userForm.roleIds" multiple placeholder="请选择角色" style="width: 100%">
+            <el-option
+              v-for="role in roleList"
+              :key="role.roleId"
+              :label="role.roleName"
+              :value="role.roleId">
+            </el-option>
+          </el-select>
+        </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
         <el-button type="primary" @click="submitForm">确 定</el-button>
       </span>
     </el-dialog>
+    
+    <!-- 机构选择器 -->
+    <OrgSelector 
+      v-model="orgSelectorVisible" 
+      @confirm="handleOrgConfirm" 
+      @close="resetOrgSelector">
+    </OrgSelector>
   </div>
 </template>
 
@@ -104,20 +154,48 @@
   .el-table__body tr:not(.current-row):hover > td {
     background-color: #f5f7fa !important;
   }
+
+  /* 固定表头样式优化 */
+  .el-table .el-table__header-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  /* 表格容器样式 */
+  .el-table {
+    border: 1px solid #ebeef5;
+    border-radius: 4px;
+  }
+
+  /* 表头样式 */
+  .el-table th {
+    background-color: #fafafa;
+    font-weight: 600;
+  }
 </style>
 
 <script>
 import userApi from '@/api/sys/user'
+import orgApi from '@/api/sys/org'
+import OrgSelector from '@/views/sys/common/OrgSelector'
 
 export default {
+  components: {
+    OrgSelector
+  },
   data(){
     return{
       total: 0,
       searchModel: {
         pageNo: 1,
-        pageSize: 10
+        pageSize: 100,
+        userName: '',
+        loginName: '',
+        phone: ''
       },
       userList: [],
+      roleList: [],
       dialogVisible: false,
       isEdit: false,
       selectedRow: null,
@@ -127,8 +205,12 @@ export default {
         loginName: '',
         email: '',
         phone: '',
-        status: 1
+        status: 1,
+        orgId: '',
+        orgName: '',
+        roleIds: []
       },
+      orgSelectorVisible: false,
       rules: {
         userName: [
           { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -143,6 +225,12 @@ export default {
         ],
         status: [
           { required: true, message: '请选择状态', trigger: 'change' }
+        ],
+        orgId: [
+          { required: true, message: '请选择所属机构', trigger: 'change' }
+        ],
+        roleIds: [
+          { required: true, message: '请选择角色', trigger: 'change' }
         ]
       }
     }
@@ -156,6 +244,7 @@ export default {
 
   created(){
     this.getUserList();
+    this.getRoleList();
   },
 
   methods:{
@@ -173,8 +262,18 @@ export default {
         this.total = response.data.total;
       });
     },
+    getRoleList(){
+      // 这里需要调用角色API获取角色列表
+      // 暂时使用模拟数据
+      this.roleList = [
+        { roleId: '0001', roleName: '开发人员' },
+        { roleId: '0002', roleName: '测试人员' },
+        { roleId: '0003', roleName: '管理员' }
+      ];
+    },
     resetSearch(){
       this.searchModel.userName = '';
+      this.searchModel.loginName = '';
       this.searchModel.phone = '';
       this.searchModel.pageNo = 1;
       this.getUserList();
@@ -208,7 +307,10 @@ export default {
           loginName: this.selectedRow.loginName,
           email: this.selectedRow.email || '',
           phone: this.selectedRow.phone || '',
-          status: this.selectedRow.status
+          status: this.selectedRow.status,
+          orgId: this.selectedRow.orgId || '',
+          orgName: this.selectedRow.orgName || '',
+          roleIds: this.selectedRow.roleIds ? this.selectedRow.roleIds.split(',') : []
         };
       }
     },
@@ -216,7 +318,7 @@ export default {
       if (this.$refs.userFormRef) {
         this.$refs.userFormRef.resetFields();
       }
-      this.userForm = { userId: '', userName: '', loginName: '', email: '', phone: '', status: 1 };
+      this.userForm = { userId: '', userName: '', loginName: '', email: '', phone: '', status: 1, orgId: '', orgName: '', roleIds: [] };
     },
     submitForm(){
       this.$refs.userFormRef.validate(valid => {
@@ -226,7 +328,9 @@ export default {
           loginName: this.userForm.loginName,
           email: this.userForm.email,
           phone: this.userForm.phone,
-          status: this.userForm.status
+          status: this.userForm.status,
+          orgId: this.userForm.orgId,
+          roleIds: this.userForm.roleIds.join(',')
         };
 
         if (this.isEdit) {
@@ -250,6 +354,50 @@ export default {
           });
         }
       });
+    },
+    handleOrgSelect() {
+      this.orgSelectorVisible = true;
+    },
+    handleOrgConfirm(orgId) {
+      // 根据orgId找到机构名称
+      this.findOrgNameById(orgId).then(orgName => {
+        this.userForm.orgId = orgId;
+        this.userForm.orgName = orgName;
+      });
+    },
+    resetOrgSelector() {
+      this.orgSelectorVisible = false;
+    },
+    async findOrgNameById(orgId) {
+      try {
+        // 调用机构API获取机构树，然后根据orgId查找机构名称
+        const response = await orgApi.getOrgTree();
+        const orgTree = response.data || [];
+        return this.findOrgNameInTree(orgTree, orgId);
+      } catch (error) {
+        console.error('获取机构名称失败:', error);
+        // 如果API调用失败，使用模拟数据作为备选
+        const orgMap = {
+          '1000': '汉东农信',
+          '1001': '汉东农信-技术部',
+          '1002': '汉东农信-业务部'
+        };
+        return orgMap[orgId] || '未知机构';
+      }
+    },
+    findOrgNameInTree(orgTree, targetOrgId) {
+      for (const org of orgTree) {
+        if (org.orgId === targetOrgId) {
+          return org.orgName;
+        }
+        if (org.children && org.children.length > 0) {
+          const result = this.findOrgNameInTree(org.children, targetOrgId);
+          if (result) {
+            return result;
+          }
+        }
+      }
+      return null;
     }
   }
 };

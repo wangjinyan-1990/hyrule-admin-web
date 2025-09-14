@@ -134,12 +134,12 @@
     </el-dialog>
 
     <!-- 用户选择组件 -->
-    <UserSelector
+    <UserSelectors
       v-model="addUserVisible"
       :excludeUserIds="roleUserIds"
       @confirm="handleUserSelect"
       @close="resetAddUser">
-    </UserSelector>
+    </UserSelectors>
   </div>
 </template>
 
@@ -178,11 +178,11 @@
 <script>
 import roleApi from '@/api/sys/role'
 import menuApi from '@/api/menu'
-import UserSelector from './common/UserSelector.vue'
+import UserSelectors from './common/UserSelectors.vue'
 
 export default {
   components: {
-    UserSelector
+    UserSelectors
   },
   data(){
     return{
@@ -475,9 +475,14 @@ export default {
     resetAddUser(){
       // 重置添加用户相关状态
     },
-    handleUserSelect(user){
-      roleApi.addUserRole(this.selectedRow.roleId, user.userId).then(() => {
-        this.$message.success('添加成功');
+    handleUserSelect(users){
+      // 批量添加用户到角色
+      const promises = users.map(user => 
+        roleApi.addUserRole(this.selectedRow.roleId, user.userId)
+      );
+      
+      Promise.all(promises).then(() => {
+        this.$message.success(`成功添加 ${users.length} 个用户`);
         this.getRoleUsers();
       }).catch(() => {
         this.$message.error('添加失败');

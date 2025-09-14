@@ -9,7 +9,13 @@
         </el-col>
       </el-row>
 
-      <el-table :data="userList" stripe style="width: 100%" @current-change="handleUserChange" highlight-current-row>
+      <el-table 
+        :data="userList" 
+        stripe 
+        style="width: 100%" 
+        @selection-change="handleSelectionChange"
+        ref="userTable">
+        <el-table-column type="selection" width="55"></el-table-column>
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="userId" label="用户ID" width="80" v-if="false"></el-table-column>
         <el-table-column prop="userName" label="用户名" width="150"></el-table-column>
@@ -30,7 +36,9 @@
     </div>
     <span slot="footer" class="dialog-footer">
       <el-button @click="handleClose">取 消</el-button>
-      <el-button type="primary" @click="handleConfirm" :disabled="!selectedUser">确 定</el-button>
+      <el-button type="primary" @click="handleConfirm" :disabled="selectedUsers.length === 0">
+        确定 (已选择 {{ selectedUsers.length }} 个用户)
+      </el-button>
     </span>
   </el-dialog>
 </template>
@@ -56,7 +64,7 @@
 import userApi from '@/api/sys/user'
 
 export default {
-  name: 'UserSelector',
+  name: 'UserSelectors',
   props: {
     // 控制弹窗显示
     value: {
@@ -78,7 +86,7 @@ export default {
       },
       userList: [],
       total: 0,
-      selectedUser: null
+      selectedUsers: []
     }
   },
   computed: {
@@ -108,7 +116,7 @@ export default {
       };
       this.userList = [];
       this.total = 0;
-      this.selectedUser = null;
+      this.selectedUsers = [];
     },
     getUserList() {
       userApi.getUserList(this.searchModel).then(response => {
@@ -134,15 +142,15 @@ export default {
       this.searchModel.pageNo = pageNo;
       this.getUserList();
     },
-    handleUserChange(currentRow) {
-      this.selectedUser = currentRow;
+    handleSelectionChange(selection) {
+      this.selectedUsers = selection;
     },
     handleConfirm() {
-      if (!this.selectedUser) {
+      if (this.selectedUsers.length === 0) {
         this.$message.warning('请先选择用户');
         return;
       }
-      this.$emit('confirm', this.selectedUser);
+      this.$emit('confirm', this.selectedUsers);
       this.handleClose();
     },
     handleClose() {

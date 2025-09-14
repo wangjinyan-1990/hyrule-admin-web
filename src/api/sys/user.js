@@ -11,6 +11,7 @@ export default {
         pageNo: searchModel.pageNo,
         pageSize: searchModel.pageSize,
         userName: searchModel.userName,
+        loginName: searchModel.loginName,
         phone: searchModel.phone
       }
     });

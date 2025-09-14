@@ -356,9 +356,9 @@ export default {
             hidden: 0
           }
           await menuApi.createMenu(payload)
-          this.$message.success('新增成功')
+        this.$message.success('新增成功')
           this.childDialogVisible = false
-          this.loadMenus()
+        this.loadMenus()
         } catch (e) {
           this.$message.error(e && e.message ? e.message : '新增失败')
         } finally {
@@ -391,9 +391,9 @@ export default {
         try {
           this.editing = true
           await menuApi.updateMenu(this.editForm)
-          this.$message.success('修改成功')
+        this.$message.success('修改成功')
           this.editDialogVisible = false
-          this.loadMenus()
+        this.loadMenus()
         } catch (e) {
           this.$message.error(e && e.message ? e.message : '修改失败')
         } finally {

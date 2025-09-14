@@ -23,7 +23,9 @@ export default {
   name: 'TagsView',
   computed: {
     visitedViews() {
-      return this.$store.getters.visitedViews || []
+      const views = this.$store.getters.visitedViews || []
+      // 过滤掉首页标签，首页标签不显示
+      return views.filter(view => view.path !== '/dashboard')
     }
   },
   watch: {

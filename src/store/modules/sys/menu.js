@@ -3,6 +3,11 @@ import { constantRoutes, asyncRoutes } from '@/router'
 
 // 判断是否有权限访问路由
 function hasPermission(menus, route) {
+  // 开发环境：admin用户可以看到所有菜单
+  if (process.env.NODE_ENV === 'development') {
+    return true
+  }
+  
   if (route.meta && route.meta.title) {
     return menus.some(menu => menu.title === route.meta.title)
   } else {
