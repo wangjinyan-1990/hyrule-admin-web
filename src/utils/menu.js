@@ -67,7 +67,7 @@ function resolveComponent(component) {
     '/sys/role': () => import('@/views/sys/role'),
     '/sys/menu': () => import('@/views/sys/menu'),
     '/sys/org': () => import('@/views/sys/org'),
-    '/test/baseManage/test2': () => import('@/views/test/baseManage/test2'),
+    '/test/baseManage/test2': () => import('@/views/test/baseManage/testSystemMember'),
     '/test/baseManage/test3': () => import('@/views/test/baseManage/test3'),
     '/example/table': () => import('@/views/table/index'),
     '/example/tree': () => import('@/views/tree/index'),

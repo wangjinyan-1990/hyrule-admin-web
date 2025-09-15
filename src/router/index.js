@@ -88,10 +88,10 @@ export const asyncRoutes = [
             meta: { title: '测试系统维护', icon: 'el-icon-s-help' }
           },
           {
-            path: 'test2',
-            name: 'test2',
-            component: () => import('@/views/test/baseManage/test2'),
-            meta: { title: '功能2', icon: 'el-icon-s-help' }
+            path: 'testSystemMember',
+            name: 'testSystemMember',
+            component: () => import('@/views/test/baseManage/testSystemMember'),
+            meta: { title: '系统成员维护', icon: 'el-icon-s-help' }
           },
           {
             path: 'test3',
