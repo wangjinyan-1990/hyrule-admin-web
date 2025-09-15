@@ -44,10 +44,15 @@ router.beforeEach(async(to, from, next) => {
         try {
           // get user info
           await store.dispatch('user/getUserInfo')
-          // load menus and dynamically add routes (fix 404 after refresh)
+          // 加载菜单数据并设置到store中，但不动态添加路由
           const menus = await store.dispatch('menu/getUserMenus')
           const accessRoutes = await store.dispatch('menu/generateRoutes', menus)
-          router.addRoutes(accessRoutes)
+          // 不调用 router.addRoutes(accessRoutes)，避免路由重复定义
+          // 但是需要确保路由已经存在于静态配置中
+          
+          // 检查路由是否存在
+          console.log('当前路由:', to.path)
+          console.log('路由匹配:', router.resolve(to.path))
 
           // 刷新后定位到原路径；若原路径是 /404，则退回到上次路径或首页
           if (to.path === '/404') {

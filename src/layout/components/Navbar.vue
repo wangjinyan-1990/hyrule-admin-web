@@ -9,6 +9,9 @@
     </div>
 
     <div class="right-menu">
+      <div class="user-info">
+        <span class="user-name">{{ name || '用户' }}</span>
+      </div>
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
           <img :src="require('@/assets/play_guitar.gif')" class="user-avatar">
@@ -50,7 +53,8 @@ export default {
   computed: {
     ...mapGetters([
       'sidebar',
-      'avatar'
+      'avatar',
+      'name'
     ])
   },
   methods: {
@@ -121,6 +125,20 @@ export default {
         &:hover {
           background: rgba(0, 0, 0, .025)
         }
+      }
+    }
+
+    .user-info {
+      display: inline-block;
+      margin-right: 15px;
+      vertical-align: top;
+
+      .user-name {
+        font-size: 16px;
+        color: #303133;
+        font-weight: 600;
+        line-height: 50px;
+        display: inline-block;
       }
     }
 

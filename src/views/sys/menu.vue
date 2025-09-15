@@ -1,9 +1,26 @@
 <template>
   <div class="app-container">
     <el-card shadow="never" style="margin-bottom: 10px;">
+      <el-row :gutter="20">
+        <el-col :span="8">
+          <el-select v-model="selectedRoleId" placeholder="请选择角色" @change="onRoleChange" clearable>
+            <el-option
+              v-for="role in roleList"
+              :key="role.roleId"
+              :label="role.roleName"
+              :value="role.roleId">
+            </el-option>
+          </el-select>
+        </el-col>
+        <el-col :span="16">
       <el-button type="primary" icon="el-icon-plus" @click="onAddTopLevel">
         新增
       </el-button>
+          <el-button v-if="selectedRoleId" type="success" icon="el-icon-check" @click="saveRoleMenus">
+            保存角色菜单权限
+          </el-button>
+        </el-col>
+      </el-row>
     </el-card>
 
     <!-- 新增一级菜单弹窗 -->
@@ -114,10 +131,11 @@
         v-loading="loading"
         ref="menuTable"
       >
-        <el-table-column prop="title" label="菜单名称" min-width="120" />
+        <el-table-column v-if="selectedRoleId" type="selection" width="55" :selectable="isSelectable" @selection-change="onSelectionChange" />
+        <el-table-column prop="title" label="菜单名称" min-width="180" />
         <el-table-column prop="path" label="路径" min-width="120" />
         <el-table-column prop="name" label="路由名" min-width="120" />
-        <el-table-column prop="redirect" label="目标路径" min-width="220" />
+        <el-table-column prop="redirect" label="目标路径" min-width="200" />
         <el-table-column prop="icon" label="图标" width="120">
           <template slot-scope="scope">
             <svg-icon v-if="scope.row.icon" :icon-class="scope.row.icon" />
@@ -147,6 +165,7 @@
 
 <script>
 import menuApi from '@/api/menu'
+import roleApi from '@/api/sys/role'
 import { buildMenuTree } from '@/utils/menu'
 
 export default {
@@ -156,6 +175,11 @@ export default {
       loading: false,
       menus: [],
       menuTree: [],
+      // 角色相关
+      selectedRoleId: null,
+      roleList: [],
+      roleMenuIds: [], // 角色已分配的菜单ID列表
+      selectedMenuIds: [], // 当前选中的菜单ID列表
       // 新增一级菜单
       addDialogVisible: false,
       adding: false,
@@ -231,6 +255,7 @@ export default {
   },
   created() {
     this.loadMenus()
+    this.loadRoles()
   },
   methods: {
     isButton(row) {

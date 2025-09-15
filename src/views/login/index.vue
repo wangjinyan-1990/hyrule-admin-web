@@ -119,12 +119,11 @@ export default {
             return this.$store.dispatch('menu/getUserMenus')
           })
           .then((menus) => {
-            // 根据菜单生成路由
+            // 生成路由配置并设置到store中，但不动态添加路由
             return this.$store.dispatch('menu/generateRoutes', menus)
           })
           .then((accessRoutes) => {
-            // 动态添加路由
-            this.$router.addRoutes(accessRoutes)
+            // 不调用 this.$router.addRoutes(accessRoutes)，避免路由重复定义
             // 跳转到主页
             this.$router.push({ path: this.redirect || '/' })
           })

@@ -39,7 +39,6 @@ export const asyncRoutes = [
   {
     path: '/sys',
     component: Layout,
-    redirect: '/sys/user',
     name: 'userManage',
     meta: { title: '系统管理', icon: 'sys' },
     children: [
@@ -73,62 +72,34 @@ export const asyncRoutes = [
   {
     path: '/test',
     component: Layout,
-    redirect: '/test/test1',
     name: 'test',
     meta: { title: '测试模块', icon: 'form' },
     children: [
       {
-        path: 'test1',
-        name: 'test1',
-        component: () => import('@/views/test/testSystem'),
-        meta: { title: '功能1', icon: 'el-icon-s-help' }
-      },
-      {
-        path: 'test2',
-        name: 'test2',
-        component: () => import('@/views/test/test2'),
-        meta: { title: '功能2', icon: 'el-icon-s-help' }
-      },
-      {
-        path: 'test3',
-        name: 'test3',
-        component: () => import('@/views/test/test3'),
-        meta: { title: '功能3', icon: 'el-icon-s-help' }
-      }
-    ]
-  },
-
-  {
-    path: '/example',
-    component: Layout,
-    redirect: '/example/table',
-    name: 'Example',
-    meta: { title: 'Example', icon: 'el-icon-s-help' },
-    children: [
-      {
-        path: 'table',
-        name: 'Table',
-        component: () => import('@/views/table/index'),
-        meta: { title: 'Table', icon: 'table' }
-      },
-      {
-        path: 'tree',
-        name: 'Tree',
-        component: () => import('@/views/tree/index'),
-        meta: { title: 'Tree', icon: 'tree' }
-      }
-    ]
-  },
-
-  {
-    path: '/form',
-    component: Layout,
-    children: [
-      {
-        path: 'index',
-        name: 'Form',
-        component: () => import('@/views/form/index'),
-        meta: { title: 'Form', icon: 'form' }
+        path: 'baseManage',
+        name: 'baseManage',
+        component: () => import('@/views/test/baseManage/index'),
+        meta: { title: '基础管理', icon: 'el-icon-s-tools' },
+        children: [
+          {
+            path: 'testSystem',
+            name: 'testSystem',
+            component: () => import('@/views/test/baseManage/testSystem'),
+            meta: { title: '测试系统维护', icon: 'el-icon-s-help' }
+          },
+          {
+            path: 'test2',
+            name: 'test2',
+            component: () => import('@/views/test/baseManage/test2'),
+            meta: { title: '功能2', icon: 'el-icon-s-help' }
+          },
+          {
+            path: 'test3',
+            name: 'test3',
+            component: () => import('@/views/test/baseManage/test3'),
+            meta: { title: '功能3', icon: 'el-icon-s-help' }
+          }
+        ]
       }
     ]
   },
@@ -190,6 +161,28 @@ export const asyncRoutes = [
   },
 
   {
+    path: '/example',
+    component: Layout,
+    redirect: '/example/table',
+    name: 'Example',
+    meta: { title: 'Example', icon: 'el-icon-s-help' },
+    children: [
+      {
+        path: 'table',
+        name: 'Table',
+        component: () => import('@/views/table/index'),
+        meta: { title: 'Table', icon: 'table' }
+      },
+      {
+        path: 'tree',
+        name: 'Tree',
+        component: () => import('@/views/tree/index'),
+        meta: { title: 'Tree', icon: 'tree' }
+      }
+    ]
+  },
+
+  {
     path: 'external-link',
     component: Layout,
     children: [
@@ -204,7 +197,7 @@ export const asyncRoutes = [
 const createRouter = () => new Router({
   // mode: 'history', // require service support
   scrollBehavior: () => ({ y: 0 }),
-  routes: constantRoutes
+  routes: constantRoutes.concat(asyncRoutes)
 })
 
 const router = createRouter()
