@@ -48,6 +48,12 @@ export default {
       activeTab: 'developer'
     }
   },
+  mounted() {
+    // 强制重新计算布局，解决第一次加载时宽度不够的问题
+    this.$nextTick(() => {
+      window.dispatchEvent(new Event('resize'));
+    });
+  },
   methods: {
     handleTabClick(tab) {
       console.log('切换到页签:', tab.name);
@@ -61,6 +67,9 @@ export default {
 <style scoped>
 .system-member-container {
   padding: 10px;
+  width: 100%;
+  min-width: 100%;
+  box-sizing: border-box;
 }
 
 .page-title {
@@ -125,5 +134,18 @@ export default {
 .el-tabs__item span i {
   margin-right: 5px;
   font-size: 14px;
+}
+
+/* 确保卡片占满宽度 */
+::v-deep .el-card {
+  width: 100%;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 确保页签内容区域占满宽度 */
+::v-deep .el-tabs__content {
+  width: 100%;
+  min-width: 100%;
 }
 </style>

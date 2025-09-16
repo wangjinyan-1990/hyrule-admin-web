@@ -21,13 +21,13 @@
 
     <!-- 结果栏 -->
     <el-card>
-      <el-table 
-        :data="userList" 
-        stripe 
-        style="width: 100%" 
+      <el-table
+        :data="userList"
+        stripe
+        style="width: 100%"
         height="500"
-        @row-dblclick="handleEdit" 
-        @current-change="handleRowChange" 
+        @row-dblclick="handleEdit"
+        @current-change="handleRowChange"
         highlight-current-row>
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="userId" label="用户ID" width="80" v-if="false"></el-table-column>
@@ -90,23 +90,22 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="所属机构" prop="orgId">
-          <el-input 
-            v-model="userForm.orgName" 
-            placeholder="请选择所属机构" 
-            readonly 
+          <el-input
+            v-model="userForm.orgName"
+            placeholder="请选择所属机构"
+            readonly
             @click="handleOrgSelect">
             <el-button slot="append" icon="el-icon-search" @click="handleOrgSelect"></el-button>
           </el-input>
         </el-form-item>
         <el-form-item label="角色" prop="roleIds">
-          <el-select v-model="userForm.roleIds" multiple placeholder="请选择角色" style="width: 100%">
-            <el-option
-              v-for="role in roleList"
-              :key="role.roleId"
-              :label="role.roleName"
-              :value="role.roleId">
-            </el-option>
-          </el-select>
+          <el-input
+            v-model="roleDisplayText"
+            placeholder="请选择角色"
+            readonly
+            @click="handleRoleSelect">
+            <el-button slot="append" icon="el-icon-search" @click="handleRoleSelect"></el-button>
+          </el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -114,13 +113,21 @@
         <el-button type="primary" @click="submitForm">确 定</el-button>
       </span>
     </el-dialog>
-    
+
     <!-- 机构选择器 -->
-    <OrgSelector 
-      v-model="orgSelectorVisible" 
-      @confirm="handleOrgConfirm" 
+    <OrgSelector
+      v-model="orgSelectorVisible"
+      @confirm="handleOrgConfirm"
       @close="resetOrgSelector">
     </OrgSelector>
+
+    <!-- 角色选择器 -->
+    <RoleSelector
+      v-model="roleSelectorVisible"
+      :selected-role-ids="userForm.roleIds"
+      @confirm="handleRoleConfirm"
+      @close="resetRoleSelector">
+    </RoleSelector>
   </div>
 </template>
 
@@ -178,11 +185,14 @@
 <script>
 import userApi from '@/api/sys/user'
 import orgApi from '@/api/sys/org'
+import roleApi from '@/api/sys/role'
 import OrgSelector from '@/views/sys/common/OrgSelector'
+import RoleSelector from '@/views/sys/common/RoleSelector'
 
 export default {
   components: {
-    OrgSelector
+    OrgSelector,
+    RoleSelector
   },
   data(){
     return{
@@ -211,6 +221,8 @@ export default {
         roleIds: []
       },
       orgSelectorVisible: false,
+      roleSelectorVisible: false,
+      roleDisplayText: '',
       rules: {
         userName: [
           { required: true, message: '请输入用户名', trigger: 'blur' },
@@ -219,6 +231,10 @@ export default {
         loginName: [
           { required: true, message: '请输入登录名', trigger: 'blur' },
           { min: 2, max: 20, message: '长度在2到20个字符', trigger: 'blur' }
+        ],
+        phone: [
+          { required: true, message: '请输入电话', trigger: 'blur' },
+          { min: 11, max: 11, message: '长度在11个字符', trigger: 'blur' }
         ],
         email: [
           { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
@@ -262,14 +278,26 @@ export default {
         this.total = response.data.total;
       });
     },
-    getRoleList(){
-      // 这里需要调用角色API获取角色列表
-      // 暂时使用模拟数据
-      this.roleList = [
-        { roleId: '0001', roleName: '开发人员' },
-        { roleId: '0002', roleName: '测试人员' },
-        { roleId: '0003', roleName: '管理员' }
-      ];
+    async getRoleList(){
+      try {
+        // 调用角色API获取角色列表
+        const response = await roleApi.getRoleList({
+          pageNo: 1,
+          pageSize: 1000,
+          roleName: ''
+        });
+
+        if (response.code === 20000) {
+          this.roleList = response.data?.rows || [];
+          console.log('角色列表加载成功，共', this.roleList.length, '条记录');
+        } else {
+          console.error('获取角色列表失败:', response.message);
+          this.roleList = [];
+        }
+      } catch (error) {
+        console.error('获取角色列表失败:', error);
+        this.roleList = [];
+      }
     },
     resetSearch(){
       this.searchModel.userName = '';
@@ -301,6 +329,10 @@ export default {
     },
     loadUserData(){
       if (this.selectedRow) {
+        console.log('加载用户数据，selectedRow:', this.selectedRow);
+        const roleIds = this.selectedRow.roleIds ? this.selectedRow.roleIds.split(',') : [];
+        console.log('解析后的roleIds:', roleIds);
+
         this.userForm = {
           userId: this.selectedRow.userId,
           userName: this.selectedRow.userName,
@@ -310,8 +342,10 @@ export default {
           status: this.selectedRow.status,
           orgId: this.selectedRow.orgId || '',
           orgName: this.selectedRow.orgName || '',
-          roleIds: this.selectedRow.roleIds ? this.selectedRow.roleIds.split(',') : []
+          roleIds: roleIds
         };
+        console.log('设置后的userForm.roleIds:', this.userForm.roleIds);
+        this.updateRoleDisplayText();
       }
     },
     resetForm(){
@@ -319,6 +353,7 @@ export default {
         this.$refs.userFormRef.resetFields();
       }
       this.userForm = { userId: '', userName: '', loginName: '', email: '', phone: '', status: 1, orgId: '', orgName: '', roleIds: [] };
+      this.roleDisplayText = '';
     },
     submitForm(){
       this.$refs.userFormRef.validate(valid => {
@@ -398,6 +433,28 @@ export default {
         }
       }
       return null;
+    },
+    // 角色选择器相关方法
+    handleRoleSelect() {
+      this.roleSelectorVisible = true;
+    },
+    handleRoleConfirm(selectedRoleIds, selectedRoles) {
+      this.userForm.roleIds = selectedRoleIds;
+      this.updateRoleDisplayText();
+    },
+    resetRoleSelector() {
+      this.roleSelectorVisible = false;
+    },
+    updateRoleDisplayText() {
+      if (this.userForm.roleIds && this.userForm.roleIds.length > 0) {
+        const roleNames = this.userForm.roleIds.map(roleId => {
+          const role = this.roleList.find(r => r.roleId === roleId);
+          return role ? role.roleName : roleId;
+        });
+        this.roleDisplayText = roleNames.join(', ');
+      } else {
+        this.roleDisplayText = '';
+      }
     }
   }
 };

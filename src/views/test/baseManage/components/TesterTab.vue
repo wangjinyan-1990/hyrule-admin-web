@@ -1,30 +1,32 @@
 <template>
-  <div>
+  <div class="tester-container">
     <!-- 搜索栏 -->
     <el-card id="search">
       <el-row>
         <el-col :span="20">
-          <el-input v-model="searchModel.userName" placeholder="用户名" style="width: 200px; margin-right: 10px;"></el-input>
-          <el-input v-model="searchModel.loginName" placeholder="登录名" style="width: 200px; margin-right: 10px;"></el-input>
-          <el-input v-model="searchModel.phone" placeholder="电话" style="width: 200px; margin-right: 10px;"></el-input>
+          <el-input v-model="searchModel.userName" placeholder="用户名" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-input v-model="searchModel.loginName" placeholder="登录名" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-input v-model="searchModel.phone" placeholder="电话" style="width: 150px; margin-right: 10px;"></el-input>
           <el-button @click="getTesterList" type="primary" round icon="el-icon-search">查询</el-button>
           <el-button @click="resetSearch" type="info" round icon="el-icon-refresh">重置</el-button>
         </el-col>
         <el-col :span="4" align="right">
-          <el-button @click="handleEdit" type="warning" icon="el-icon-edit" circle :disabled="!selectedRow">编辑</el-button>
+          <el-tooltip content="用户系统分配" placement="top">
+            <el-button @click="handleEdit" type="warning" icon="el-icon-edit" circle :disabled="!selectedRow"></el-button>
+          </el-tooltip>
         </el-col>
       </el-row>
     </el-card>
 
     <!-- 结果栏 -->
     <el-card>
-      <el-table 
-        :data="testerList" 
-        stripe 
-        style="width: 100%" 
+      <el-table
+        :data="testerList"
+        stripe
+        style="width: 100%"
         height="500"
-        @row-dblclick="handleEdit" 
-        @current-change="handleRowChange" 
+        @row-dblclick="handleEdit"
+        @current-change="handleRowChange"
         highlight-current-row>
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="userId" label="用户ID" width="80" v-if="false"></el-table-column>
@@ -38,10 +40,15 @@
           </template>
         </el-table-column>
         <el-table-column prop="systemIds" label="所属系统ID" width="100" v-if="false"></el-table-column>
-        <el-table-column prop="systemNames" label="所属系统" width="200" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="systemNames" label="所属系统" width="200" show-overflow-tooltip>
+          <template slot-scope="scope">
+            <span v-if="scope.row.systemNames">{{ scope.row.systemNames }}</span>
+            <span v-else style="color: #999;">未分配</span>
+          </template>
+        </el-table-column>
       </el-table>
     </el-card>
-    
+
     <el-pagination
       @size-change="handleSizeChange"
       @current-change="handleCurrentChange"
@@ -52,23 +59,32 @@
       :total="total">
     </el-pagination>
 
-    <!-- 编辑测试人员对话框 -->
+    <!-- 用户系统分配对话框 -->
     <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="500px" @close="resetForm">
       <el-form ref="testerFormRef" :model="testerForm" :rules="rules" label-width="100px">
-        <el-form-item label="用户名" prop="userName">
-          <el-input v-model="testerForm.userName" placeholder="请输入用户名"></el-input>
+        <el-form-item label="用户名">
+          <el-input v-model="testerForm.userName" disabled></el-input>
         </el-form-item>
-        <el-form-item label="登录名" prop="loginName">
-          <el-input v-model="testerForm.loginName" placeholder="请输入登录名"></el-input>
+        <el-form-item label="登录名">
+          <el-input v-model="testerForm.loginName" disabled></el-input>
         </el-form-item>
-        <el-form-item label="电话" prop="phone">
-          <el-input v-model="testerForm.phone" placeholder="请输入电话"></el-input>
+        <el-form-item label="邮箱">
+          <el-input v-model="testerForm.email" disabled></el-input>
         </el-form-item>
-        <el-form-item label="所属机构" prop="orgName">
-          <el-input v-model="testerForm.orgName" placeholder="请输入所属机构"></el-input>
+        <el-form-item label="电话">
+          <el-input v-model="testerForm.phone" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="所属机构">
+          <el-input v-model="testerForm.orgName" disabled></el-input>
         </el-form-item>
         <el-form-item label="所属系统" prop="systemNames">
-          <el-input v-model="testerForm.systemNames" placeholder="请输入所属系统"></el-input>
+          <el-input
+            v-model="systemDisplayText"
+            placeholder="请选择所属系统"
+            readonly
+            @click="handleSystemSelect">
+            <el-button slot="append" icon="el-icon-search" @click="handleSystemSelect"></el-button>
+          </el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
@@ -76,15 +92,30 @@
         <el-button type="primary" @click="submitForm">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 测试系统选择器 -->
+    <testSystemSelector
+      v-model="systemSelectorVisible"
+      :selected-system-ids="testerForm.systemIds ? testerForm.systemIds.split(',') : []"
+      @confirm="handleSystemConfirm"
+      @close="resetSystemSelector">
+    </testSystemSelector>
   </div>
 </template>
 
 <script>
+import systemUserApi from '@/api/test/baseManage/testSystemMember'
+import testSystemSelector from '@/views/sys/common/TestSystemMultipleSelector'
+
 export default {
+  components: {
+    testSystemSelector
+  },
   name: 'TesterTab',
   data() {
     return {
       total: 0,
+      roleId: '0002', // 测试人员角色ID，可以根据需要动态设置
       searchModel: {
         pageNo: 1,
         pageSize: 10,
@@ -95,10 +126,13 @@ export default {
       testerList: [],
       dialogVisible: false,
       selectedRow: null,
+      systemSelectorVisible: false,
+      systemDisplayText: '',
       testerForm: {
         userId: '',
         userName: '',
         loginName: '',
+        email: '',
         phone: '',
         orgName: '',
         systemIds: '',
@@ -127,7 +161,7 @@ export default {
   },
   computed: {
     dialogTitle() {
-      return '编辑测试人员';
+      return '用户系统分配';
     }
   },
   created() {
@@ -142,31 +176,28 @@ export default {
       this.searchModel.pageNo = pageNo;
       this.getTesterList();
     },
-    getTesterList() {
-      // 模拟数据，实际应该调用API
-      const mockData = [
-        {
-          userId: 'test001',
-          userName: '王五',
-          loginName: 'wangwu',
-          phone: '13800138003',
-          orgName: '汉东农信-技术部',
-          systemIds: 'sys001,sys003',
-          systemNames: '核心业务系统,风控管理系统'
-        },
-        {
-          userId: 'test002',
-          userName: '赵六',
-          loginName: 'zhaoliu',
-          phone: '13800138004',
-          orgName: '汉东农信-技术部',
-          systemIds: 'sys002',
-          systemNames: '客户管理系统'
+    async getTesterList() {
+      try {
+        console.log('开始获取测试人员列表，角色ID:', this.roleId, '搜索条件:', this.searchModel);
+        const response = await systemUserApi.getUsersByRoleId(this.roleId, this.searchModel);
+        console.log('测试人员列表API响应:', response);
+
+        if (response.code === 20000) {
+          // 适配新的数据格式：data.rows 和 data.total
+          this.testerList = response.data?.rows || [];
+          this.total = response.data?.total || this.testerList.length;
+          console.log('测试人员列表加载成功，共', this.testerList.length, '条记录，总数:', this.total);
+        } else {
+          this.$message.error(response.message || '获取测试人员列表失败');
+          this.testerList = [];
+          this.total = 0;
         }
-      ];
-      
-      this.testerList = mockData;
-      this.total = mockData.length;
+      } catch (error) {
+        console.error('获取测试人员列表失败:', error);
+        this.$message.error('获取测试人员列表失败，请检查网络连接');
+        this.testerList = [];
+        this.total = 0;
+      }
     },
     resetSearch() {
       this.searchModel.userName = '';
@@ -194,11 +225,13 @@ export default {
           userId: this.selectedRow.userId,
           userName: this.selectedRow.userName,
           loginName: this.selectedRow.loginName,
+          email: this.selectedRow.email || '',
           phone: this.selectedRow.phone || '',
           orgName: this.selectedRow.orgName || '',
           systemIds: this.selectedRow.systemIds || '',
           systemNames: this.selectedRow.systemNames || ''
         };
+        this.updateSystemDisplayText();
       }
     },
     resetForm() {
@@ -209,22 +242,53 @@ export default {
         userId: '',
         userName: '',
         loginName: '',
+        email: '',
         phone: '',
         orgName: '',
         systemIds: '',
         systemNames: ''
       };
+      this.systemDisplayText = '';
     },
-    submitForm() {
-      this.$refs.testerFormRef.validate(valid => {
+    async submitForm() {
+      this.$refs.testerFormRef.validate(async (valid) => {
         if (!valid) return;
-        
-        // 实际应该调用API保存数据
-        this.$message.success('编辑成功');
-        this.dialogVisible = false;
-        this.getTesterList();
+
+        try {
+          const response = await systemUserApi.updateUser(this.testerForm);
+
+          if (response.code === 20000) {
+            this.$message.success('编辑成功');
+            this.dialogVisible = false;
+            this.getTesterList();
+          } else {
+            this.$message.error(response.message || '编辑失败');
+          }
+        } catch (error) {
+          console.error('编辑测试人员失败:', error);
+          this.$message.error('编辑失败，请检查网络连接');
+        }
       });
     },
+    // 系统选择器相关方法
+    handleSystemSelect() {
+      this.systemSelectorVisible = true;
+    },
+    handleSystemConfirm(selectedSystemIds, selectedSystemNames, selectedSystems) {
+      this.testerForm.systemIds = selectedSystemIds.join(',');
+      this.testerForm.systemNames = selectedSystemNames.join(',');
+      this.updateSystemDisplayText();
+    },
+    resetSystemSelector() {
+      this.systemSelectorVisible = false;
+    },
+    updateSystemDisplayText() {
+      if (this.testerForm.systemNames) {
+        this.systemDisplayText = this.testerForm.systemNames;
+      } else {
+        this.systemDisplayText = '';
+      }
+    }
   }
 };
 </script>
@@ -253,5 +317,19 @@ export default {
 
 .el-table__body tr:not(.current-row):hover > td {
   background-color: #f5f7fa !important;
+}
+
+/* 确保组件占满宽度 */
+.tester-container {
+  width: 100%;
+  min-width: 100%;
+  box-sizing: border-box;
+}
+
+/* 确保卡片占满宽度 */
+::v-deep .el-card {
+  width: 100%;
+  min-width: 100%;
+  box-sizing: border-box;
 }
 </style>
