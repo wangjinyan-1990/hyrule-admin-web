@@ -73,31 +73,31 @@ export const asyncRoutes = [
     path: '/test',
     component: Layout,
     name: 'test',
-    meta: { title: '测试模块', icon: 'form' },
+    meta: { title: '测试模块', icon: 'testModule' },
     children: [
       {
         path: 'baseManage',
         name: 'baseManage',
         component: () => import('@/views/test/baseManage/index'),
-        meta: { title: '基础管理', icon: 'el-icon-s-tools' },
+        meta: { title: '基础管理', icon: 'baseManage' },
         children: [
           {
             path: 'testSystem',
             name: 'testSystem',
             component: () => import('@/views/test/baseManage/testSystem'),
-            meta: { title: '测试系统维护', icon: 'el-icon-s-help' }
+            meta: { title: '测试系统维护', icon: 'testSystem' }
           },
           {
             path: 'testSystemMember',
             name: 'testSystemMember',
             component: () => import('@/views/test/baseManage/testSystemMember'),
-            meta: { title: '系统成员维护', icon: 'el-icon-s-help' }
+            meta: { title: '系统成员维护', icon: 'testSystemMember' }
           },
           {
-            path: 'test3',
-            name: 'test3',
-            component: () => import('@/views/test/baseManage/test3'),
-            meta: { title: '功能3', icon: 'el-icon-s-help' }
+            path: 'testDirectory',
+            name: 'testDirectory',
+            component: () => import('@/views/test/baseManage/testDirectory'),
+            meta: { title: '测试目录维护', icon: 'testDirectory' }
           }
         ]
       }

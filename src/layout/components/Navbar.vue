@@ -10,7 +10,7 @@
 
     <div class="right-menu">
       <div class="user-info">
-        <span class="user-name">{{ name || '用户' }}</span>
+        <span class="user-name">{{ userName || '用户' }}</span>
       </div>
       <el-dropdown class="avatar-container" trigger="click">
         <div class="avatar-wrapper">
@@ -54,7 +54,7 @@ export default {
     ...mapGetters([
       'sidebar',
       'avatar',
-      'name'
+      'userName'
     ])
   },
   methods: {

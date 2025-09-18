@@ -5,9 +5,10 @@ import { resetRouter } from '@/router'
 const getDefaultState = () => {
   return {
     token: getToken(),
-    name: '',
+    userId: '',
+    userName: '',
     avatar: '',
-    roles: [],
+    roleIds: [],
     menus: []
   }
 }
@@ -21,14 +22,17 @@ const mutations = {
   SET_TOKEN: (state, token) => {
     state.token = token
   },
-  SET_NAME: (state, name) => {
-    state.name = name
+  SET_USER_ID: (state, userId) => {
+    state.userId = userId
+  },
+  SET_NAME: (state, userName) => {
+    state.userName = userName
   },
   SET_AVATAR: (state, avatar) => {
     state.avatar = avatar
   },
-  SET_ROLES: (state, roles) => {
-    state.roles = roles
+  SET_ROLES: (state, roleIds) => {
+    state.roleIds = roleIds
   },
   SET_MENUS: (state, menus) => {
     state.menus = menus
@@ -56,16 +60,28 @@ const actions = {
     return new Promise((resolve, reject) => {
       getUserInfo(state.token).then(response => {
         const { data } = response
+        console.log('getUserInfo API响应数据:', data)
 
         if (!data) {
           reject('Verification failed, please Login again.')
         }
 
-        const { roles, name, avatar } = data
+        // 根据实际API响应结构调整字段映射
+        const { 
+          userId, 
+          userName, 
+          roleIds, 
+          avatar 
+        } = data
 
+        console.log('解析的用户信息:', {
+          userId, userName, roleIds, avatar
+        })
+        
         // 允许无角色用户登录
-        commit('SET_ROLES', Array.isArray(roles) ? roles : [])
-        commit('SET_NAME', name)
+        commit('SET_USER_ID', userId)
+        commit('SET_NAME', userName)
+        commit('SET_ROLES', Array.isArray(roleIds) ? roleIds : [])
         commit('SET_AVATAR', avatar)
         resolve(data)
       }).catch(error => {

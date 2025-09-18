@@ -31,7 +31,7 @@ router.beforeEach(async(to, from, next) => {
       next({ path: '/' })
       NProgress.done()
     } else {
-      const hasGetUserInfo = store.getters.name
+      const hasGetUserInfo = store.getters.userName
       if (hasGetUserInfo) {
         // 如果误入 /404，且已登录，尝试跳回上次页面或首页
         if (to.path === '/404') {
@@ -49,7 +49,6 @@ router.beforeEach(async(to, from, next) => {
           const accessRoutes = await store.dispatch('menu/generateRoutes', menus)
           // 不调用 router.addRoutes(accessRoutes)，避免路由重复定义
           // 但是需要确保路由已经存在于静态配置中
-          
           // 检查路由是否存在
           console.log('当前路由:', to.path)
           console.log('路由匹配:', router.resolve(to.path))

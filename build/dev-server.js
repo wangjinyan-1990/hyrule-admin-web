@@ -7,7 +7,7 @@ const compiler = webpack(webpackConfig)
 
 const server = new WebpackDevServer(compiler, Object.assign({
   // 自定义WebpackDevServer配置
-  port: config.devServer.port || 7788,
+  port: config.devServer.port || 7777,
   host: 'localhost',
   open: true,
   overlay: {
