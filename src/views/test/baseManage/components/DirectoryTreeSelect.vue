@@ -384,15 +384,22 @@ export default {
       if (data.directoryType === 'root') {
         return 'el-icon-folder-opened'
       } else {
-        // 有子目录的使用实心文件夹图标，没有子目录的使用空心文件夹图标
-        // 检查children数组是否存在且长度大于0
-        const hasChildren = data.children && Array.isArray(data.children) && data.children.length > 0
-        console.log(`节点 ${data.directoryName} 的子目录检查:`, {
-          hasChildren: hasChildren,
-          children: data.children,
-          childrenLength: data.children ? data.children.length : 0
+        // 根据 isLeafDirectory 字段判断文件夹图标类型
+        // isLeafDirectory: "0" 表示不是叶子目录(有子目录)，使用黑色文件夹图标
+        // isLeafDirectory: "1" 表示是叶子目录(没有子目录)，使用普通文件夹图标
+        const isLeafDirectory = data.isLeafDirectory
+        console.log(`节点 ${data.directoryName} 的叶子目录检查:`, {
+          isLeafDirectory: isLeafDirectory,
+          iconType: isLeafDirectory === "0" ? 'black-folder' : 'normal-folder'
         })
-        return hasChildren ? 'el-icon-folder-opened' : 'el-icon-folder'
+        
+        if (isLeafDirectory === "0") {
+          // 不是叶子目录，有子目录，使用黑色文件夹图标
+          return 'el-icon-folder-opened'
+        } else {
+          // 是叶子目录，没有子目录，使用普通文件夹图标
+          return 'el-icon-folder'
+        }
       }
     },
 
@@ -806,5 +813,33 @@ export default {
 
 ::v-deep .el-tree-node__expand-icon.is-leaf {
   display: none !important;
+}
+
+/* 黑色文件夹图标样式 - 用于非叶子目录 */
+::v-deep .el-icon-folder-opened {
+  color: #000000 !important;
+  font-weight: 900 !important;
+  /* 使用实心效果 */
+  -webkit-text-stroke: 0.5px #000000 !important;
+  text-shadow: none !important;
+  /* 尝试使用不同的图标 */
+  font-family: "element-icons" !important;
+}
+
+/* 使用SVG背景图片作为实心黑色文件夹图标 */
+::v-deep .el-icon-folder-opened::before {
+  content: "" !important;
+  display: inline-block !important;
+  width: 16px !important;
+  height: 16px !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23000000'%3E%3Cpath d='M12.4142 5H21C21.5523 5 22 5.44772 22 6V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H10.4142L12.4142 5Z'%3E%3C/path%3E%3C/svg%3E") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* 普通文件夹图标样式 - 用于叶子目录 */
+::v-deep .el-icon-folder {
+  color: #606266 !important;
 }
 </style>

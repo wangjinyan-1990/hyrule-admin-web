@@ -451,12 +451,12 @@ export default {
             console.log('第一次重试恢复状态')
             this.$refs.directoryTreeSelect.restoreExpandedState()
           }, 100)
-          
+
           setTimeout(() => {
             console.log('第二次重试恢复状态')
             this.$refs.directoryTreeSelect.restoreExpandedState()
           }, 300)
-          
+
           setTimeout(() => {
             console.log('第三次重试恢复状态')
             this.$refs.directoryTreeSelect.restoreExpandedState()

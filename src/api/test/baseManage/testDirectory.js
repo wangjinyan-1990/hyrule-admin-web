@@ -4,7 +4,7 @@ export default {
   // 根据用户ID获取系统目录
   getSystemsByUserId(userId) {
     return request({
-      url: `/test/directory/getSystemsByUserId`,
+      url: `/test/directory/getRootDirectoryByUserId`,
       method: 'get',
       params: {
         userId: userId
