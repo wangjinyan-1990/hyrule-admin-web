@@ -254,8 +254,8 @@ export default {
             })
             
             if (content) {
-              // 设置缩进：基础8px + 层级 * 8px
-              const paddingLeft = 8 + level * 8
+              // 设置缩进：基础12px + 层级 * 12px，增强层级视觉效果
+              const paddingLeft = 12 + level * 12
               
               // 强制设置样式，使用!important
               content.style.setProperty('padding-left', `${paddingLeft}px`, 'important')
@@ -302,12 +302,12 @@ export default {
                 })
                 
                 if (hasChildren) {
-                  // 重新分析：展开图标应该在文件夹图标的左侧4px处
-                  // 文件夹图标的左侧位置 = paddingLeft
-                  // 展开图标的右侧位置 = 文件夹图标的左侧位置 - 4px间距
-                  // 展开图标的左侧位置 = 展开图标的右侧位置 - 展开图标宽度(16px)
-                  const folderIconLeft = paddingLeft  // 文件夹图标的左侧位置
-                  const expandIconLeft = Math.max(4, folderIconLeft - 4 - 16)  // 展开图标在文件夹图标左侧4px，再减去展开图标宽度16px，最小位置为4px
+                  // 修复间距问题：展开图标和文件夹图标之间应该有8px的间距
+                  // 展开图标位置：paddingLeft（与内容区域对齐）
+                  // 文件夹图标位置：paddingLeft + 24px（为展开图标预留24px空间）
+                  // 实际间距：24px - 16px（展开图标宽度）= 8px
+                  const expandIconLeft = paddingLeft       // 展开图标的位置
+                  const folderIconLeft = paddingLeft + 24  // 文件夹图标的左侧位置
                   
                   // 应用基础样式
                   expandIcon.style.setProperty('position', 'absolute', 'important')
@@ -324,16 +324,30 @@ export default {
                   expandIcon.style.setProperty('font-size', '12px', 'important')
                   expandIcon.style.setProperty('transition', 'all 0.2s ease', 'important')
                   
-                  // 设置精确位置：始终在文件夹图标左侧4px
+                  // 设置精确位置：始终在文件夹图标左侧8px
                   expandIcon.style.setProperty('left', `${expandIconLeft}px`, 'important')
                   
-                  console.log(`✅ 展开图标位置: ${expandIconLeft}px (文件夹图标左侧位置: ${folderIconLeft}px, 展开图标右侧位置: ${expandIconLeft + 16}px, 实际间距: ${folderIconLeft - (expandIconLeft + 16)}px, 目标间距: 4px)`)
+                  // 设置文件夹图标的margin-left，为展开图标预留空间
+                  const folderIcon = content.querySelector('.el-icon-folder-opened')
+                  if (folderIcon) {
+                    folderIcon.style.setProperty('margin-left', '24px', 'important')
+                    console.log(`✅ 设置文件夹图标左边距: 24px`)
+                  }
+                  
+                  console.log(`✅ 展开图标位置: ${expandIconLeft}px (文件夹图标位置: ${folderIconLeft}px, 展开图标右侧位置: ${expandIconLeft + 16}px, 实际间距: ${folderIconLeft - (expandIconLeft + 16)}px, 目标间距: 8px)`)
                 } else {
                   // 没有子节点，隐藏展开图标
                   expandIcon.style.setProperty('display', 'none', 'important')
                   expandIcon.style.setProperty('visibility', 'hidden', 'important')
                   expandIcon.style.setProperty('opacity', '0', 'important')
                   console.log(`❌ 节点无子节点，隐藏展开图标`)
+                  
+                  // 叶子目录的文件夹图标需要16px的margin-left，与展开图标保持视觉对齐
+                  const folderIcon = content.querySelector('.el-icon-folder')
+                  if (folderIcon) {
+                    folderIcon.style.setProperty('margin-left', '16px', 'important')
+                    console.log(`✅ 叶子目录文件夹图标左边距: 16px`)
+                  }
                 }
               }
               
@@ -636,7 +650,7 @@ export default {
 /* 层级缩进样式 - 阶梯式展示 */
 /* 重置Element UI默认样式 */
 ::v-deep .el-tree-node__content {
-  padding-left: 8px !important;
+  padding-left: 12px !important;
   margin-left: 0 !important;
   text-indent: 0 !important;
 }
@@ -649,111 +663,111 @@ export default {
 
 /* 第1层 - 根目录 */
 ::v-deep .el-tree-node[data-level="0"] .el-tree-node__content {
-  padding-left: 8px !important;
+  padding-left: 12px !important;
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="0"] {
-  padding-left: 8px !important;
+  padding-left: 12px !important;
   margin-left: 0 !important;
 }
 
 /* 第2层 - 子目录 */
 ::v-deep .el-tree-node[data-level="1"] .el-tree-node__content {
-  padding-left: 16px !important; /* 8px + 8px */
+  padding-left: 24px !important; /* 12px + 12px */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="1"] {
-  padding-left: 16px !important;
+  padding-left: 24px !important;
   margin-left: 0 !important;
 }
 
 /* 第3层 - 孙目录 */
 ::v-deep .el-tree-node[data-level="2"] .el-tree-node__content {
-  padding-left: 24px !important; /* 8px + 8px + 8px */
+  padding-left: 36px !important; /* 12px + 12px + 12px */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="2"] {
-  padding-left: 24px !important;
+  padding-left: 36px !important;
   margin-left: 0 !important;
 }
 
 /* 第4层 */
 ::v-deep .el-tree-node[data-level="3"] .el-tree-node__content {
-  padding-left: 32px !important; /* 8px + 8px + 8px + 8px */
+  padding-left: 48px !important; /* 12px + 12px + 12px + 12px */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="3"] {
-  padding-left: 32px !important;
+  padding-left: 48px !important;
   margin-left: 0 !important;
 }
 
 /* 第5层 */
 ::v-deep .el-tree-node[data-level="4"] .el-tree-node__content {
-  padding-left: 40px !important;
+  padding-left: 60px !important;
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="4"] {
-  padding-left: 40px !important;
+  padding-left: 60px !important;
   margin-left: 0 !important;
 }
 
 /* 第6层 */
 ::v-deep .el-tree-node[data-level="5"] .el-tree-node__content {
-  padding-left: 48px !important;
+  padding-left: 72px !important;
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="5"] {
-  padding-left: 48px !important;
+  padding-left: 72px !important;
   margin-left: 0 !important;
 }
 
 /* 第7层 */
 ::v-deep .el-tree-node[data-level="6"] .el-tree-node__content {
-  padding-left: 56px !important;
+  padding-left: 84px !important;
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="6"] {
-  padding-left: 56px !important;
+  padding-left: 84px !important;
   margin-left: 0 !important;
 }
 
 /* 第8层 */
 ::v-deep .el-tree-node[data-level="7"] .el-tree-node__content {
-  padding-left: 64px !important;
+  padding-left: 96px !important;
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="7"] {
-  padding-left: 64px !important;
+  padding-left: 96px !important;
   margin-left: 0 !important;
 }
 
 /* 第9层 */
 ::v-deep .el-tree-node[data-level="8"] .el-tree-node__content {
-  padding-left: 72px !important;
+  padding-left: 108px !important;
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="8"] {
-  padding-left: 72px !important;
+  padding-left: 108px !important;
   margin-left: 0 !important;
 }
 
 /* 第10层 */
 ::v-deep .el-tree-node[data-level="9"] .el-tree-node__content {
-  padding-left: 80px !important;
+  padding-left: 120px !important;
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="9"] {
-  padding-left: 80px !important;
+  padding-left: 120px !important;
   margin-left: 0 !important;
 }
 
@@ -841,5 +855,6 @@ export default {
 /* 普通文件夹图标样式 - 用于叶子目录 */
 ::v-deep .el-icon-folder {
   color: #606266 !important;
+  /* margin-left由JavaScript动态设置为16px，与展开图标保持视觉对齐 */
 }
 </style>

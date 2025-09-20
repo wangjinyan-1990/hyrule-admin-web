@@ -38,15 +38,9 @@
               <span class="info-label">目录名称：</span>
               <span class="info-value">{{ currentNode.directoryName }}</span>
             </div>
-            <div class="info-item">
-              <span class="info-label">系统ID：</span>
-              <span class="info-value">{{ currentNode.systemId }}</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">目录类型：</span>
-              <el-tag :type="getDirectoryTypeTag(currentNode.directoryType)">
-                {{ getDirectoryTypeText(currentNode.directoryType) }}
-              </el-tag>
+            <div class="info-item" v-if="currentNode.parentDirectoryName">
+              <span class="info-label">父目录：</span>
+              <span class="info-value">{{ currentNode.parentDirectoryName }}</span>
             </div>
             <div class="info-item">
               <span class="info-label">层级：</span>
@@ -69,15 +63,15 @@
               <span class="info-value">{{ currentNode.thirdPath }}</span>
             </div>
             <div class="info-item" v-if="currentNode.isUseTestcase !== null">
-              <span class="info-label">是否使用测试用例：</span>
-              <el-tag :type="currentNode.isUseTestcase ? 'success' : 'info'">
-                {{ currentNode.isUseTestcase ? '是' : '否' }}
+              <span class="info-label">用例库是否使用：</span>
+              <el-tag :type="currentNode.isUseTestcase === '1' ? 'success' : 'info'">
+                {{ currentNode.isUseTestcase === '1' ? '是' : '否' }}
               </el-tag>
             </div>
             <div class="info-item" v-if="currentNode.isUseTestset !== null">
-              <span class="info-label">是否使用测试集：</span>
-              <el-tag :type="currentNode.isUseTestset ? 'success' : 'info'">
-                {{ currentNode.isUseTestset ? '是' : '否' }}
+              <span class="info-label">测试集是否使用：</span>
+              <el-tag :type="currentNode.isUseTestset === '1' ? 'success' : 'info'">
+                {{ currentNode.isUseTestset === '1' ? '是' : '否' }}
               </el-tag>
             </div>
             <div class="info-item" v-if="currentNode.createTime">
@@ -176,7 +170,42 @@ export default {
     // 处理节点选择
     handleNodeSelect(data) {
       console.log('选择节点:', data)
-      this.currentNode = data
+      
+      // 设置当前节点，并查找父目录信息
+      this.currentNode = {
+        ...data,
+        parentDirectoryName: this.findParentDirectoryName(data)
+      }
+    },
+
+    // 查找父目录名称
+    findParentDirectoryName(nodeData) {
+      if (!nodeData || !nodeData.directoryParentId) {
+        return ''
+      }
+      
+      // 从DirectoryTreeSelect组件的树数据中查找父目录
+      const treeSelect = this.$refs.directoryTreeSelect
+      if (treeSelect && treeSelect.treeData) {
+        const parentNode = this.findNodeById(treeSelect.treeData, nodeData.directoryParentId)
+        return parentNode ? parentNode.directoryName : ''
+      }
+      
+      return ''
+    },
+
+    // 根据ID查找节点
+    findNodeById(nodes, targetId) {
+      for (const node of nodes) {
+        if (node.directoryId === targetId) {
+          return node
+        }
+        if (node.children && node.children.length > 0) {
+          const found = this.findNodeById(node.children, targetId)
+          if (found) return found
+        }
+      }
+      return null
     },
 
     // 加载目录数据
