@@ -11,6 +11,13 @@ function hasPermission(menus, route) {
     }
     return true // admin用户显示所有未隐藏的菜单
   }
+  
+  // 特殊处理：测试模块下的所有菜单都允许访问
+  if (route.path === '/test' || (route.path && route.path.startsWith('/test/'))) {
+    console.log(`测试模块路由，允许访问: ${route.path}`)
+    return true
+  }
+  
   // 检查路由是否在用户菜单权限中
   if (route.meta && route.meta.title) {
     const hasPermission = menus.some(menu => menu.title === route.meta.title)
@@ -77,10 +84,9 @@ const actions = {
         console.log('admin用户，显示所有未隐藏菜单')
         accessedRoutes = filterAsyncRoutes(asyncRoutes, [])
       } else {
-        // 普通用户根据菜单权限过滤
-        accessedRoutes = Array.isArray(menus) && menus.length > 0
-          ? filterAsyncRoutes(asyncRoutes, menus)
-          : []
+        // 普通用户：优先显示测试模块，然后根据菜单权限过滤
+        console.log('普通用户，优先显示测试模块')
+        accessedRoutes = filterAsyncRoutes(asyncRoutes, menus || [])
       }
       console.log('过滤后的路由:', accessedRoutes)
       commit('SET_ROUTES', accessedRoutes)

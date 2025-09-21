@@ -47,6 +47,11 @@ service.interceptors.response.use(
    * You can also judge the status by HTTP Status Code
    */
   response => {
+    // 处理 blob 响应（文件下载）
+    if (response.config.responseType === 'blob') {
+      return response
+    }
+
     const res = response.data
 
     // if the custom code is not 20000, it is judged as an error.

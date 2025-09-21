@@ -8,16 +8,18 @@
         node-key="directoryId"
         :default-expand-all="false"
         :default-expanded-keys="defaultExpandedKeys"
-        :expand-on-click-node="false"
+        :expand-on-click-node="true"
         highlight-current
-        @node-click="handleNodeClick">
+        @node-click="handleNodeClick"
+        @node-expand="handleNodeExpand"
+        @node-collapse="handleNodeCollapse">
 
-        <span class="custom-tree-node" slot-scope="{ node, data }" :data-level="data.level" :style="{ paddingLeft: (8 + (data.level || 0) * 8) + 'px' }" style="display: flex; align-items: center; text-align: left; width: 100%; justify-content: space-between;">
-          <div style="display: flex; align-items: center; flex: 1;">
+        <span class="custom-tree-node" slot-scope="{ node, data }" :data-level="data.level" :style="{ paddingLeft: (4 + (data.level || 0) * 8) + 'px', display: 'flex', alignItems: 'center', textAlign: 'left', width: '100%', justifyContent: showActions ? 'space-between' : 'flex-start' }">
+          <div style="display: flex; align-items: center; flex: 1; min-width: 0;">
             <i :class="getNodeIcon(data)" class="tree-icon" :key="`icon-${data.directoryId}-${iconUpdateKey}`" style="margin-right: 2px !important; margin-left: 0 !important; flex-shrink: 0; padding: 0 !important; width: auto !important;"></i>
-            <span style="margin-left: 0; padding-left: 0; text-align: left; display: inline-block; font-size: 12px;">{{ node.label }}</span>
+            <span style="margin-left: 0; padding-left: 0; text-align: left; display: inline-block; font-size: 12px; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" :title="node.label">{{ node.label }}</span>
           </div>
-          <div style="display: flex; align-items: center; margin-left: auto;">
+          <div v-if="showActions" style="display: flex; align-items: center; margin-left: auto; flex-shrink: 0;">
             <el-button
               type="text"
               size="mini"
@@ -53,6 +55,13 @@ import testDirectoryApi from '@/api/test/baseManage/testDirectory'
 
 export default {
   name: 'DirectoryTreeSelect',
+  props: {
+    // 是否显示操作按钮（新增、编辑、删除）
+    showActions: {
+      type: Boolean,
+      default: true
+    }
+  },
   data() {
     return {
       treeData: [],
@@ -63,11 +72,19 @@ export default {
       expandedKeys: [], // 保存展开的节点keys
       selectedKey: '', // 保存选中的节点key
       defaultExpandedKeys: [], // 默认展开的节点keys
-      iconUpdateKey: 0 // 用于强制更新图标
+      iconUpdateKey: 0, // 用于强制更新图标
+      _settingIndentation: false, // 防止重复设置缩进的标志
+      _indentationTimer: null // 防抖定时器
     }
   },
   created() {
     this.loadRootDirectories()
+  },
+  beforeDestroy() {
+    // 清理定时器，避免内存泄漏
+    if (this._indentationTimer) {
+      clearTimeout(this._indentationTimer)
+    }
   },
   methods: {
     async loadRootDirectories() {
@@ -125,10 +142,10 @@ export default {
           
           console.log('处理后的子目录数据:', children)
           
-            // 使用Vue.set确保响应式更新
-            this.$set(parentData, 'children', children)
-            
-            // 设置hasChildren属性：根据isLeafDirectory字段判断
+          // 使用Vue.set确保响应式更新
+          this.$set(parentData, 'children', children)
+          
+          // 设置hasChildren属性：根据isLeafDirectory字段判断
             // isLeafDirectory: "1" 表示叶子目录(没有子目录)，"0" 表示不是叶子目录(有子目录)
             const hasChildren = children.some(child => child.isLeafDirectory !== "1")
             this.$set(parentData, 'hasChildren', hasChildren)
@@ -140,24 +157,26 @@ export default {
               isLeafDirectory: children.map(child => ({ name: child.directoryName, isLeaf: child.isLeafDirectory }))
             })
             
-            // 更新图标更新key以强制重新渲染图标
-            this.iconUpdateKey++
-            
-            // 强制触发响应式更新
-            this.$forceUpdate()
+          // 更新图标更新key以强制重新渲染图标
+          this.iconUpdateKey++
           
-          // 强制更新树组件
+          // 强制触发响应式更新
           this.$forceUpdate()
           
           // 等待DOM更新后，尝试展开父节点
           await this.$nextTick()
           this.expandParentNode(parentData.directoryId)
           
-          // 设置节点缩进样式
-          this.setNodeIndentation()
-          
-          // 强制更新图标显示
-          this.$forceUpdate()
+          // 重新设置展开图标位置（延迟执行，避免重复调用）
+          this.$nextTick(() => {
+            setTimeout(() => {
+              if (!this._settingIndentation) {
+                this._settingIndentation = true
+                this.setNodeIndentation()
+                this._settingIndentation = false
+              }
+            }, 100)
+          })
           
           return children
         } else {
@@ -220,18 +239,115 @@ export default {
       }
     },
 
+    // 节点展开事件
+    handleNodeExpand(data, node) {
+      console.log('节点展开:', data, node)
+      this.$emit('node-expand', data)
+    },
+
+    // 节点收起事件
+    handleNodeCollapse(data, node) {
+      console.log('节点收起:', data, node)
+      this.$emit('node-collapse', data)
+    },
+
     // 强制展开节点
     forceExpandNode(nodeId) {
       const tree = this.$refs.directoryTree
       if (tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeId]) {
         console.log('强制展开节点:', nodeId)
-        tree.store.nodesMap[nodeId].expanded = true
+        const treeNode = tree.store.nodesMap[nodeId]
+        
+        // 添加到展开的keys中
+        if (!this.expandedKeys.includes(nodeId)) {
+          this.expandedKeys.push(nodeId)
+        }
+        
+        // 使用Element UI的方法展开节点
+        if (typeof tree.setExpandedKeys === 'function') {
+          tree.setExpandedKeys([...this.expandedKeys])
+        }
+        
+        // 设置树节点状态
+        treeNode.expanded = true
+        
+        // 强制更新
         this.$forceUpdate()
+        
+        console.log('节点展开完成，当前展开keys:', this.expandedKeys)
+      } else {
+        console.warn('无法找到要展开的节点:', nodeId)
+      }
+    },
+
+    // 强制收起节点
+    forceCollapseNode(nodeId) {
+      const tree = this.$refs.directoryTree
+      if (tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeId]) {
+        console.log('强制收起节点:', nodeId)
+        const treeNode = tree.store.nodesMap[nodeId]
+        
+        // 从展开的keys中移除
+        const index = this.expandedKeys.indexOf(nodeId)
+        if (index > -1) {
+          this.expandedKeys.splice(index, 1)
+        }
+        
+        // 使用Element UI的方法收起节点
+        if (typeof tree.setExpandedKeys === 'function') {
+          tree.setExpandedKeys([...this.expandedKeys])
+        }
+        
+        // 设置树节点状态
+        treeNode.expanded = false
+        
+        // 强制更新
+        this.$forceUpdate()
+        
+        console.log('节点收起完成，当前展开keys:', this.expandedKeys)
+      } else {
+        console.warn('无法找到要收起的节点:', nodeId)
+      }
+    },
+
+    // 调试方法：检查节点的展开状态
+    debugNodeState(nodeId) {
+      const tree = this.$refs.directoryTree
+      if (tree && tree.store && tree.store.nodesMap) {
+        const treeNode = tree.store.nodesMap[nodeId]
+        const isInExpandedKeys = this.expandedKeys.includes(nodeId)
+        const treeExpanded = treeNode?.expanded
+        
+        console.log('节点状态调试:', {
+          nodeId: nodeId,
+          treeExpanded: treeExpanded,
+          inExpandedKeys: isInExpandedKeys,
+          childNodes: treeNode?.childNodes?.length,
+          expandedKeys: [...this.expandedKeys],
+          shouldBeExpanded: isInExpandedKeys
+        })
+        
+        // 如果状态不一致，输出警告
+        if (treeExpanded !== isInExpandedKeys) {
+          console.warn('状态不一致！树节点expanded:', treeExpanded, '展开keys包含:', isInExpandedKeys)
+        }
       }
     },
 
     // 设置节点缩进样式
     setNodeIndentation() {
+      // 防抖处理，避免频繁调用
+      if (this._indentationTimer) {
+        clearTimeout(this._indentationTimer)
+      }
+      
+      this._indentationTimer = setTimeout(() => {
+        this._doSetNodeIndentation()
+      }, 50)
+    },
+
+    // 实际执行设置节点缩进的方法
+    _doSetNodeIndentation() {
       this.$nextTick(() => {
         const tree = this.$refs.directoryTree
         if (tree && tree.$el) {
@@ -245,17 +361,18 @@ export default {
             const content = treeNode ? treeNode.querySelector('.el-tree-node__content') : null
             const expandIcon = treeNode ? treeNode.querySelector('.el-tree-node__expand-icon') : null
             
-            console.log(`节点${index}:`, {
-              level: level,
-              treeNode: !!treeNode,
-              content: !!content,
-              expandIcon: !!expandIcon,
-              nodeText: node.textContent?.trim()
-            })
+            // 减少日志输出，提高性能
+            // console.log(`节点${index}:`, {
+            //   level: level,
+            //   treeNode: !!treeNode,
+            //   content: !!content,
+            //   expandIcon: !!expandIcon,
+            //   nodeText: node.textContent?.trim()
+            // })
             
             if (content) {
-              // 设置缩进：基础12px + 层级 * 12px，增强层级视觉效果
-              const paddingLeft = 12 + level * 12
+              // 设置缩进：基础4px + 层级 * 8px，优化空间利用
+              const paddingLeft = 4 + level * 8
               
               // 强制设置样式，使用!important
               content.style.setProperty('padding-left', `${paddingLeft}px`, 'important')
@@ -293,27 +410,24 @@ export default {
                 // isLeafDirectory: "1" 表示叶子目录(没有子目录)，"0" 表示不是叶子目录(有子目录)
                 const hasChildren = nodeData ? nodeData.isLeafDirectory !== "1" : false
                 
-                console.log(`🔍 节点 "${nodeText}" (层级${level}) 子节点检查: hasChildren=${hasChildren}`, {
-                  nodeData: nodeData,
-                  isLeafDirectory: nodeData ? nodeData.isLeafDirectory : 'undefined',
-                  hasChildren: nodeData ? nodeData.hasChildren : 'undefined',
-                  children: nodeData ? nodeData.children : 'undefined',
-                  childrenLength: nodeData && nodeData.children ? nodeData.children.length : 0
-                })
+                // 检查Element UI树的展开状态
+                const tree = this.$refs.directoryTree
+                const isExpanded = tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeData?.directoryId]?.expanded
+                const isInExpandedKeys = this.expandedKeys.includes(nodeData?.directoryId)
+                
+                // 减少日志输出，提高性能
+                // console.log(`🔍 节点 "${nodeText}" (层级${level}) 子节点检查: hasChildren=${hasChildren}, isExpanded=${isExpanded}`)
                 
                 if (hasChildren) {
-                  // 修复间距问题：展开图标和文件夹图标之间应该有8px的间距
-                  // 展开图标位置：paddingLeft（与内容区域对齐）
-                  // 文件夹图标位置：paddingLeft + 24px（为展开图标预留24px空间）
-                  // 实际间距：24px - 16px（展开图标宽度）= 8px
-                  const expandIconLeft = paddingLeft       // 展开图标的位置
-                  const folderIconLeft = paddingLeft + 24  // 文件夹图标的左侧位置
+                  // 重新设计布局：展开图标在文件夹图标的左侧，间距8px
+                  // 展开图标位置：paddingLeft
+                  // 文件夹图标位置：paddingLeft + 16px（展开图标宽度）+ 8px（间距）= paddingLeft + 24px
                   
-                  // 应用基础样式
+                  // 展开图标样式
                   expandIcon.style.setProperty('position', 'absolute', 'important')
                   expandIcon.style.setProperty('top', '50%', 'important')
                   expandIcon.style.setProperty('transform', 'translateY(-50%)', 'important')
-                  expandIcon.style.setProperty('z-index', '10', 'important')
+                  expandIcon.style.setProperty('left', `${paddingLeft}px`, 'important')
                   expandIcon.style.setProperty('width', '16px', 'important')
                   expandIcon.style.setProperty('height', '16px', 'important')
                   expandIcon.style.setProperty('display', 'flex', 'important')
@@ -323,31 +437,117 @@ export default {
                   expandIcon.style.setProperty('color', '#606266', 'important')
                   expandIcon.style.setProperty('font-size', '12px', 'important')
                   expandIcon.style.setProperty('transition', 'all 0.2s ease', 'important')
-                  
-                  // 设置精确位置：始终在文件夹图标左侧8px
-                  expandIcon.style.setProperty('left', `${expandIconLeft}px`, 'important')
+                  expandIcon.style.setProperty('z-index', '10', 'important')
+                  expandIcon.style.setProperty('pointer-events', 'auto', 'important')
+                  expandIcon.style.setProperty('visibility', 'visible', 'important')
+                  expandIcon.style.setProperty('opacity', '1', 'important')
                   
                   // 设置文件夹图标的margin-left，为展开图标预留空间
                   const folderIcon = content.querySelector('.el-icon-folder-opened')
                   if (folderIcon) {
+                    // 文件夹图标左边距 = 展开图标宽度(16px) + 间距(8px) = 24px
                     folderIcon.style.setProperty('margin-left', '24px', 'important')
                     console.log(`✅ 设置文件夹图标左边距: 24px`)
                   }
                   
-                  console.log(`✅ 展开图标位置: ${expandIconLeft}px (文件夹图标位置: ${folderIconLeft}px, 展开图标右侧位置: ${expandIconLeft + 16}px, 实际间距: ${folderIconLeft - (expandIconLeft + 16)}px, 目标间距: 8px)`)
+                  // 移除之前的事件监听器，避免重复添加
+                  if (expandIcon._clickHandler) {
+                    expandIcon.removeEventListener('click', expandIcon._clickHandler)
+                  }
+                  
+                  // 添加展开图标的点击事件处理
+                  const clickHandler = (e) => {
+                    e.stopPropagation()
+                    e.preventDefault()
+                    console.log('🎯 展开图标被点击:', nodeData)
+                    console.log('🎯 展开图标元素:', expandIcon)
+                    console.log('🎯 当前树数据:', this.treeData)
+                    
+                    // 检查节点是否已有子节点
+                    const tree = this.$refs.directoryTree
+                    if (tree && tree.store && tree.store.nodesMap) {
+                      const treeNode = tree.store.nodesMap[nodeData.directoryId]
+                      if (treeNode) {
+                        console.log('树节点信息:', treeNode)
+                        console.log('当前展开状态:', treeNode.expanded)
+                        console.log('展开keys:', this.expandedKeys)
+                        
+                        // 如果节点没有子节点，先加载子目录
+                        if (!treeNode.childNodes || treeNode.childNodes.length === 0) {
+                          console.log('节点没有子节点，开始加载子目录...')
+                          this.loadChildrenDirectories(nodeData).then(children => {
+                            if (children.length > 0) {
+                              console.log('子目录加载成功，强制展开节点')
+                              // 强制更新树组件
+                              this.$forceUpdate()
+                              this.$nextTick(() => {
+                                // 延迟一点时间确保DOM更新完成
+                                setTimeout(() => {
+                                  this.forceExpandNode(nodeData.directoryId)
+                                  // 重新设置展开图标位置（避免重复调用）
+                                  if (!this._settingIndentation) {
+                                    this._settingIndentation = true
+                                    this.setNodeIndentation()
+                                    this._settingIndentation = false
+                                  }
+                                }, 50)
+                              })
+                            } else {
+                              console.log('该节点没有子目录')
+                            }
+                          }).catch(error => {
+                            console.error('加载子目录失败:', error)
+                          })
+                        } else {
+                          console.log('节点已有子节点，直接切换展开状态')
+                          // 以展开keys为准判断当前状态
+                          const isCurrentlyExpanded = this.expandedKeys.includes(nodeData.directoryId)
+                          
+                          if (isCurrentlyExpanded) {
+                            console.log('收起节点:', nodeData.directoryId)
+                            this.debugNodeState(nodeData.directoryId)
+                            this.forceCollapseNode(nodeData.directoryId)
+                          } else {
+                            console.log('展开节点:', nodeData.directoryId)
+                            this.debugNodeState(nodeData.directoryId)
+                            this.forceExpandNode(nodeData.directoryId)
+                          }
+                          
+                          // 重新设置展开图标位置（避免重复调用）
+                          this.$nextTick(() => {
+                            if (!this._settingIndentation) {
+                              this._settingIndentation = true
+                              this.setNodeIndentation()
+                              this._settingIndentation = false
+                            }
+                          })
+                        }
+                      }
+                    }
+                  }
+                  
+                  // 添加事件监听器
+                  expandIcon.addEventListener('click', clickHandler)
+                  
+                  // 保存事件处理器引用，用于后续移除
+                  expandIcon._clickHandler = clickHandler
+                  
+                  console.log(`✅ 展开图标位置: ${paddingLeft}px (文件夹图标位置: ${paddingLeft + 24}px, 展开图标右侧位置: ${paddingLeft + 16}px, 实际间距: 8px, 目标间距: 8px)`)
                 } else {
-                  // 没有子节点，隐藏展开图标
+                  // 叶子节点：隐藏展开图标，文件夹图标左对齐
                   expandIcon.style.setProperty('display', 'none', 'important')
                   expandIcon.style.setProperty('visibility', 'hidden', 'important')
                   expandIcon.style.setProperty('opacity', '0', 'important')
-                  console.log(`❌ 节点无子节点，隐藏展开图标`)
+                  expandIcon.style.setProperty('pointer-events', 'none', 'important')
                   
-                  // 叶子目录的文件夹图标需要16px的margin-left，与展开图标保持视觉对齐
+                  // 叶子节点的文件夹图标左边距较小，用于视觉对齐
                   const folderIcon = content.querySelector('.el-icon-folder')
                   if (folderIcon) {
                     folderIcon.style.setProperty('margin-left', '16px', 'important')
-                    console.log(`✅ 叶子目录文件夹图标左边距: 16px`)
+                    console.log(`✅ 叶子节点文件夹图标左边距: 16px`)
                   }
+                  
+                  console.log(`❌ 叶子节点隐藏展开图标: 节点="${nodeText}"`)
                 }
               }
               
@@ -604,7 +804,7 @@ export default {
 
 .tree-content {
   flex: 1;
-  padding: 15px;
+  padding: 8px;
   overflow: auto;
 }
 
@@ -614,7 +814,7 @@ export default {
   align-items: center;
   text-align: left;
   width: 100%;
-  justify-content: space-between;
+  min-width: 0; /* 允许flex子元素收缩 */
 }
 
 .tree-icon {
@@ -636,7 +836,7 @@ export default {
   align-items: center;
   text-align: left;
   width: 100%;
-  justify-content: space-between;
+  min-width: 0; /* 允许flex子元素收缩 */
 }
 
 ::v-deep .el-tree-node__content .custom-tree-node span {
@@ -645,12 +845,17 @@ export default {
   text-align: left;
   display: inline-block;
   font-size: 12px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 层级缩进样式 - 阶梯式展示 */
 /* 重置Element UI默认样式 */
 ::v-deep .el-tree-node__content {
-  padding-left: 12px !important;
+  padding-left: 4px !important;
   margin-left: 0 !important;
   text-indent: 0 !important;
 }
@@ -663,111 +868,111 @@ export default {
 
 /* 第1层 - 根目录 */
 ::v-deep .el-tree-node[data-level="0"] .el-tree-node__content {
-  padding-left: 12px !important;
+  padding-left: 4px !important;
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="0"] {
-  padding-left: 12px !important;
+  padding-left: 4px !important;
   margin-left: 0 !important;
 }
 
 /* 第2层 - 子目录 */
 ::v-deep .el-tree-node[data-level="1"] .el-tree-node__content {
-  padding-left: 24px !important; /* 12px + 12px */
+  padding-left: 12px !important; /* 4px + 8px */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="1"] {
-  padding-left: 24px !important;
+  padding-left: 12px !important;
   margin-left: 0 !important;
 }
 
 /* 第3层 - 孙目录 */
 ::v-deep .el-tree-node[data-level="2"] .el-tree-node__content {
-  padding-left: 36px !important; /* 12px + 12px + 12px */
+  padding-left: 20px !important; /* 4px + 8px + 8px */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="2"] {
-  padding-left: 36px !important;
+  padding-left: 20px !important;
   margin-left: 0 !important;
 }
 
 /* 第4层 */
 ::v-deep .el-tree-node[data-level="3"] .el-tree-node__content {
-  padding-left: 48px !important; /* 12px + 12px + 12px + 12px */
+  padding-left: 28px !important; /* 4px + 8px + 8px + 8px */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="3"] {
-  padding-left: 48px !important;
+  padding-left: 28px !important;
   margin-left: 0 !important;
 }
 
 /* 第5层 */
 ::v-deep .el-tree-node[data-level="4"] .el-tree-node__content {
-  padding-left: 60px !important;
+  padding-left: 36px !important; /* 4px + 8px * 4 */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="4"] {
-  padding-left: 60px !important;
+  padding-left: 36px !important;
   margin-left: 0 !important;
 }
 
 /* 第6层 */
 ::v-deep .el-tree-node[data-level="5"] .el-tree-node__content {
-  padding-left: 72px !important;
+  padding-left: 44px !important; /* 4px + 8px * 5 */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="5"] {
-  padding-left: 72px !important;
+  padding-left: 44px !important;
   margin-left: 0 !important;
 }
 
 /* 第7层 */
 ::v-deep .el-tree-node[data-level="6"] .el-tree-node__content {
-  padding-left: 84px !important;
+  padding-left: 52px !important; /* 4px + 8px * 6 */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="6"] {
-  padding-left: 84px !important;
+  padding-left: 52px !important;
   margin-left: 0 !important;
 }
 
 /* 第8层 */
 ::v-deep .el-tree-node[data-level="7"] .el-tree-node__content {
-  padding-left: 96px !important;
+  padding-left: 60px !important; /* 4px + 8px * 7 */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="7"] {
-  padding-left: 96px !important;
+  padding-left: 60px !important;
   margin-left: 0 !important;
 }
 
 /* 第9层 */
 ::v-deep .el-tree-node[data-level="8"] .el-tree-node__content {
-  padding-left: 108px !important;
+  padding-left: 68px !important; /* 4px + 8px * 8 */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="8"] {
-  padding-left: 108px !important;
+  padding-left: 68px !important;
   margin-left: 0 !important;
 }
 
 /* 第10层 */
 ::v-deep .el-tree-node[data-level="9"] .el-tree-node__content {
-  padding-left: 120px !important;
+  padding-left: 76px !important; /* 4px + 8px * 9 */
   margin-left: 0 !important;
 }
 
 ::v-deep .custom-tree-node[data-level="9"] {
-  padding-left: 120px !important;
+  padding-left: 76px !important;
   margin-left: 0 !important;
 }
 
@@ -783,6 +988,7 @@ export default {
   align-items: center !important;
   justify-content: center !important;
   cursor: pointer !important;
+  pointer-events: auto !important;
   transition: transform 0.2s ease !important;
 }
 

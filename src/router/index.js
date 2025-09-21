@@ -100,6 +100,33 @@ export const asyncRoutes = [
             meta: { title: '测试目录维护', icon: 'testDirectory' }
           }
         ]
+      },
+      {
+        path: 'usecaseManage',
+        name: 'usecaseManage',
+        component: () => import('@/views/test/usecaseManage/index'),
+        redirect: '/test/usecaseManage/requireRepository',
+        meta: { title: '用例管理', icon: 'usecaseManage' },
+        children: [
+          {
+            path: 'requireRepository',
+            name: 'requireRepository',
+            component: () => import('@/views/test/usecaseManage/requireRepository'),
+            meta: { title: '需求库', icon: 'requireRepository' }
+          },
+          {
+            path: 'useCaseRepository',
+            name: 'useCaseRepository',
+            component: () => import('@/views/test/usecaseManage/useCaseRepository'),
+            meta: { title: '用例库', icon: 'useCaseRepository' }
+          },
+          {
+            path: 'useCaseExecution',
+            name: 'useCaseExecution',
+            component: () => import('@/views/test/usecaseManage/useCaseExecution'),
+            meta: { title: '执行库', icon: 'useCaseExecution' }
+          }
+        ]
       }
     ]
   },
