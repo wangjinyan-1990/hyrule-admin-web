@@ -14,6 +14,7 @@
       
       <el-upload
         ref="upload"
+        action="#"
         :auto-upload="false"
         :limit="limit"
         :on-change="handleFileChange"

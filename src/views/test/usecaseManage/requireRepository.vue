@@ -16,104 +16,97 @@
 
     <!-- 右侧内容区 -->
     <div class="right-panel">
-      <!-- 查询条件 -->
-      <div class="search-section">
-        <el-form :model="searchForm" :inline="true" class="search-form">
-          <!-- 第一排：需求点概述、设计人、查询按钮和重置按钮 -->
-          <el-row :gutter="16">
-            <el-col :span="6">
-              <el-form-item label="需求点概述">
-                <el-input
-                  v-model="searchForm.requirePointDesc"
-                  placeholder="请输入需求点概述"
-                  clearable
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="设计人">
-                <el-input
-                  v-model="searchForm.designer"
-                  placeholder="请输入设计人"
-                  clearable
-                  style="width: 100%"
-                />
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item>
-                <el-button type="primary" @click="handleSearch" :loading="loading">
-                  <i class="el-icon-search"></i> 查询
-                </el-button>
-                <el-button @click="handleReset">
-                  <i class="el-icon-refresh"></i> 重置
-                </el-button>
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <!-- 预留空间 -->
-            </el-col>
-          </el-row>
-          <!-- 第二排：其他查询条件 -->
-          <el-row :gutter="16">
-            <el-col :span="6">
-              <el-form-item label="需求点类型">
-                <el-select
-                  v-model="searchForm.requirePointType"
-                  placeholder="请选择需求点类型"
-                  clearable
-                  style="width: 100%"
-                >
+      <!-- 搜索栏 -->
+      <el-card id="search">
+        <el-row>
+          <el-col :span="24">
+            <!-- 第一排查询条件 -->
+            <el-row style="margin-bottom: 0px;">
+              <el-col :span="6">
+                <el-input v-model="searchForm.requirePointDesc" placeholder="需求点概述"></el-input>
+              </el-col>
+              <el-col :span="6">
+                <el-select v-model="searchForm.requirePointType" placeholder="需求点类型" clearable>
                   <el-option
                     v-for="item in requirePointTypeOptions"
                     :key="item.dataValue"
                     :label="item.dataName"
-                    :value="item.dataValue"
-                  />
+                    :value="item.dataValue">
+                  </el-option>
                 </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="评审状态">
-                <el-select
-                  v-model="searchForm.reviewStatus"
-                  placeholder="请选择评审状态"
-                  clearable
-                  style="width: 100%"
-                >
+              </el-col>
+              <el-col :span="6">
+                <el-select v-model="searchForm.reviewStatus" placeholder="评审状态" clearable>
                   <el-option
                     v-for="item in reviewStatusOptions"
                     :key="item.dataValue"
                     :label="item.dataName"
-                    :value="item.dataValue"
-                  />
+                    :value="item.dataValue">
+                  </el-option>
                 </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <el-form-item label="需求状态">
-                <el-select
-                  v-model="searchForm.requireStatus"
-                  placeholder="请选择需求状态"
-                  clearable
-                  style="width: 100%"
-                >
-                  <el-option
-                    v-for="item in requireStatusOptions"
-                    :key="item.dataValue"
-                    :label="item.dataName"
-                    :value="item.dataValue"
-                  />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="6">
-              <!-- 预留空间，保持布局平衡 -->
-            </el-col>
-          </el-row>
-        </el-form>
-      </div>
+              </el-col>
+              <el-col :span="6">
+                <!-- 展开/收起按钮 -->
+                <el-button
+                  @click="toggleMoreSearch"
+                  type="text"
+                  :icon="showMoreSearch ? 'el-icon-arrow-up' : 'el-icon-arrow-down'">
+                  {{ showMoreSearch ? '收起' : '展开' }}
+                </el-button>
+                <!-- 查询和重置按钮 -->
+                <el-button @click="handleSearch" type="primary" round icon="el-icon-search">查询</el-button>
+                <el-button @click="handleReset" type="info" round icon="el-icon-refresh">重置</el-button>
+              </el-col>
+            </el-row>
+          </el-col>
+        </el-row>
+        
+        <!-- 第二排查询条件 -->
+        <el-row style="margin-top: 0px;">
+          <el-col :span="6">
+            <el-select v-model="searchForm.requireStatus" placeholder="需求状态" clearable>
+              <el-option
+                v-for="item in requireStatusOptions"
+                :key="item.dataValue"
+                :label="item.dataName"
+                :value="item.dataValue">
+              </el-option>
+            </el-select>
+          </el-col>
+          <el-col :span="6">
+            <el-select v-model="searchForm.analysisMethod" placeholder="分析方法" clearable>
+              <el-option
+                v-for="item in analysisMethodOptions"
+                :key="item.dataValue"
+                :label="item.dataName"
+                :value="item.dataValue">
+              </el-option>
+            </el-select>
+          </el-col>
+          <el-col :span="6">
+            <el-input v-model="searchForm.designer" placeholder="设计人"></el-input>
+          </el-col>
+          <el-col :span="6">
+            <!-- 预留空间 -->
+          </el-col>
+        </el-row>
+        
+        <!-- 展开的搜索条件 -->
+        <el-row v-show="showMoreSearch" style="margin-top: 0px;">
+          <el-col :span="6">
+            <!-- 可以添加更多查询条件 -->
+          </el-col>
+          <el-col :span="6">
+            <!-- 可以添加更多查询条件 -->
+          </el-col>
+          <el-col :span="6">
+            <!-- 可以添加更多查询条件 -->
+          </el-col>
+          <el-col :span="6">
+            <!-- 预留空间 -->
+          </el-col>
+        </el-row>
+      </el-card>
 
       <!-- 操作按钮 -->
       <div class="action-section">
@@ -140,15 +133,18 @@
 
       <!-- 结果列表 -->
       <div class="table-section">
-        <el-table
-          :data="tableData"
-          v-loading="loading"
-          @selection-change="handleSelectionChange"
-          stripe
-          border
-          style="width: 100%"
-          :max-height="600"
-        >
+        <div class="table-wrapper">
+          <el-table
+            v-if="tableData.length > 0"
+            :data="tableData"
+            v-loading="loading"
+            @selection-change="handleSelectionChange"
+            stripe
+            border
+            height="500"
+            style="width: 1400px; min-width: 1400px;"
+            :key="tableKey"
+          >
           <el-table-column type="selection" width="55" />
           <el-table-column prop="requirePointDesc" label="需求点概述" min-width="200" show-overflow-tooltip />
           <el-table-column prop="requirePointType" label="需求点类型" width="120">
@@ -188,7 +184,7 @@
               {{ formatDateTime(scope.row.modifyTime) }}
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
+          <el-table-column label="操作" width="250">
             <template slot-scope="scope">
               <el-button size="mini" type="primary" @click="handleView(scope.row)">
                 查看
@@ -202,6 +198,7 @@
             </template>
           </el-table-column>
         </el-table>
+        </div>
 
         <!-- 分页 -->
         <div class="pagination-container">
@@ -322,6 +319,8 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
       tableData: [],
       selectedRows: [],
       loading: false,
+      tableKey: 0,
+      showMoreSearch: false,
 
       // 分页
       pagination: {
@@ -369,9 +368,26 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
   mounted() {
     // 页面加载时不自动查询数据
+    this.$nextTick(() => {
+      // 强制设置表格行高
+      const tableRows = document.querySelectorAll('.el-table__row')
+      tableRows.forEach(row => {
+        row.style.height = '35px'
+      })
+      
+      const tableCells = document.querySelectorAll('.el-table th, .el-table td')
+      tableCells.forEach(cell => {
+        cell.style.height = '35px'
+        cell.style.lineHeight = '35px'
+      })
+    })
   },
 
   methods: {
+    // 切换更多搜索条件显示
+    toggleMoreSearch() {
+      this.showMoreSearch = !this.showMoreSearch
+    },
 
     // 加载数据字典
     async loadDictionaryData() {
@@ -423,13 +439,20 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         }
 
         if (responseData) {
-          // 强制清空并重新设置数据
+          // 先清空数据，强制表格重新创建
           this.tableData = []
+          this.tableKey += 1
+          
+          // 延迟设置新数据
           this.$nextTick(() => {
             this.tableData = responseData.rows || []
             this.pagination.total = responseData.total || 0
-            // 强制更新视图
+            this.tableKey += 1
+            
+            // 再次强制更新
+            this.$nextTick(() => {
             this.$forceUpdate()
+            })
           })
         } else {
           console.log('API响应数据格式不正确:', response.data)
@@ -702,6 +725,13 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
     // 导入相关方法
     handleImport() {
+      console.log('点击导入按钮，当前选中的目录:', this.selectedDirectory)
+      if (!this.selectedDirectory) {
+        this.$message.warning('请选择要导入的系统')
+        console.log('没有选择目录，不打开导入弹窗')
+        return
+      }
+      console.log('已选择目录，打开导入弹窗')
       this.importDialogVisible = true
     },
 
@@ -711,14 +741,81 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         const formData = new FormData()
         formData.append('file', file.raw)
 
-        // 添加额外参数
-        if (this.selectedDirectory?.directoryId) {
-          formData.append('directoryId', this.selectedDirectory.directoryId)
+        // 添加systemId参数
+        if (this.selectedDirectory?.systemId) {
+          formData.append('systemId', this.selectedDirectory.systemId)
         }
 
         const response = await requireRepositoryApi.importRequirePoints(formData)
 
-        this.$message.success('导入成功')
+        console.log('导入响应数据:', response)
+        console.log('响应数据结构:', {
+          hasData: !!response.data,
+          code: response.data?.code,
+          message: response.data?.message,
+          data: response.data?.data
+        })
+
+        // 处理导入结果
+        console.log('开始处理导入结果...')
+        
+        // 检查响应数据结构
+        let responseData = null
+        if (response.data && response.data.code === 20000) {
+          responseData = response.data
+          console.log('使用 response.data')
+        } else if (response.code === 20000) {
+          responseData = response
+          console.log('使用 response')
+        } else {
+          console.log('响应数据格式不正确:', response)
+          this.$message.error('导入失败：响应数据格式不正确')
+          return
+        }
+        
+        const result = responseData.data
+        const message = responseData.message
+        
+        console.log('处理结果:', {
+          result,
+          message,
+          failCount: result.failCount,
+          successCount: result.successCount,
+          failCountType: typeof result.failCount
+        })
+        
+        if (result.failCount === 0 || result.failCount === '0') {
+          // 全部成功
+          console.log('进入成功分支')
+          this.$message.success(message)
+        } else if (result.successCount > 0 || result.successCount > '0') {
+          // 部分成功
+          console.log('进入部分成功分支')
+          this.$message.warning(message)
+          
+          // 显示错误详情
+          if (result.errorMessages && result.errorMessages.length > 0) {
+            const errorDetail = result.errorMessages.join('\n')
+            this.$alert(errorDetail, '导入错误详情', {
+              confirmButtonText: '确定',
+              type: 'warning'
+            })
+          }
+        } else {
+          // 全部失败
+          console.log('进入失败分支')
+          this.$message.error(message)
+          
+          // 显示错误详情
+          if (result.errorMessages && result.errorMessages.length > 0) {
+            const errorDetail = result.errorMessages.join('\n')
+            this.$alert(errorDetail, '导入错误详情', {
+              confirmButtonText: '确定',
+              type: 'error'
+            })
+          }
+        }
+
         this.importDialogVisible = false
         this.loadData() // 重新加载数据
       } catch (error) {
@@ -834,14 +931,19 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
   display: flex;
   height: calc(100vh - 84px);
   background: #f5f5f5;
+  min-width: 1230px;
+  overflow-x: auto;
 }
 
 .left-panel {
   width: 280px;
+  min-width: 280px;
+  max-width: 280px;
   background: white;
   border-right: 1px solid #e6e6e6;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 }
 
 .panel-header {
@@ -863,56 +965,55 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 }
 
 .right-panel {
-  flex: 1;
+  width: 950px;
+  min-width: 950px;
+  max-width: 950px;
   display: flex;
   flex-direction: column;
   background: white;
   margin: 16px;
   border-radius: 4px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.search-section {
-  padding: 20px;
-  border-bottom: 1px solid #e6e6e6;
+/* 搜索表单样式 - 参考testSystem.vue */
+#search .el-input, #search .el-select{
+  width: 100%;
+  margin-right: 10px;
 }
 
-.search-form {
-  margin: 0;
+#search .el-input__inner {
+  width: 100% !important;
+  height: 35px !important;
+  line-height: 35px !important;
 }
 
-.search-form .el-form-item {
-  margin-bottom: 12px;
-  display: inline-block !important;
-  vertical-align: top;
-  margin-right: 16px;
+#search .el-select .el-input__inner {
+  width: 100% !important;
+  height: 35px !important;
+  line-height: 35px !important;
 }
 
-/* 统一的label和content样式 */
-.search-form .el-form-item__label {
-  font-size: 14px;
-  color: #606266;
-  line-height: 32px;
-  white-space: nowrap;
-  width: 70px;
-  display: inline-block !important;
-  float: none !important;
-  text-align: left;
-  margin-right: 8px;
+/* 按钮样式调整 */
+#search .el-button {
+  padding: 6px 8px;
+  font-size: 11px;
+  margin-left: 2px;
 }
 
-.search-form .el-form-item__content {
-  width: calc(100% - 78px);
-  display: inline-block !important;
-  vertical-align: top;
+.el-card{
+  margin-bottom: 10px;
 }
 
-.search-form .el-row {
-  margin-bottom: 8px;
+/* 减少查询条件间距 */
+#search .el-row {
+  margin-bottom: 0px !important;
 }
 
-.search-form .el-row:last-child {
-  margin-bottom: 0;
+#search .el-col {
+  margin-bottom: 0px !important;
 }
 
 .action-section {
@@ -925,7 +1026,126 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow: hidden;
+  min-height: 0;
+  min-width: 0;
+  max-height: calc(100vh - 200px);
+  width: 100%;
+}
+
+/* 表格容器水平滚动 - 参考testSystem.vue */
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto !important;
+  overflow-y: auto !important;
+  margin: 0;
+  padding: 0;
+}
+
+.table-wrapper .el-table {
+  min-width: 1400px !important;
+  width: 1400px !important;
+}
+
+/* 强制覆盖Element UI的默认样式 */
+.el-table {
+  min-width: 1400px !important;
+  width: 1400px !important;
+}
+
+/* 表格选中行高亮颜色 */
+.el-table__body tr.current-row > td {
+  background-color: #b3d9ff !important;
+}
+
+/* 鼠标悬停时保持选中行的颜色不变 */
+.el-table__body tr.current-row:hover > td {
+  background-color: #b3d9ff !important;
+}
+
+/* 未选中行的悬停效果 */
+.el-table__body tr:not(.current-row):hover > td {
+  background-color: #f5f7fa !important;
+}
+
+/* 固定表头样式优化 */
+.el-table .el-table__header-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+/* 表格容器样式 */
+.el-table {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+}
+
+/* 表头样式 */
+.el-table th {
+  background-color: #fafafa;
+  font-weight: 600;
+}
+
+.table-wrapper .el-table th {
+  padding: 2px 0 !important;
+  font-size: 12px;
+  font-weight: 500;
+  height: 35px !important;
+  line-height: 35px !important;
+}
+
+.table-wrapper .el-table td {
+  padding: 1px 0 !important;
+  font-size: 12px;
+  height: 35px !important;
+  line-height: 35px !important;
+}
+
+/* 使用更强的选择器 */
+.el-table th,
+.el-table td {
+  height: 35px !important;
+  line-height: 35px !important;
+}
+
+/* 针对表格行 */
+.el-table__row {
+  height: 35px !important;
+}
+
+.table-wrapper .el-table .cell {
+  padding: 0 6px;
+  line-height: 1.1;
+  height: 35px;
+  display: flex;
+  align-items: center;
+}
+
+/* 调整按钮大小 */
+.table-wrapper .el-button--mini {
+  padding: 4px 8px;
+  font-size: 11px;
+  margin: 1px 2px;
+}
+
+/* 调整操作按钮区域的大小 */
+.action-section .el-button {
+  font-size: 12px;
+  padding: 6px 12px;
+  height: 28px;
+}
+
+.action-section .el-button i {
+  font-size: 12px;
+}
+
+/* 调整标签大小 */
+.table-wrapper .el-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  height: 20px;
+  line-height: 16px;
 }
 
 .pagination-container {
