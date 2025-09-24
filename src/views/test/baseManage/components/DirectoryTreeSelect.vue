@@ -112,19 +112,16 @@ export default {
           })
         }
       } catch (error) {
-        console.error('加载根目录失败:', error)
       }
     },
 
     async loadChildrenDirectories(parentData) {
       try {
-        console.log('开始加载子目录，父节点:', parentData)
         const response = await testDirectoryApi.getChildrenByParentId(
           parentData.directoryId,
           parentData.systemId
         )
         
-        console.log('子目录API响应:', response)
         
         if (response.code === 20000 && response.data?.rows) {
           const children = response.data.rows.map(item => ({
@@ -140,7 +137,6 @@ export default {
             children: []
           }))
           
-          console.log('处理后的子目录数据:', children)
           
           // 使用Vue.set确保响应式更新
           this.$set(parentData, 'children', children)
@@ -150,12 +146,6 @@ export default {
             const hasChildren = children.some(child => child.isLeafDirectory !== "1")
             this.$set(parentData, 'hasChildren', hasChildren)
             
-            console.log(`节点 ${parentData.directoryName} 的子目录检查:`, {
-              hasChildren: parentData.hasChildren,
-              children: parentData.children,
-              childrenLength: parentData.children.length,
-              isLeafDirectory: children.map(child => ({ name: child.directoryName, isLeaf: child.isLeafDirectory }))
-            })
             
           // 更新图标更新key以强制重新渲染图标
           this.iconUpdateKey++
@@ -180,11 +170,9 @@ export default {
           
           return children
         } else {
-          console.log('没有找到子目录数据')
           return []
         }
       } catch (error) {
-        console.error('加载子目录失败:', error)
         return []
       }
     },
@@ -193,15 +181,12 @@ export default {
     expandParentNode(nodeId) {
       const tree = this.$refs.directoryTree
       if (tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeId]) {
-        console.log('尝试展开父节点:', nodeId)
         tree.store.nodesMap[nodeId].expanded = true
         this.$forceUpdate()
       }
     },
 
     async handleNodeClick(data, node) {
-      console.log('点击节点:', data, node)
-      console.log('节点子节点数量:', node.childNodes.length)
       this.$emit('node-select', data)
       
       // 保存当前选中的节点
@@ -209,11 +194,9 @@ export default {
       
       // 如果节点没有子节点，尝试加载子目录
       if (node.childNodes.length === 0) {
-        console.log('节点没有子节点，尝试加载子目录...')
         try {
           const children = await this.loadChildrenDirectories(data)
           if (children.length > 0) {
-            console.log('成功加载子目录:', children)
                // 强制更新树组件
                this.$forceUpdate()
                
@@ -225,13 +208,10 @@ export default {
                  this.$forceUpdate()
                }, 100)
           } else {
-            console.log('该节点没有子目录')
           }
         } catch (error) {
-          console.error('加载子目录失败:', error)
         }
       } else {
-        console.log('节点已有子节点，无需加载')
         // 如果已有子节点，确保节点是展开的
         if (!node.expanded) {
           this.forceExpandNode(data.directoryId)
@@ -241,13 +221,11 @@ export default {
 
     // 节点展开事件
     handleNodeExpand(data, node) {
-      console.log('节点展开:', data, node)
       this.$emit('node-expand', data)
     },
 
     // 节点收起事件
     handleNodeCollapse(data, node) {
-      console.log('节点收起:', data, node)
       this.$emit('node-collapse', data)
     },
 
@@ -255,7 +233,6 @@ export default {
     forceExpandNode(nodeId) {
       const tree = this.$refs.directoryTree
       if (tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeId]) {
-        console.log('强制展开节点:', nodeId)
         const treeNode = tree.store.nodesMap[nodeId]
         
         // 添加到展开的keys中
@@ -274,9 +251,7 @@ export default {
         // 强制更新
         this.$forceUpdate()
         
-        console.log('节点展开完成，当前展开keys:', this.expandedKeys)
       } else {
-        console.warn('无法找到要展开的节点:', nodeId)
       }
     },
 
@@ -284,7 +259,6 @@ export default {
     forceCollapseNode(nodeId) {
       const tree = this.$refs.directoryTree
       if (tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeId]) {
-        console.log('强制收起节点:', nodeId)
         const treeNode = tree.store.nodesMap[nodeId]
         
         // 从展开的keys中移除
@@ -304,9 +278,7 @@ export default {
         // 强制更新
         this.$forceUpdate()
         
-        console.log('节点收起完成，当前展开keys:', this.expandedKeys)
       } else {
-        console.warn('无法找到要收起的节点:', nodeId)
       }
     },
 
@@ -493,10 +465,8 @@ export default {
                                 }, 50)
                               })
                             } else {
-                              console.log('该节点没有子目录')
                             }
                           }).catch(error => {
-                            console.error('加载子目录失败:', error)
                           })
                         } else {
                           console.log('节点已有子节点，直接切换展开状态')

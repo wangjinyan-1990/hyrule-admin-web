@@ -60,7 +60,7 @@
             </el-row>
           </el-col>
         </el-row>
-        
+
         <!-- 第二排查询条件 -->
         <el-row style="margin-top: 0px;">
           <el-col :span="6">
@@ -90,7 +90,7 @@
             <!-- 预留空间 -->
           </el-col>
         </el-row>
-        
+
         <!-- 展开的搜索条件 -->
         <el-row v-show="showMoreSearch" style="margin-top: 0px;">
           <el-col :span="6">
@@ -135,7 +135,6 @@
       <div class="table-section">
         <div class="table-wrapper">
           <el-table
-            v-if="tableData.length > 0"
             :data="tableData"
             v-loading="loading"
             @selection-change="handleSelectionChange"
@@ -374,7 +373,7 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
       tableRows.forEach(row => {
         row.style.height = '35px'
       })
-      
+
       const tableCells = document.querySelectorAll('.el-table th, .el-table td')
       tableCells.forEach(cell => {
         cell.style.height = '35px'
@@ -404,7 +403,6 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         this.requireStatusOptions = requireStatusRes.data || []
         this.analysisMethodOptions = analysisMethodRes.data || []
       } catch (error) {
-        console.error('加载数据字典失败:', error)
         this.$message.error('加载数据字典失败')
       }
     },
@@ -419,12 +417,13 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
           pageSize: this.pagination.pageSize
         }
 
-        // 如果directoryId可能有问题，可以临时移除或重命名
-        if (params.directoryId) {
-          // 临时使用不同的参数名
-          params.directoryId = params.directoryId
-          delete params.directoryId
+        // 确保directoryId参数正确传递
+        if (this.searchForm.directoryId) {
+          params.directoryId = this.searchForm.directoryId
         }
+
+        // 调试信息：显示传递给API的参数
+        console.log('API请求参数:', params)
 
         const response = await requireRepositoryApi.getRequirePointList(params)
 
@@ -442,24 +441,20 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
           // 先清空数据，强制表格重新创建
           this.tableData = []
           this.tableKey += 1
-          
           // 延迟设置新数据
           this.$nextTick(() => {
             this.tableData = responseData.rows || []
             this.pagination.total = responseData.total || 0
             this.tableKey += 1
-            
             // 再次强制更新
             this.$nextTick(() => {
-            this.$forceUpdate()
+              this.$forceUpdate()
             })
           })
         } else {
-          console.log('API响应数据格式不正确:', response.data)
           this.$message.error('API响应数据格式不正确')
         }
       } catch (error) {
-        console.error('加载数据失败:', error)
         this.$message.error('加载数据失败: ' + (error.response?.data?.message || error.message))
       } finally {
         this.loading = false
@@ -492,6 +487,8 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
     handleNodeSelect(data) {
       this.selectedDirectory = data
       this.searchForm.directoryId = data.directoryId
+      console.log('选中目录:', data)
+      console.log('设置directoryId:', data.directoryId)
       this.loadData()
     },
 
@@ -541,7 +538,6 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
           this.$message.success('删除成功')
           this.loadData()
         } catch (error) {
-          console.error('删除失败:', error)
           this.$message.error('删除失败')
         }
       })
@@ -576,7 +572,6 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
           this.selectedRows = []
           this.loadData()
         } catch (error) {
-          console.error('批量评审失败:', error)
           this.$message.error('批量评审失败')
         }
       }).catch(() => {
@@ -602,7 +597,6 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
           this.$message.success('删除成功')
           this.loadData()
         } catch (error) {
-          console.error('批量删除失败:', error)
           this.$message.error('批量删除失败')
         }
       })
@@ -627,7 +621,6 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
             this.dialogVisible = false
             this.loadData()
           } catch (error) {
-            console.error('提交失败:', error)
             this.$message.error('提交失败')
           } finally {
             this.submitLoading = false
@@ -725,13 +718,10 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
     // 导入相关方法
     handleImport() {
-      console.log('点击导入按钮，当前选中的目录:', this.selectedDirectory)
       if (!this.selectedDirectory) {
         this.$message.warning('请选择要导入的系统')
-        console.log('没有选择目录，不打开导入弹窗')
         return
       }
-      console.log('已选择目录，打开导入弹窗')
       this.importDialogVisible = true
     },
 
@@ -748,51 +738,31 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
         const response = await requireRepositoryApi.importRequirePoints(formData)
 
-        console.log('导入响应数据:', response)
-        console.log('响应数据结构:', {
-          hasData: !!response.data,
-          code: response.data?.code,
-          message: response.data?.message,
-          data: response.data?.data
-        })
 
         // 处理导入结果
-        console.log('开始处理导入结果...')
-        
+
         // 检查响应数据结构
         let responseData = null
         if (response.data && response.data.code === 20000) {
           responseData = response.data
-          console.log('使用 response.data')
         } else if (response.code === 20000) {
           responseData = response
-          console.log('使用 response')
         } else {
-          console.log('响应数据格式不正确:', response)
           this.$message.error('导入失败：响应数据格式不正确')
           return
         }
-        
+
         const result = responseData.data
         const message = responseData.message
-        
-        console.log('处理结果:', {
-          result,
-          message,
-          failCount: result.failCount,
-          successCount: result.successCount,
-          failCountType: typeof result.failCount
-        })
-        
+
+
         if (result.failCount === 0 || result.failCount === '0') {
           // 全部成功
-          console.log('进入成功分支')
           this.$message.success(message)
         } else if (result.successCount > 0 || result.successCount > '0') {
           // 部分成功
-          console.log('进入部分成功分支')
           this.$message.warning(message)
-          
+
           // 显示错误详情
           if (result.errorMessages && result.errorMessages.length > 0) {
             const errorDetail = result.errorMessages.join('\n')
@@ -803,9 +773,8 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
           }
         } else {
           // 全部失败
-          console.log('进入失败分支')
           this.$message.error(message)
-          
+
           // 显示错误详情
           if (result.errorMessages && result.errorMessages.length > 0) {
             const errorDetail = result.errorMessages.join('\n')
@@ -819,7 +788,6 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         this.importDialogVisible = false
         this.loadData() // 重新加载数据
       } catch (error) {
-        console.error('导入失败:', error)
         this.$message.error('导入失败: ' + (error.message || '未知错误'))
       } finally {
         this.importLoading = false
@@ -860,7 +828,6 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
         this.$message.success('导出成功')
       } catch (error) {
-        console.error('导出失败:', error)
         this.$message.error('导出失败: ' + (error.message || '未知错误'))
       }
     },
@@ -869,9 +836,8 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
     async handleDownloadTemplate() {
       try {
         this.$message.info('正在下载模板...')
-        
+
         const response = await requireRepositoryApi.downloadImportTemplate()
-        console.log('下载模板响应:', response)
 
         // 检查响应数据
         if (!response.data) {
@@ -882,17 +848,17 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         const blob = new Blob([response.data], {
           type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         })
-        
+
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
         link.download = '需求点导入模板.xlsx'
         link.style.display = 'none'
-        
+
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        
+
         // 清理URL对象
         setTimeout(() => {
           window.URL.revokeObjectURL(url)
@@ -900,14 +866,7 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
         this.$message.success('模板下载成功')
       } catch (error) {
-        console.error('下载模板失败:', error)
-        console.error('错误详情:', {
-          message: error.message,
-          response: error.response,
-          status: error.response?.status,
-          data: error.response?.data
-        })
-        
+
         let errorMessage = '下载模板失败'
         if (error.response?.status === 404) {
           errorMessage = '模板文件不存在，请联系管理员'
@@ -918,7 +877,7 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         } else if (error.message) {
           errorMessage = error.message
         }
-        
+
         this.$message.error(errorMessage)
       }
     }
@@ -1067,6 +1026,7 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 .el-table__body tr:not(.current-row):hover > td {
   background-color: #f5f7fa !important;
 }
+
 
 /* 固定表头样式优化 */
 .el-table .el-table__header-wrapper {

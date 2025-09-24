@@ -147,7 +147,6 @@ export default {
     },
     selectedSystemIds: {
       handler(newVal) {
-        console.log('selectedSystemIds 变化:', newVal);
         if (this.dialogVisible && this.systemList.length > 0) {
           this.initSelectedSystems();
           this.$nextTick(() => {
@@ -161,22 +160,18 @@ export default {
   mounted() {
     // 组件挂载后，如果有已选择的系统ID，初始化选择状态
     if (this.selectedSystemIds && this.selectedSystemIds.length > 0) {
-      console.log('组件挂载，初始化已选择的系统:', this.selectedSystemIds);
     }
   },
   methods: {
     // 加载系统列表
     async loadSystemList() {
       try {
-        console.log('开始加载测试系统列表，搜索条件:', this.searchModel);
         const response = await testSystemApi.getTestSystemList(this.searchModel);
-        console.log('测试系统列表API响应:', response);
         
         if (response.code === 20000) {
           this.systemList = response.data?.rows || [];
           this.total = response.data?.total || 0;
           this.filteredSystemList = [...this.systemList];
-          console.log('测试系统列表加载成功，共', this.systemList.length, '条记录');
           
           // 先初始化已选择的系统，然后设置表格选中状态
           this.initSelectedSystems();
@@ -187,15 +182,12 @@ export default {
           this.$message.error(response.message || '获取测试系统列表失败');
         }
       } catch (error) {
-        console.error('获取测试系统列表失败:', error);
         this.$message.error('获取测试系统列表失败，请检查网络连接');
       }
     },
 
     // 初始化已选择的系统
     initSelectedSystems() {
-      console.log('初始化已选择的系统，selectedSystemIds:', this.selectedSystemIds);
-      console.log('当前系统列表:', this.systemList);
       
       this.selectedSystems = [];
       if (this.selectedSystemIds && this.selectedSystemIds.length > 0) {
@@ -203,14 +195,11 @@ export default {
         this.selectedSystems = this.systemList.filter(system => 
           this.selectedSystemIds.includes(system.systemId)
         );
-        console.log('过滤后的已选择系统:', this.selectedSystems);
       }
     },
 
     // 设置表格中已选择的行
     setSelectedRows() {
-      console.log('设置表格选中行，selectedSystems:', this.selectedSystems);
-      console.log('filteredSystemList:', this.filteredSystemList);
       
       if (this.$refs.systemTable && this.selectedSystems.length > 0) {
         // 先清除所有选择
@@ -220,10 +209,8 @@ export default {
         setTimeout(() => {
           this.selectedSystems.forEach(selectedSystem => {
             const row = this.filteredSystemList.find(system => system.systemId === selectedSystem.systemId);
-            console.log('查找行，selectedSystem.systemId:', selectedSystem.systemId, '找到的行:', row);
             if (row) {
               this.$refs.systemTable.toggleRowSelection(row, true);
-              console.log('已设置行选中状态');
             }
           });
         }, 100);

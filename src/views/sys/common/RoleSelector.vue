@@ -116,15 +116,12 @@ export default {
     // 加载角色列表
     async loadRoleList() {
       try {
-        console.log('开始加载角色列表，搜索条件:', this.searchModel);
         const response = await roleApi.getRoleList(this.searchModel);
-        console.log('角色列表API响应:', response);
 
         if (response.code === 20000) {
           this.roleList = response.data?.rows || [];
           this.total = response.data?.total || 0;
           this.filteredRoleList = [...this.roleList];
-          console.log('角色列表加载成功，共', this.roleList.length, '条记录');
           
           // 先初始化已选择的角色，然后设置表格选中状态
           this.initSelectedRoles();
@@ -135,15 +132,12 @@ export default {
           this.$message.error(response.message || '获取角色列表失败');
         }
       } catch (error) {
-        console.error('获取角色列表失败:', error);
         this.$message.error('获取角色列表失败，请检查网络连接');
       }
     },
 
     // 初始化已选择的角色
     initSelectedRoles() {
-      console.log('初始化已选择的角色，selectedRoleIds:', this.selectedRoleIds);
-      console.log('当前角色列表:', this.roleList);
       
       this.selectedRoles = [];
       if (this.selectedRoleIds && this.selectedRoleIds.length > 0) {
@@ -151,28 +145,21 @@ export default {
         this.selectedRoles = this.roleList.filter(role => 
           this.selectedRoleIds.includes(role.roleId)
         );
-        console.log('过滤后的已选择角色:', this.selectedRoles);
       }
     },
 
     // 设置表格中已选择的行
     setSelectedRows() {
-      console.log('设置表格选中行，selectedRoles:', this.selectedRoles);
-      console.log('filteredRoleList:', this.filteredRoleList);
       
       if (this.$refs.roleTable && this.selectedRoles.length > 0) {
         this.selectedRoles.forEach(selectedRole => {
           const row = this.filteredRoleList.find(role => role.roleId === selectedRole.roleId);
-          console.log('查找角色行:', selectedRole.roleId, '找到:', row);
           if (row) {
             this.$refs.roleTable.toggleRowSelection(row, true);
-            console.log('设置行选中:', row.roleName);
           } else {
-            console.warn('未找到角色行:', selectedRole.roleId);
           }
         });
       } else {
-        console.log('表格引用不存在或没有已选择的角色');
       }
     },
 

@@ -56,7 +56,6 @@ export default {
   },
   methods: {
     handleTabClick(tab) {
-      console.log('切换到页签:', tab.name);
       // 可以在这里添加页签切换时的逻辑
       // 比如刷新数据、重置状态等
     }

@@ -178,22 +178,18 @@ export default {
     },
     async getTesterList() {
       try {
-        console.log('开始获取测试人员列表，角色ID:', this.roleId, '搜索条件:', this.searchModel);
         const response = await systemUserApi.getUsersByRoleId(this.roleId, this.searchModel);
-        console.log('测试人员列表API响应:', response);
 
         if (response.code === 20000) {
           // 适配新的数据格式：data.rows 和 data.total
           this.testerList = response.data?.rows || [];
           this.total = response.data?.total || this.testerList.length;
-          console.log('测试人员列表加载成功，共', this.testerList.length, '条记录，总数:', this.total);
         } else {
           this.$message.error(response.message || '获取测试人员列表失败');
           this.testerList = [];
           this.total = 0;
         }
       } catch (error) {
-        console.error('获取测试人员列表失败:', error);
         this.$message.error('获取测试人员列表失败，请检查网络连接');
         this.testerList = [];
         this.total = 0;
@@ -265,7 +261,6 @@ export default {
             this.$message.error(response.message || '编辑失败');
           }
         } catch (error) {
-          console.error('编辑测试人员失败:', error);
           this.$message.error('编辑失败，请检查网络连接');
         }
       });

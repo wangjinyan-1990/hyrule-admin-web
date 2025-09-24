@@ -60,7 +60,6 @@ const actions = {
     return new Promise((resolve, reject) => {
       getUserInfo(state.token).then(response => {
         const { data } = response
-        console.log('getUserInfo API响应数据:', data)
 
         if (!data) {
           reject('Verification failed, please Login again.')
@@ -73,10 +72,6 @@ const actions = {
           roleIds, 
           avatar 
         } = data
-
-        console.log('解析的用户信息:', {
-          userId, userName, roleIds, avatar
-        })
         
         // 允许无角色用户登录
         commit('SET_USER_ID', userId)

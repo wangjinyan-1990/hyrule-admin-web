@@ -375,14 +375,11 @@ export default {
         // 获取所有菜单
         const res = await menuApi.getAllMenus()
         const list = Array.isArray(res && res.data) ? res.data : []
-        console.log('所有菜单:', list)
         // 特别检查基础管理相关菜单的ID
         const baseManageMenus = list.filter(m => m.title && (m.title.includes('基础管理') || m.title.includes('测试系统维护') || m.title.includes('系统成员管理')))
-        console.log('基础管理相关菜单:', baseManageMenus)
 
         // 只过滤隐藏菜单，显示所有非隐藏的菜单
         const visible = list.filter(m => m.hidden !== 1)
-        console.log('过滤后的菜单（排除隐藏）:', visible)
 
         // 构造成树
         const idToNode = {}
@@ -396,15 +393,11 @@ export default {
           }
         })
         this.menuTreeData = roots
-        console.log('构建的菜单树:', this.menuTreeData)
 
         // 检查菜单树中menuId的类型
         if (this.menuTreeData.length > 0) {
-          console.log('菜单树中第一个菜单的menuId类型:', typeof this.menuTreeData[0].menuId)
-          console.log('菜单树中第一个菜单的menuId值:', this.menuTreeData[0].menuId)
         }
       } catch (e) {
-        console.error('加载菜单失败:', e)
         this.menuTreeData = []
       }
     },
@@ -413,45 +406,33 @@ export default {
         // 获取角色权限菜单ID列表
         const res = await menuApi.getRoleMenus(this.selectedRow.roleId)
         const roleMenuIds = Array.isArray(res && res.data) ? res.data : []
-        console.log('角色权限菜单ID:', roleMenuIds)
 
         // 菜单树中的menuId是数字类型，所以直接使用数字数组
-        console.log('角色权限菜单ID（数字）:', roleMenuIds)
 
         // 检查菜单树中所有菜单的ID类型
         const allMenuIds = this.getAllMenuIdsFromTree(this.menuTreeData)
-        console.log('菜单树中所有菜单ID:', allMenuIds)
-        console.log('菜单树中所有菜单ID类型:', allMenuIds.map(id => typeof id))
 
         // 检查角色权限菜单ID的类型
-        console.log('角色权限菜单ID类型:', roleMenuIds.map(id => typeof id))
 
         // 找出不在角色权限中的菜单ID
         const notInRoleMenus = allMenuIds.filter(id => !roleMenuIds.includes(id))
-        console.log('不在角色权限中的菜单ID:', notInRoleMenus)
 
         // 只勾选角色有权限的菜单（使用数字类型）
         this.checkedMenuIds = roleMenuIds
         this.$nextTick(() => {
           if (this.$refs.menuTreeRef) {
-            console.log('设置勾选状态，勾选的菜单ID:', roleMenuIds)
-            console.log('调用setCheckedKeys前的树组件状态:', this.$refs.menuTreeRef.getCheckedKeys())
 
             // 先清除所有勾选
             this.$refs.menuTreeRef.setCheckedKeys([])
-            console.log('清除所有勾选后的状态:', this.$refs.menuTreeRef.getCheckedKeys())
 
             // 使用setTimeout延迟设置，确保清除操作完成
             setTimeout(() => {
               this.$refs.menuTreeRef.setCheckedKeys(roleMenuIds)
-              console.log('延迟调用setCheckedKeys后的树组件状态:', this.$refs.menuTreeRef.getCheckedKeys())
             }, 100)
           } else {
-            console.error('树组件引用不存在')
           }
         })
       } catch (e) {
-        console.error('设置菜单勾选状态失败:', e)
         this.checkedMenuIds = []
       }
     },
@@ -484,18 +465,11 @@ export default {
       const keys = Array.from(new Set([...(checked || []), ...(half || [])]));
 
       // 菜单树返回的已经是数字类型，直接使用
-      console.log('保存角色菜单权限:', {
-        roleId: this.selectedRow.roleId,
-        checkedKeys: checked,
-        halfCheckedKeys: half,
-        finalKeys: keys
-      });
       try {
         await menuApi.saveRoleMenus(this.selectedRow.roleId, keys);
         this.$message.success('保存成功');
         this.menuManageVisible = false;
       } catch (e) {
-        console.error('保存角色菜单权限失败:', e);
         this.$message.error('保存失败');
       }
     },

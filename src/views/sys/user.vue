@@ -289,13 +289,10 @@ export default {
 
         if (response.code === 20000) {
           this.roleList = response.data?.rows || [];
-          console.log('角色列表加载成功，共', this.roleList.length, '条记录');
         } else {
-          console.error('获取角色列表失败:', response.message);
           this.roleList = [];
         }
       } catch (error) {
-        console.error('获取角色列表失败:', error);
         this.roleList = [];
       }
     },
@@ -329,9 +326,7 @@ export default {
     },
     loadUserData(){
       if (this.selectedRow) {
-        console.log('加载用户数据，selectedRow:', this.selectedRow);
         const roleIds = this.selectedRow.roleIds ? this.selectedRow.roleIds.split(',') : [];
-        console.log('解析后的roleIds:', roleIds);
 
         this.userForm = {
           userId: this.selectedRow.userId,
@@ -344,7 +339,6 @@ export default {
           orgName: this.selectedRow.orgName || '',
           roleIds: roleIds
         };
-        console.log('设置后的userForm.roleIds:', this.userForm.roleIds);
         this.updateRoleDisplayText();
       }
     },
@@ -410,7 +404,6 @@ export default {
         const orgTree = response.data || [];
         return this.findOrgNameInTree(orgTree, orgId);
       } catch (error) {
-        console.error('获取机构名称失败:', error);
         // 如果API调用失败，使用模拟数据作为备选
         const orgMap = {
           '1000': '汉东农信',

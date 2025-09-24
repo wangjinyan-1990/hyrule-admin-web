@@ -270,7 +270,6 @@ export default {
       
       // 展开所有收集到的节点
       const keysArray = Array.from(expandedKeys);
-      console.log('展开的节点ID:', keysArray);
       this.$refs.orgTree.setExpandedKeys(keysArray);
     },
     

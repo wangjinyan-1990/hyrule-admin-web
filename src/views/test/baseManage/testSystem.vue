@@ -384,16 +384,13 @@ export default {
   methods:{
     async initializeComponent() {
       try {
-        console.log('开始初始化组件');
         // 先设置默认选项，确保组件能正常渲染
         this.setDefaultOptions();
         // 然后尝试加载数据字典
         await this.loadDictionaryOptions();
         // 最后加载数据
         this.getTestSystemList();
-        console.log('组件初始化完成');
       } catch (error) {
-        console.error('组件初始化失败:', error);
         // 即使初始化失败，也要确保组件能显示
         this.setDefaultOptions();
       }
@@ -407,15 +404,12 @@ export default {
       this.getTestSystemList();
     },
     getTestSystemList(){
-      console.log('开始获取测试系统列表');
       testSystemApi.getTestSystemList(this.searchModel)
         .then(response => {
-          console.log('获取测试系统列表成功:', response);
           this.testSystemList = response.data.rows || [];
           this.total = response.data.total || 0;
         })
         .catch(error => {
-          console.error('获取测试系统列表失败:', error);
           this.$message.error('获取数据失败: ' + (error.message || '未知错误'));
           // 设置空数据，确保组件能正常显示
           this.testSystemList = [];
@@ -446,7 +440,6 @@ export default {
         this.systemTypeOptions = systemTypeRes.data || [];
         this.systemStageOptions = systemStageRes.data || [];
       } catch (error) {
-        console.error('加载数据字典失败:', error);
         this.$message.error('加载数据字典失败');
         // 设置默认选项作为备选
         this.setDefaultOptions();
@@ -623,7 +616,6 @@ export default {
         const orgTree = response.data || [];
         return this.findOrgNameInTree(orgTree, orgId);
       } catch (error) {
-        console.error('获取机构名称失败:', error);
         return '未知机构';
       }
     },
@@ -669,7 +661,6 @@ export default {
 
         return '未知用户';
       } catch (error) {
-        console.error('获取用户名称失败:', error);
         // 如果API调用失败，使用模拟数据作为备选
         const userMap = {
           '1': '张三',

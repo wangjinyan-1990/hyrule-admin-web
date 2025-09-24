@@ -50,8 +50,6 @@ router.beforeEach(async(to, from, next) => {
           // 不调用 router.addRoutes(accessRoutes)，避免路由重复定义
           // 但是需要确保路由已经存在于静态配置中
           // 检查路由是否存在
-          console.log('当前路由:', to.path)
-          console.log('路由匹配:', router.resolve(to.path))
 
           // 刷新后定位到原路径；若原路径是 /404，则退回到上次路径或首页
           if (to.path === '/404') {

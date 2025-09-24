@@ -169,7 +169,6 @@ export default {
   methods: {
     // 处理节点选择
     handleNodeSelect(data) {
-      console.log('选择节点:', data)
       
       // 设置当前节点，并查找父目录信息
       this.currentNode = {
@@ -212,42 +211,21 @@ export default {
     async loadDirectoryData() {
       try {
         this.loading = true
-        console.log('开始加载测试目录数据')
 
         // 获取当前用户ID，从store中获取
         const userId = this.$store.getters.userId
-        console.log('当前用户信息:', {
-          userId: this.$store.getters.userId,
-          userName: this.$store.getters.userName,
-          roleIds: this.$store.getters.roleIds,
-          finalUserId: userId
-        })
 
         const response = await testDirectoryApi.getSystemsByUserId(userId)
-        console.log('测试目录API响应:', response)
 
         if (response.code === 20000) {
           const rawData = response.data?.rows || []
-          console.log('原始目录数据:', rawData)
-          console.log('原始数据详情:', rawData.map(item => ({
-            directoryId: item.directoryId,
-            directoryName: item.directoryName,
-            systemId: item.systemId
-          })))
 
           // 构建树形数据
           this.directoryTreeData = this.buildTreeData(rawData)
-          console.log('构建后的树形数据:', this.directoryTreeData)
-          console.log('构建后的节点ID详情:', this.directoryTreeData.map(item => ({
-            directoryId: item.directoryId,
-            directoryName: item.directoryName,
-            systemId: item.systemId
-          })))
         } else {
           this.$message.error(response.message || '获取测试目录失败')
         }
       } catch (error) {
-        console.error('获取测试目录失败:', error)
         this.$message.error('获取测试目录失败，请检查网络连接')
       } finally {
         this.loading = false
@@ -260,7 +238,6 @@ export default {
       // 这里可以根据实
       // 际需求构建更复杂的树形结构
       return rawData.map(item => {
-        console.log('构建树节点数据:', item)
         return {
           ...item,
           // 确保directoryId存在
@@ -273,7 +250,6 @@ export default {
 
     // 处理节点点击
     async handleNodeClick(data, node) {
-      console.log('点击节点:', data, node)
       this.currentNode = data
       // 如果节点还没有子节点，则查询子目录
       if (!data.children || data.children.length === 0) {
@@ -284,7 +260,6 @@ export default {
     // 加载子目录
     async loadChildrenDirectories(parentData, parentNode) {
       try {
-        console.log('查询子目录:', parentData)
 
         // 使用父目录的directoryId作为directoryParentId，systemId保持不变
         const response = await testDirectoryApi.getChildrenByParentId(
@@ -294,7 +269,6 @@ export default {
 
         if (response.code === 20000 && response.data && response.data.rows) {
           const children = response.data.rows.map(item => {
-            console.log('构建子节点数据:', item)
             return {
               ...item,
               directoryId: item.directoryId,
@@ -315,46 +289,32 @@ export default {
                 const nodeId = parentData.directoryId
                 const parentNodeId = parentNode.id
 
-                console.log('尝试展开节点:', {
-                  nodeId,
-                  parentNodeId,
-                  parentData,
-                  nodesMapKeys: Object.keys(tree.store?.nodesMap || {})
-                })
 
                 // 方法1：使用parentNode.id（Element UI内部使用的ID）
                 if (tree.store && tree.store.nodesMap && tree.store.nodesMap[parentNodeId]) {
                   tree.store.nodesMap[parentNodeId].expanded = true
-                  console.log('方法1成功：使用parentNode.id展开:', parentNodeId)
                   return
                 }
 
                 // 方法2：使用directoryId
                 if (tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeId]) {
                   tree.store.nodesMap[nodeId].expanded = true
-                  console.log('方法2成功：使用directoryId展开:', nodeId)
                   return
                 }
 
                 // 方法3：使用Element UI的setExpandedKeys方法
                 if (typeof tree.setExpandedKeys === 'function') {
                   tree.setExpandedKeys([parentNodeId])
-                  console.log('方法3：使用setExpandedKeys展开:', parentNodeId)
                   return
                 }
 
-                console.log('所有展开方法都失败')
               }
             } catch (error) {
-              console.warn('展开节点失败:', error)
             }
           })
-          console.log('子目录加载成功:', children)
         } else {
-          console.log('该目录下没有子目录')
         }
       } catch (error) {
-        console.error('加载子目录失败:', error)
         this.$message.error('加载子目录失败，请重试')
       }
     },
@@ -437,7 +397,6 @@ export default {
           this.$message.success('删除成功')
           this.loadDirectoryData() // 重新加载数据
         } catch (error) {
-          console.error('删除目录失败:', error)
           this.$message.error('删除失败，请重试')
         }
       }).catch(() => {
@@ -471,28 +430,23 @@ export default {
 
         // 刷新树选择器组件
         if (this.$refs.directoryTreeSelect) {
-          console.log('开始刷新树组件')
           await this.$refs.directoryTreeSelect.refreshData()
           // 等待DOM更新
           await this.$nextTick()
           // 多次重试恢复状态
           setTimeout(() => {
-            console.log('第一次重试恢复状态')
             this.$refs.directoryTreeSelect.restoreExpandedState()
           }, 100)
 
           setTimeout(() => {
-            console.log('第二次重试恢复状态')
             this.$refs.directoryTreeSelect.restoreExpandedState()
           }, 300)
 
           setTimeout(() => {
-            console.log('第三次重试恢复状态')
             this.$refs.directoryTreeSelect.restoreExpandedState()
           }, 500)
         }
       } catch (error) {
-        console.error('操作失败:', error)
         this.$message.error('操作失败，请重试')
       }
     },
@@ -518,83 +472,79 @@ export default {
     // 获取当前展开的节点keys
     getExpandedKeys() {
       const tree = this.$refs.directoryTree
-      console.log('getExpandedKeys - tree:', tree)
       if (tree && tree.store && tree.store.nodesMap) {
         const expandedKeys = []
         Object.keys(tree.store.nodesMap).forEach(key => {
           const node = tree.store.nodesMap[key]
           if (node && node.expanded) {
             expandedKeys.push(key)
-            console.log('找到展开的节点:', key, node)
           }
         })
-        console.log('所有展开的节点keys:', expandedKeys)
         return expandedKeys
       }
-      console.log('tree或store未准备好')
       return []
     },
 
     // 设置展开的节点keys
     setExpandedKeys(expandedKeys) {
       const tree = this.$refs.directoryTree
-      console.log('setExpandedKeys - tree:', tree, 'expandedKeys:', expandedKeys)
+      // console.log('setExpandedKeys - tree:', tree, 'expandedKeys:', expandedKeys)
       if (tree && tree.store && tree.store.nodesMap && expandedKeys.length > 0) {
-        console.log('当前nodesMap中的所有keys:', Object.keys(tree.store.nodesMap))
+        // console.log('当前nodesMap中的所有keys:', Object.keys(tree.store.nodesMap))
         expandedKeys.forEach(key => {
           const node = tree.store.nodesMap[key]
           if (node) {
             node.expanded = true
-            console.log('设置节点展开:', key, node)
+            // console.log('设置节点展开:', key, node)
           } else {
-            console.log('未找到节点:', key, '当前nodesMap keys:', Object.keys(tree.store.nodesMap))
+            // console.log('未找到节点:', key, '当前nodesMap keys:', Object.keys(tree.store.nodesMap))
           }
         })
       } else {
-        console.log('无法设置展开状态 - tree:', !!tree, 'store:', !!tree?.store, 'nodesMap:', !!tree?.store?.nodesMap, 'keys:', expandedKeys.length)
+        // console.log('无法设置展开状态 - tree:', !!tree, 'store:', !!tree?.store, 'nodesMap:', !!tree?.store?.nodesMap, 'keys:', expandedKeys.length)
       }
     },
 
     // 恢复展开状态（使用Element UI原生方法）
     restoreExpandedState(expandedKeys) {
       const tree = this.$refs.directoryTree
-      console.log('restoreExpandedState - tree:', tree, 'expandedKeys:', expandedKeys)
+      // console.log('restoreExpandedState - tree:', tree, 'expandedKeys:', expandedKeys)
 
       if (tree && expandedKeys.length > 0) {
         try {
           // 使用Element UI树组件的setExpandedKeys方法
           if (typeof tree.setExpandedKeys === 'function') {
             tree.setExpandedKeys(expandedKeys)
-            console.log('使用setExpandedKeys方法恢复展开状态成功')
+            // console.log('使用setExpandedKeys方法恢复展开状态成功')
           } else {
             // 降级方案：直接操作store
-            console.log('setExpandedKeys方法不存在，使用降级方案')
+            // console.log('setExpandedKeys方法不存在，使用降级方案')
             this.setExpandedKeys(expandedKeys)
           }
         } catch (error) {
-          console.error('恢复展开状态失败:', error)
+          // console.error('恢复展开状态失败:', error)
           // 降级方案：直接操作store
           this.setExpandedKeys(expandedKeys)
         }
       } else {
-        console.log('无法恢复展开状态 - tree:', !!tree, 'keys:', expandedKeys.length)
+        // console.log('无法恢复展开状态 - tree:', !!tree, 'keys:', expandedKeys.length)
       }
     },
 
     // 强制展开节点（全新的实现方式）
     forceExpandNodes(expandedKeys) {
       const tree = this.$refs.directoryTree
-      console.log('forceExpandNodes - tree:', tree, 'expandedKeys:', expandedKeys)
+      // console.log('forceExpandNodes - tree:', tree, 'expandedKeys:', expandedKeys)
 
       if (!tree || expandedKeys.length === 0) {
-        console.log('无法强制展开节点 - tree:', !!tree, 'keys:', expandedKeys.length)
+        // console.log('无法强制展开节点 - tree:', !!tree, 'keys:', expandedKeys.length)
         return
       }
 
       try {
         // 方法1：直接操作DOM元素
         expandedKeys.forEach(key => {
-          console.log('尝试DOM操作展开节点:', key)
+          // console.log('尝试DOM操作展开节点:', key)
 
           // 尝试多种DOM选择器
           let nodeElement = document.querySelector(`[data-key="${key}"]`)
@@ -616,21 +566,21 @@ export default {
           }
 
           if (nodeElement) {
-            console.log('找到节点元素:', nodeElement)
+            // console.log('找到节点元素:', nodeElement)
             const expandIcon = nodeElement.querySelector('.el-tree-node__expand-icon')
             if (expandIcon) {
-              console.log('找到展开图标:', expandIcon)
+              // console.log('找到展开图标:', expandIcon)
               if (!expandIcon.classList.contains('is-expanded')) {
-                console.log('通过DOM操作展开节点:', key)
+                // console.log('通过DOM操作展开节点:', key)
                 expandIcon.click()
               } else {
-                console.log('节点已经展开:', key)
+                // console.log('节点已经展开:', key)
               }
             } else {
-              console.log('未找到展开图标:', key)
+              // console.log('未找到展开图标:', key)
             }
           } else {
-            console.log('未找到节点元素:', key)
+            // console.log('未找到节点元素:', key)
           }
         })
 
@@ -641,7 +591,7 @@ export default {
 
         // 方法3：强制重新渲染组件
         setTimeout(() => {
-          console.log('强制重新渲染组件')
+          // console.log('强制重新渲染组件')
           this.$forceUpdate()
           this.$nextTick(() => {
             // 再次尝试设置展开状态
@@ -652,7 +602,7 @@ export default {
         // 方法4：最后尝试使用defaultExpandedKeys
         setTimeout(() => {
           this.defaultExpandedKeys = expandedKeys
-          console.log('设置defaultExpandedKeys作为最后手段:', expandedKeys)
+          // console.log('设置defaultExpandedKeys作为最后手段:', expandedKeys)
 
           // 再次强制更新
           this.$forceUpdate()
@@ -660,7 +610,7 @@ export default {
 
         // 方法5：终极方案 - 重新创建树数据
         setTimeout(() => {
-          console.log('终极方案：重新创建树数据')
+          // console.log('终极方案：重新创建树数据')
           const currentData = [...this.directoryTreeData]
           this.directoryTreeData = []
           this.$nextTick(() => {
@@ -672,7 +622,7 @@ export default {
         }, 300)
 
       } catch (error) {
-        console.error('强制展开节点失败:', error)
+        // console.error('强制展开节点失败:', error)
         // 最后的降级方案
         this.setExpandedKeys(expandedKeys)
       }

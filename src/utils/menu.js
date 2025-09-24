@@ -88,6 +88,5 @@ function resolveComponent(component) {
   }
 
   // 如果没有找到，返回404页面
-  console.warn(`Component not found: ${component}`)
   return () => import('@/views/404')
 }

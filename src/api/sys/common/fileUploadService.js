@@ -56,7 +56,6 @@ class FileUploadService {
         message: '上传成功'
       }
     } catch (error) {
-      console.error('文件上传失败:', error)
       return {
         success: false,
         data: null,
