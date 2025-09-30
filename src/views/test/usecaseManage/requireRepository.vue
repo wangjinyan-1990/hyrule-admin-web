@@ -22,10 +22,10 @@
           <el-col :span="24">
             <!-- 第一排查询条件 -->
             <el-row style="margin-bottom: 0px;">
-              <el-col :span="6">
+            <el-col :span="6">
                 <el-input v-model="searchForm.requirePointDesc" placeholder="需求点概述"></el-input>
-              </el-col>
-              <el-col :span="6">
+            </el-col>
+            <el-col :span="6">
                 <el-select v-model="searchForm.requirePointType" placeholder="需求点类型" clearable>
                   <el-option
                     v-for="item in requirePointTypeOptions"
@@ -34,8 +34,8 @@
                     :value="item.dataValue">
                   </el-option>
                 </el-select>
-              </el-col>
-              <el-col :span="6">
+            </el-col>
+            <el-col :span="6">
                 <el-select v-model="searchForm.reviewStatus" placeholder="评审状态" clearable>
                   <el-option
                     v-for="item in reviewStatusOptions"
@@ -44,8 +44,8 @@
                     :value="item.dataValue">
                   </el-option>
                 </el-select>
-              </el-col>
-              <el-col :span="6">
+            </el-col>
+            <el-col :span="6">
                 <!-- 展开/收起按钮 -->
                 <el-button
                   @click="toggleMoreSearch"
@@ -65,15 +65,15 @@
         <el-row style="margin-top: 0px;">
           <el-col :span="6">
             <el-select v-model="searchForm.requireStatus" placeholder="需求状态" clearable>
-              <el-option
-                v-for="item in requireStatusOptions"
-                :key="item.dataValue"
-                :label="item.dataName"
+                  <el-option
+                    v-for="item in requireStatusOptions"
+                    :key="item.dataValue"
+                    :label="item.dataName"
                 :value="item.dataValue">
               </el-option>
-            </el-select>
-          </el-col>
-          <el-col :span="6">
+                </el-select>
+            </el-col>
+            <el-col :span="6">
             <el-select v-model="searchForm.analysisMethod" placeholder="分析方法" clearable>
               <el-option
                 v-for="item in analysisMethodOptions"
@@ -88,8 +88,8 @@
           </el-col>
           <el-col :span="6">
             <!-- 预留空间 -->
-          </el-col>
-        </el-row>
+            </el-col>
+          </el-row>
 
         <!-- 展开的搜索条件 -->
         <el-row v-show="showMoreSearch" style="margin-top: 0px;">
@@ -134,16 +134,16 @@
       <!-- 结果列表 -->
       <div class="table-section">
         <div class="table-wrapper">
-          <el-table
-            :data="tableData"
-            v-loading="loading"
-            @selection-change="handleSelectionChange"
-            stripe
-            border
+        <el-table
+          :data="tableData"
+          v-loading="loading"
+          @selection-change="handleSelectionChange"
+          stripe
+          border
             height="500"
             style="width: 1400px; min-width: 1400px;"
             :key="tableKey"
-          >
+        >
           <el-table-column type="selection" width="55" />
           <el-table-column prop="requirePointDesc" label="需求点概述" min-width="200" show-overflow-tooltip />
           <el-table-column prop="requirePointType" label="需求点类型" width="120">
@@ -173,6 +173,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="designer" label="设计人" width="100" />
+          <el-table-column prop="modifier" label="修改人" width="100" />
           <el-table-column prop="createTime" label="创建时间" width="160">
             <template slot-scope="scope">
               {{ formatDateTime(scope.row.createTime) }}
@@ -214,14 +215,84 @@
       </div>
     </div>
 
-    <!-- 新增/编辑对话框 -->
+    <!-- 新增/编辑/查看对话框 -->
     <el-dialog
       :title="dialogTitle"
       :visible.sync="dialogVisible"
       width="800px"
       :close-on-click-modal="false"
     >
-      <el-form :model="formData" :rules="formRules" ref="formRef" label-width="120px">
+      <!-- 查看模式 -->
+      <div v-if="dialogMode === 'view'" class="view-detail">
+        <el-form :model="formData" label-width="120px" class="view-form">
+          <el-form-item label="需求点概述">
+            <el-input
+              :value="formData.requirePointDesc || '-'"
+              type="textarea"
+              :rows="3"
+              readonly
+              class="view-input"
+            />
+          </el-form-item>
+
+          <el-form-item label="需求点类型">
+            <el-select :value="formData.requirePointType" disabled class="view-select">
+              <el-option
+                :label="getRequirePointTypeText(formData.requirePointType)"
+                :value="formData.requirePointType"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="分析方法">
+            <el-select :value="formData.analysisMethod" disabled class="view-select">
+              <el-option
+                :label="getAnalysisMethodText(formData.analysisMethod)"
+                :value="formData.analysisMethod"
+              />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="备注">
+            <el-input
+              :value="formData.remark || '-'"
+              type="textarea"
+              :rows="2"
+              readonly
+              class="view-input"
+            />
+          </el-form-item>
+
+          <!-- 其他信息 -->
+          <el-form-item label="评审状态">
+            <el-tag :type="getReviewStatusTag(formData.reviewStatus)">
+              {{ getReviewStatusText(formData.reviewStatus) }}
+            </el-tag>
+          </el-form-item>
+
+          <el-form-item label="需求状态">
+            <el-tag :type="getRequireStatusTag(formData.requireStatus)">
+              {{ getRequireStatusText(formData.requireStatus) }}
+            </el-tag>
+          </el-form-item>
+
+          <el-form-item label="设计人">
+            <span class="view-text">{{ formData.designer || '-' }}</span>
+          </el-form-item>
+          <el-form-item label="修改人">
+            <span class="view-text">{{ formData.modifier || '-' }}</span>
+          </el-form-item>
+          <el-form-item label="创建时间">
+            <span class="view-text">{{ formatDateTime(formData.createTime) || '-' }}</span>
+          </el-form-item>
+          <el-form-item label="修改时间">
+            <span class="view-text">{{ formatDateTime(formData.modifyTime) || '-' }}</span>
+          </el-form-item>
+        </el-form>
+      </div>
+
+      <!-- 编辑模式 -->
+      <el-form v-else-if="dialogMode === 'edit'" :model="formData" :rules="formRules" ref="formRef" label-width="120px">
         <el-form-item label="需求点概述" prop="requirePointDesc">
           <el-input
             v-model="formData.requirePointDesc"
@@ -250,6 +321,18 @@
             />
           </el-select>
         </el-form-item>
+        <el-form-item label="设计人">
+          <el-input
+            v-model="formData.designer"
+            placeholder="请输入设计人"
+          />
+        </el-form-item>
+        <el-form-item label="修改人">
+          <el-input
+            v-model="formData.modifier"
+            placeholder="请输入修改人"
+          />
+        </el-form-item>
         <el-form-item label="备注">
           <el-input
             v-model="formData.remark"
@@ -259,9 +342,77 @@
           />
         </el-form-item>
       </el-form>
+
       <div slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
+        <!-- 查看模式按钮 -->
+        <template v-if="dialogMode === 'view'">
+          <el-button @click="dialogVisible = false">关闭</el-button>
+          <el-button type="primary" @click="switchToEditMode">编辑</el-button>
+        </template>
+
+        <!-- 编辑模式按钮 -->
+        <template v-else-if="dialogMode === 'edit'">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitLoading">确定</el-button>
+        </template>
+      </div>
+    </el-dialog>
+
+    <!-- 删除确认对话框 -->
+    <el-dialog
+      title="删除需求点"
+      :visible.sync="deleteDialogVisible"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <div class="delete-confirm">
+        <div class="delete-warning">
+          <i class="el-icon-warning" style="color: #E6A23C; font-size: 24px; margin-right: 12px;"></i>
+          <span>确定要删除需求点"{{ deleteData.requirePointDesc }}"吗？</span>
+        </div>
+        <p style="color: #909399; font-size: 12px; margin-top: 10px;">删除后不可恢复，请谨慎操作！</p>
+      </div>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="deleteDialogVisible = false">取消</el-button>
+        <el-button type="danger" @click="handleConfirmDelete" :loading="deleteLoading">确认删除</el-button>
+      </div>
+    </el-dialog>
+
+    <!-- 批量评审对话框 -->
+    <el-dialog
+      title="批量评审"
+      :visible.sync="batchReviewDialogVisible"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form :model="batchReviewForm" label-width="120px">
+        <el-form-item label="评审状态" required>
+          <el-select v-model="batchReviewForm.reviewStatus" placeholder="请选择评审状态" style="width: 100%">
+            <el-option
+              v-for="item in reviewStatusOptions"
+              :key="item.dataValue"
+              :label="item.dataName"
+              :value="item.dataValue"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item 
+          :label="isReviewRejected ? '评审意见' : '评审意见'"
+          :required="isReviewRejected"
+        >
+          <el-input
+            v-model="batchReviewForm.reviewComment"
+            type="textarea"
+            :rows="3"
+            :placeholder="isReviewRejected ? '请输入评审意见（必填）' : '请输入评审意见'"
+          />
+        </el-form-item>
+      </el-form>
+
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="batchReviewDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleConfirmBatchReview" :loading="batchReviewLoading">确定</el-button>
       </div>
     </el-dialog>
 
@@ -287,7 +438,7 @@ import FileUploadDialog from '@/views/sys/common/FileUploadDialog.vue'
 import dictionaryApi from '@/api/framework/dictionary'
 import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
-    export default {
+export default {
   name: 'RequireRepository',
   components: {
     DirectoryTreeSelect,
@@ -334,13 +485,29 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
       // 对话框
       dialogVisible: false,
       dialogTitle: '',
+      dialogMode: 'edit', // 'view', 'edit'
       submitLoading: false,
+
+      // 删除对话框
+      deleteDialogVisible: false,
+      deleteData: {},
+      deleteLoading: false,
+
+      // 批量评审对话框
+      batchReviewDialogVisible: false,
+      batchReviewForm: {
+        reviewStatus: '',
+        reviewComment: ''
+      },
+      batchReviewLoading: false,
       formData: {
         requirePointId: '',
         requirePointDesc: '',
         requirePointType: '',
         analysisMethod: '',
         remark: '',
+        designer: '',
+        modifier: '',
         directoryId: '',
         systemId: ''
       },
@@ -380,6 +547,17 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         cell.style.lineHeight = '35px'
       })
     })
+  },
+
+  computed: {
+    // 判断当前选择的评审状态是否为"评审不通过"
+    isReviewRejected() {
+      if (!this.batchReviewForm.reviewStatus || !this.reviewStatusOptions.length) {
+        return false
+      }
+      const selectedOption = this.reviewStatusOptions.find(option => option.dataValue === this.batchReviewForm.reviewStatus)
+      return selectedOption && selectedOption.dataName === '评审不通过'
+    }
   },
 
   methods: {
@@ -499,6 +677,7 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         return
       }
 
+      this.dialogMode = 'edit'
       this.dialogTitle = '新增需求点'
       this.dialogVisible = true
       this.formData = {
@@ -513,34 +692,86 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
     },
 
     // 编辑
-    handleEdit(row) {
-      this.dialogTitle = '编辑需求点'
-      this.dialogVisible = true
-      this.formData = { ...row }
+    async handleEdit(row) {
+      try {
+        this.loading = true
+        const response = await requireRepositoryApi.getRequirePointById(row.requirePointId)
+        if (response.code === 20000) {
+          this.formData = { ...response.data }
+          this.dialogMode = 'edit'
+          this.dialogTitle = '编辑需求点'
+          this.dialogVisible = true
+        } else {
+          this.$message.error(response.message || '获取详情失败')
+        }
+      } catch (error) {
+        console.error('获取需求点详情失败:', error)
+        this.$message.error('获取详情失败')
+      } finally {
+        this.loading = false
+      }
     },
 
     // 查看
-    handleView(row) {
-      // 实现查看详情逻辑
-      this.$message.info('查看功能待实现')
+    async handleView(row) {
+      try {
+        this.loading = true
+        const response = await requireRepositoryApi.getRequirePointById(row.requirePointId)
+        if (response.code === 20000) {
+          this.formData = { ...response.data }
+          this.dialogMode = 'view'
+          this.dialogTitle = '查看需求点详情'
+          this.dialogVisible = true
+        } else {
+          this.$message.error(response.message || '获取详情失败')
+        }
+      } catch (error) {
+        console.error('获取需求点详情失败:', error)
+        this.$message.error('获取详情失败')
+      } finally {
+        this.loading = false
+      }
     },
 
     // 删除
-    handleDelete(row) {
-      this.$confirm('确定要删除该需求点吗？', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(async () => {
-        try {
-          // 这里替换为实际的API调用
-          await this.$http.delete(`/api/require-points/${row.requirePointId}`)
-          this.$message.success('删除成功')
-          this.loadData()
-        } catch (error) {
-          this.$message.error('删除失败')
+    async handleDelete(row) {
+      try {
+        this.loading = true
+        const response = await requireRepositoryApi.getRequirePointById(row.requirePointId)
+        if (response.code === 20000) {
+          this.deleteData = { ...response.data }
+          this.deleteDialogVisible = true
+        } else {
+          this.$message.error(response.message || '获取详情失败')
         }
-      })
+      } catch (error) {
+        console.error('获取需求点详情失败:', error)
+        this.$message.error('获取详情失败')
+      } finally {
+        this.loading = false
+      }
+    },
+
+    // 模式切换方法
+    switchToEditMode() {
+      this.dialogMode = 'edit'
+      this.dialogTitle = '编辑需求点'
+    },
+
+    // 确认删除
+    async handleConfirmDelete() {
+      try {
+        this.deleteLoading = true
+        await requireRepositoryApi.deleteRequirePoint(this.deleteData.requirePointId)
+        this.$message.success('删除成功')
+        this.deleteDialogVisible = false
+        this.loadData()
+      } catch (error) {
+        console.error('删除失败:', error)
+        this.$message.error('删除失败')
+      } finally {
+        this.deleteLoading = false
+      }
     },
 
     // 批量评审
@@ -550,33 +781,46 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
         return
       }
 
-      this.$prompt('请输入评审意见', '批量评审', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        inputValidator: (value) => {
-          if (!value || value.trim() === '') {
-            return '请输入评审意见'
-          }
-          return true
-        }
-      }).then(async ({ value: reviewComment }) => {
-        try {
-          const requirePointIds = this.selectedRows.map(row => row.requirePointId)
-          await requireRepositoryApi.batchReviewRequirePoints({
-            requirePointIds: requirePointIds,
-            reviewStatus: 'PASSED', // 默认通过，可以根据需要调整
-            reviewComment: reviewComment.trim()
-          })
+      // 显示评审选择对话框
+      this.batchReviewDialogVisible = true
+      this.batchReviewForm = {
+        reviewStatus: '',
+        reviewComment: ''
+      }
+    },
 
-          this.$message.success('批量评审成功')
-          this.selectedRows = []
-          this.loadData()
-        } catch (error) {
-          this.$message.error('批量评审失败')
-        }
-      }).catch(() => {
-        // 用户取消
-      })
+    // 确认批量评审
+    async handleConfirmBatchReview() {
+      if (!this.batchReviewForm.reviewStatus) {
+        this.$message.warning('请选择评审状态')
+        return
+      }
+
+      // 如果选择"评审不通过"，评审意见必填
+      if (this.isReviewRejected && !this.batchReviewForm.reviewComment.trim()) {
+        this.$message.warning('评审不通过时，评审意见为必填项')
+        return
+      }
+
+      try {
+        this.batchReviewLoading = true
+        const requirePointIds = this.selectedRows.map(row => row.requirePointId)
+        await requireRepositoryApi.batchReviewRequirePoints({
+          requirePointIds: requirePointIds,
+          reviewStatus: this.batchReviewForm.reviewStatus,
+          reviewComment: this.batchReviewForm.reviewComment.trim()
+        })
+
+        this.$message.success('批量评审成功')
+        this.batchReviewDialogVisible = false
+        this.selectedRows = []
+        this.loadData()
+      } catch (error) {
+        console.error('批量评审失败:', error)
+        this.$message.error('批量评审失败')
+      } finally {
+        this.batchReviewLoading = false
+      }
     },
 
     // 批量删除
@@ -1176,23 +1420,72 @@ import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
   /* 小屏幕下调整列宽 */
   .search-form .el-row:first-child .el-col:first-child {
-    span: 12;
+    flex: 0 0 50%;
   }
 
   .search-form .el-row:first-child .el-col:last-child {
-    span: 12;
+    flex: 0 0 50%;
   }
 }
 
 @media (max-width: 576px) {
   /* 超小屏幕下垂直布局 */
   .search-form .el-row .el-col {
-    span: 24;
     margin-bottom: 12px;
   }
 
   .search-form .el-row:first-child .el-col:last-child {
     text-align: left;
   }
+}
+
+/* 查看详情对话框样式 */
+.view-detail {
+  padding: 20px 0;
+}
+
+.view-form {
+  max-width: 100%;
+}
+
+.view-input {
+  background-color: #f5f7fa;
+  border: 1px solid #e4e7ed;
+}
+
+.view-input .el-textarea__inner {
+  background-color: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  color: #606266;
+  cursor: default;
+}
+
+.view-select {
+  width: 100%;
+}
+
+.view-select .el-input__inner {
+  background-color: #f5f7fa;
+  border: 1px solid #e4e7ed;
+  color: #606266;
+  cursor: default;
+}
+
+.view-text {
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* 删除确认对话框样式 */
+.delete-confirm {
+  padding: 20px 0;
+}
+
+.delete-warning {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  color: #303133;
 }
 </style>

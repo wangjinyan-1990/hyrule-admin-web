@@ -132,6 +132,42 @@ export const asyncRoutes = [
   },
 
   {
+    path: '/tools',
+    component: Layout,
+    redirect: '/tools',
+    name: 'tools',
+    meta: { title: '实用工具', icon: 'tools' },
+    children: [
+      {
+        path: 'toolset',
+        name: 'toolset',
+        component: () => import('@/views/tools/toolset'),
+        meta: { title: '工具集', icon: 'toolset' }
+      },
+      {
+        path: 'notebook',
+        name: 'notebook',
+        component: () => import('@/views/tools/notebook'),
+        meta: { title: '记事本', icon: 'notebook' }
+      },
+      {
+        path: 'noteEditor/:noteId',
+        name: 'noteEditor',
+        component: () => import('@/views/tools/noteDetail'),
+        meta: { title: '编辑笔记', icon: 'notebook' },
+        hidden: true
+      },
+      {
+        path: 'noteViewer/:noteId',
+        name: 'noteViewer',
+        component: () => import('@/views/tools/noteDetail'),
+        meta: { title: '查看笔记', icon: 'notebook' },
+        hidden: true
+      }
+    ]
+  },
+
+  {
     path: '/nested',
     component: Layout,
     redirect: '/nested/menu1',
@@ -183,28 +219,6 @@ export const asyncRoutes = [
         component: () => import('@/views/nested/menu2/index'),
         name: 'Menu2',
         meta: { title: 'menu2' }
-      }
-    ]
-  },
-
-  {
-    path: '/example',
-    component: Layout,
-    redirect: '/example/table',
-    name: 'Example',
-    meta: { title: 'Example', icon: 'el-icon-s-help' },
-    children: [
-      {
-        path: 'table',
-        name: 'Table',
-        component: () => import('@/views/table/index'),
-        meta: { title: 'Table', icon: 'table' }
-      },
-      {
-        path: 'tree',
-        name: 'Tree',
-        component: () => import('@/views/tree/index'),
-        meta: { title: 'Tree', icon: 'tree' }
       }
     ]
   },

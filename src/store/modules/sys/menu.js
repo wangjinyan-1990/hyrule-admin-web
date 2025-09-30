@@ -12,11 +12,6 @@ function hasPermission(menus, route) {
     return true // admin用户显示所有未隐藏的菜单
   }
   
-  // 特殊处理：测试模块下的所有菜单都允许访问
-  if (route.path === '/test' || (route.path && route.path.startsWith('/test/'))) {
-    return true
-  }
-  
   // 检查路由是否在用户菜单权限中
   if (route.meta && route.meta.title) {
     const hasPermission = menus.some(menu => menu.title === route.meta.title)

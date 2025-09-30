@@ -74,7 +74,11 @@ service.interceptors.response.use(
           })
         })
       }
-      return Promise.reject(new Error(res.message || 'Error'))
+      // 保留更多错误信息用于调试
+      const error = new Error(res.message || 'Error')
+      error.response = response
+      error.data = res
+      return Promise.reject(error)
     } else {
       return res
     }
