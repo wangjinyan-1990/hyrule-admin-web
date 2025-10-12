@@ -84,12 +84,18 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="150" sortable>
+        <el-table-column label="大小" width="100">
           <template slot-scope="scope">
-            {{ formatDate(scope.row.createTime) }}
+            <span v-if="scope.row.type === 'directory'" class="size-text">-</span>
+            <span v-else class="size-text">{{ formatNoteSize(scope.row.noteContent) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column prop="createTime" label="创建时间" width="150" sortable>
+          <template slot-scope="scope">
+            <span class="time-text">{{ formatDate(scope.row.createTime) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="260">
           <template slot-scope="scope">
             <el-button v-if="scope.row.type === 'directory'" size="mini" @click="handleRename(scope.row)">
               重命名
@@ -103,6 +109,76 @@
           </template>
         </el-table-column>
       </el-table>
+    </div>
+
+    <!-- 附件列表 -->
+    <div v-if="currentParentId" class="attachment-list-container">
+      <div class="attachment-header">
+        <h3>附件列表</h3>
+        <el-tag type="info">{{ attachmentList.length }} 个附件</el-tag>
+      </div>
+      
+      <div v-loading="attachmentLoading" class="attachment-content">
+        <div v-if="attachmentList.length === 0" class="no-attachment">
+          <i class="el-icon-folder-opened"></i>
+          <p>暂无附件</p>
+        </div>
+        
+        <el-table v-else :data="attachmentList" stripe border>
+          <el-table-column type="selection" width="55"></el-table-column>
+          <el-table-column label="文件名" min-width="300">
+            <template slot-scope="scope">
+              <div class="file-item">
+                <i :class="getAttachmentFileIcon(scope.row.originalFileName)" class="file-icon"></i>
+                <span class="file-name">{{ scope.row.originalFileName }}</span>
+              </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="类型" width="100">
+            <template slot-scope="scope">
+              <el-tag type="warning">附件</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="大小" width="100">
+            <template slot-scope="scope">
+              <span class="size-text">{{ formatFileSize(scope.row.attachmentSize) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="上传时间" width="150" sortable>
+            <template slot-scope="scope">
+              <span class="time-text">{{ formatDate(scope.row.uploadDate) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="260">
+            <template slot-scope="scope">
+              <el-button 
+                size="mini" 
+                type="success" 
+                icon="el-icon-view"
+                @click="viewAttachment(scope.row.attachmentId, scope.row.originalFileName, scope.row.attachmentSize, scope.row.uploadDate)"
+              >
+                查看
+              </el-button>
+              <el-button 
+                size="mini" 
+                type="primary" 
+                icon="el-icon-download"
+                @click="downloadAttachment(scope.row.attachmentId, scope.row.originalFileName)"
+              >
+                下载
+              </el-button>
+              <el-button 
+                size="mini" 
+                type="danger" 
+                icon="el-icon-delete"
+                @click="deleteAttachment(scope.row.attachmentId)"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
     </div>
 
     <!-- 新建文件夹对话框 -->
@@ -142,46 +218,39 @@
     </el-dialog>
 
     <!-- 文件上传对话框 -->
-    <el-dialog
+    <FileUploadDialog
+      :visible="uploadDialogVisible"
       title="上传文件"
-      :visible.sync="uploadDialogVisible"
-      width="500px"
-      :close-on-click-modal="false"
-    >
-      <el-upload
-        ref="upload"
-        :action="uploadUrl"
-        :file-list="fileList"
-        :on-success="handleUploadSuccess"
-        :on-error="handleUploadError"
-        :before-upload="beforeUpload"
-        multiple
-        drag
-      >
-        <i class="el-icon-upload"></i>
-        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-        <div class="el-upload__tip" slot="tip">支持多文件上传，单个文件不超过10MB</div>
-      </el-upload>
-      <div slot="footer" class="dialog-footer">
-        <el-button @click="uploadDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleConfirmUpload">确定</el-button>
-      </div>
-    </el-dialog>
+      :multiple="true"
+      :auto-upload="true"
+      :upload-config="uploadConfig"
+      @success="handleUploadSuccess"
+      @error="handleUploadError"
+      @cancel="handleCancelUpload"
+      @close="handleCancelUpload"
+    />
 
   </div>
 </template>
 
 <script>
 import notebookApi from '@/api/tools/notebook'
+import FileUploadDialog from '@/views/sys/common/FileUploadDialog'
+import fileUploadService from '@/api/sys/common/fileUploadService'
 
 export default {
   name: "notebook",
+  components: {
+    FileUploadDialog
+  },
   data() {
     return {
       loading: false,
       searchKeyword: '',
       selectedItems: [],
       directoryList: [],
+      attachmentList: [], // 附件列表
+      attachmentLoading: false, // 附件加载状态
       currentParentId: null, // 当前父目录ID
       currentPath: [], // 当前路径
       createFolderDialogVisible: false,
@@ -189,8 +258,6 @@ export default {
       renameDialogVisible: false,
       renameLoading: false,
       uploadDialogVisible: false,
-      uploadUrl: '/api/file/upload',
-      fileList: [],
       folderForm: {
         directoryName: ''
       },
@@ -238,6 +305,13 @@ export default {
         
         return false
       })
+    },
+    uploadConfig() {
+      return {
+        url: '/framework/attachment/upload/batch',
+        module: 'notebook',
+        relateId: this.currentParentId || ''
+      }
     }
   },
   created() {
@@ -250,7 +324,7 @@ export default {
     async loadDirectoryList() {
       this.loading = true
       try {
-        // 并行加载目录和笔记
+        // 并行加载目录、笔记和附件
         const [directoryResponse, noteResponse] = await Promise.all([
           notebookApi.getDirectoryList({
             userId: this.$store.getters.userId,
@@ -259,7 +333,8 @@ export default {
           notebookApi.getNoteList({
             userId: this.$store.getters.userId,
             directoryId: this.currentParentId
-          })
+          }),
+          this.loadAttachments() // 同时加载附件
         ])
 
         // 检查响应状态码
@@ -752,28 +827,164 @@ export default {
       this.searchKeyword = ''
     },
 
-    // 上传前验证
-    beforeUpload(file) {
-      const isValidSize = file.size / 1024 / 1024 < 10
-      if (!isValidSize) {
-        this.$message.error('文件大小不能超过10MB')
+    // 加载附件列表
+    async loadAttachments() {
+      if (!this.currentParentId) {
+        this.attachmentList = []
+        return
       }
-      return isValidSize
+
+      this.attachmentLoading = true
+      try {
+        const result = await fileUploadService.getAttachments('notebook', this.currentParentId)
+        
+        if (result.success) {
+          this.attachmentList = result.data || []
+          console.log('加载附件列表成功:', this.attachmentList)
+        } else {
+          console.error('加载附件列表失败:', result.message)
+          this.attachmentList = []
+        }
+      } catch (error) {
+        console.error('加载附件列表异常:', error)
+        this.attachmentList = []
+      } finally {
+        this.attachmentLoading = false
+      }
     },
 
-    // 上传成功
-    handleUploadSuccess(response, file, fileList) {
-      this.$message.success('文件上传成功')
-      this.loadFileList()
+    // 查看附件
+    viewAttachment(attachmentId, fileName, attachmentSize = 0, uploadDate = '') {
+      // 通过路由跳转到附件预览页面
+      this.$router.push({
+        name: 'viewAttachment',
+        params: { 
+          attachmentId: attachmentId 
+        },
+        query: { 
+          title: `附件预览 - ${fileName}`,
+          fileName: fileName,
+          attachmentSize: attachmentSize,
+          uploadDate: uploadDate
+        }
+      })
     },
 
-    // 上传失败
-    handleUploadError(error, file, fileList) {
-      this.$message.error('文件上传失败')
+    // 下载附件
+    async downloadAttachment(attachmentId, fileName) {
+      try {
+        const result = await fileUploadService.downloadAttachment(attachmentId, fileName)
+        
+        if (result.success) {
+          this.$message.success('下载成功')
+        } else {
+          this.$message.error(result.message)
+        }
+      } catch (error) {
+        console.error('下载附件失败:', error)
+        this.$message.error('下载失败，请重试')
+      }
     },
 
-    // 确认上传
-    handleConfirmUpload() {
+    // 删除附件
+    async deleteAttachment(attachmentId) {
+      try {
+        await this.$confirm('确定要删除这个附件吗？', '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+
+        const result = await fileUploadService.deleteAttachment(attachmentId)
+        
+        if (result.success) {
+          this.$message.success('删除成功')
+          // 重新加载附件列表
+          await this.loadAttachments()
+        } else {
+          this.$message.error(result.message)
+        }
+      } catch (error) {
+        if (error !== 'cancel') {
+          console.error('删除附件失败:', error)
+          this.$message.error('删除失败，请重试')
+        }
+      }
+    },
+
+    // 根据文件名获取文件图标
+    getAttachmentFileIcon(fileName) {
+      if (!fileName) return 'el-icon-document'
+      
+      // 获取文件扩展名
+      const ext = fileName.split('.').pop().toLowerCase()
+      
+      const iconMap = {
+        // 文档类型
+        'pdf': 'el-icon-document',
+        'doc': 'el-icon-document',
+        'docx': 'el-icon-document',
+        'txt': 'el-icon-document',
+        // 表格类型
+        'xls': 'el-icon-tickets',
+        'xlsx': 'el-icon-tickets',
+        'csv': 'el-icon-tickets',
+        // 图片类型
+        'jpg': 'el-icon-picture',
+        'jpeg': 'el-icon-picture',
+        'png': 'el-icon-picture',
+        'gif': 'el-icon-picture',
+        'bmp': 'el-icon-picture',
+        'svg': 'el-icon-picture',
+        // 压缩文件
+        'zip': 'el-icon-folder-opened',
+        'rar': 'el-icon-folder-opened',
+        '7z': 'el-icon-folder-opened',
+        // 视频文件
+        'mp4': 'el-icon-video-camera',
+        'avi': 'el-icon-video-camera',
+        'mov': 'el-icon-video-camera',
+        // 音频文件
+        'mp3': 'el-icon-phone',
+        'wav': 'el-icon-phone'
+      }
+      
+      return iconMap[ext] || 'el-icon-document'
+    },
+
+    // 格式化文件大小
+    formatFileSize(bytes) {
+      if (bytes === 0) return '0 B'
+      const k = 1024
+      const sizes = ['B', 'KB', 'MB', 'GB']
+      const i = Math.floor(Math.log(bytes) / Math.log(k))
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    },
+
+    // 格式化笔记内容大小
+    formatNoteSize(noteContent) {
+      if (!noteContent) return '0 B'
+      
+      // 计算文本内容的字节大小（UTF-8编码）
+      const bytes = new Blob([noteContent]).size
+      return this.formatFileSize(bytes)
+    },
+
+    // 上传成功回调
+    handleUploadSuccess(data) {
+      // 重新加载附件列表
+      this.loadAttachments()
+      // 刷新目录列表
+      this.loadDirectoryList()
+    },
+
+    // 上传失败回调
+    handleUploadError(error) {
+      console.error('上传失败:', error)
+    },
+
+    // 取消上传
+    handleCancelUpload() {
       this.uploadDialogVisible = false
     },
 
@@ -1008,15 +1219,6 @@ export default {
   font-size: 12px;
 }
 
-/* 上传组件样式 */
-.el-upload {
-  width: 100%;
-}
-
-.el-upload-dragger {
-  width: 100%;
-  height: 180px;
-}
 
 /* 返回按钮样式 */
 .back-button {
@@ -1031,5 +1233,61 @@ export default {
   border-color: #0ea5e9;
   color: #fff;
 }
+
+/* 附件列表样式 */
+.attachment-list-container {
+  margin-top: 20px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.attachment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  border-bottom: 1px solid #ebeef5;
+  background: #fafafa;
+}
+
+.attachment-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.attachment-content {
+  padding: 0;
+  min-height: 100px;
+}
+
+.no-attachment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #909399;
+}
+
+.no-attachment i {
+  font-size: 48px;
+  margin-bottom: 10px;
+}
+
+.no-attachment p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* 调整大小和时间的字体大小 */
+.size-text,
+.time-text {
+  font-size: 12px;
+}
+
 
 </style>

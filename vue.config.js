@@ -8,7 +8,7 @@ function resolve(dir) {
 
 const name = defaultSettings.title || 'hyrule-admin' // page title
 
-const port = process.env.port || process.env.npm_config_port || 7777
+const port = process.env.port || process.env.npm_config_port || 7778
 
 module.exports = {
   publicPath: '/',

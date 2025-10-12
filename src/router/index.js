@@ -145,6 +145,188 @@ export const asyncRoutes = [
         meta: { title: '工具集', icon: 'toolset' }
       },
       {
+        path: 'rmbConverter',
+        name: 'rmbConverter',
+        component: () => import('@/components/Tools/rmbConverter'),
+        meta: { title: '人民币大写转换', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'textCaseConverter',
+        name: 'textCaseConverter',
+        component: () => import('@/components/Tools/textCaseConverter'),
+        meta: { title: '英文字母大小写转换', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'jsonFormatter',
+        name: 'jsonFormatter',
+        component: () => import('@/components/Tools/jsonFormatter'),
+        meta: { title: 'JSON格式化', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'stringLengthCalculator',
+        name: 'stringLengthCalculator',
+        component: () => import('@/components/Tools/stringLengthCalculator'),
+        meta: { title: '字符串长度计算', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'characterCountAnalyzer',
+        name: 'characterCountAnalyzer',
+        component: () => import('@/components/Tools/characterCountAnalyzer'),
+        meta: { title: '字符出现次数统计', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'stringCountAnalyzer',
+        name: 'stringCountAnalyzer',
+        component: () => import('@/components/Tools/stringCountAnalyzer'),
+        meta: { title: '字符串出现次数统计', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'colorSpaceConverter',
+        name: 'colorSpaceConverter',
+        component: () => import('@/components/Tools/colorSpaceConverter'),
+        meta: { title: '颜色空间转换', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'baseConverter',
+        name: 'baseConverter',
+        component: () => import('@/components/Tools/baseConverter'),
+        meta: { title: '进制转换器', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'passwordGenerator',
+        name: 'passwordGenerator',
+        component: () => import('@/components/Tools/passwordGenerator'),
+        meta: { title: '随机密码生成', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'textEncoder',
+        name: 'textEncoder',
+        component: () => import('@/components/Tools/textEncoder'),
+        meta: { title: '文本在线编码转换', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'imageBase64Encoder',
+        name: 'imageBase64Encoder',
+        component: () => import('@/components/Tools/imageBase64Encoder'),
+        meta: { title: '图片base64编码', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'base64ImageDecoder',
+        name: 'base64ImageDecoder',
+        component: () => import('@/components/Tools/base64ImageDecoder'),
+        meta: { title: 'base64还原图片', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'qrCodeGenerator',
+        name: 'qrCodeGenerator',
+        component: () => import('@/components/Tools/qrCodeGenerator'),
+        meta: { title: '二维码在线生成', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'idCardGenerator',
+        name: 'idCardGenerator',
+        component: () => import('@/components/Tools/idCardGenerator'),
+        meta: { title: '身份证号生成', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'imageTextRecognition',
+        name: 'imageTextRecognition',
+        component: () => import('@/components/Tools/imageTextRecognition'),
+        meta: { title: '图片文字识别', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'rgbColorReference',
+        name: 'rgbColorReference',
+        component: () => import('@/components/Tools/rgbColorReference'),
+        meta: { title: 'RGB颜色参考', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'primeFactorization',
+        name: 'primeFactorization',
+        component: () => import('@/components/Tools/primeFactorization'),
+        meta: { title: '分解质因数', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'textDiffComparator',
+        name: 'textDiffComparator',
+        component: () => import('@/components/Tools/textDiffComparator'),
+        meta: { title: '文本对比合并', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'textDeduplicator',
+        name: 'textDeduplicator',
+        component: () => import('@/components/Tools/textDeduplicator'),
+        meta: { title: '文本去重内容行', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'expressionCalculator',
+        name: 'expressionCalculator',
+        component: () => import('@/components/Tools/expressionCalculator'),
+        meta: { title: '表达式计算器', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'loanCalculator',
+        name: 'loanCalculator',
+        component: () => import('@/components/Tools/loanCalculator'),
+        meta: { title: '贷款计算器', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'md5Tool',
+        name: 'md5Tool',
+        component: () => import('@/components/Tools/md5Tool'),
+        meta: { title: 'MD5加解密工具', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'crontabCalculator',
+        name: 'crontabCalculator',
+        component: () => import('@/components/Tools/crontabCalculator'),
+        meta: { title: 'Crontab执行时间计算', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'dateCalculator',
+        name: 'dateCalculator',
+        component: () => import('@/components/Tools/dateCalculator'),
+        meta: { title: '天数计算器', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'imageCompressor',
+        name: 'imageCompressor',
+        component: () => import('@/components/Tools/imageCompressor'),
+        meta: { title: '图片压缩工具', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'pdfToDocConverter',
+        name: 'pdfToDocConverter',
+        component: () => import('@/components/Tools/pdfToDocConverter'),
+        meta: { title: 'PDF转DOC转换器', icon: 'toolset' },
+        hidden: true
+      },
+      {
         path: 'notebook',
         name: 'notebook',
         component: () => import('@/views/tools/notebook'),
@@ -162,6 +344,13 @@ export const asyncRoutes = [
         name: 'noteViewer',
         component: () => import('@/views/tools/noteDetail'),
         meta: { title: '查看笔记', icon: 'notebook' },
+        hidden: true
+      },
+      {
+        path: 'viewAttachment/:attachmentId',
+        name: 'viewAttachment',
+        component: () => import('@/views/sys/common/ViewAttachment'),
+        meta: { title: '附件预览', icon: 'document' },
         hidden: true
       }
     ]
