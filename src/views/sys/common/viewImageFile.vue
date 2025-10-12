@@ -61,6 +61,12 @@ export default {
   created() {
     this.initImagePreview()
   },
+  beforeDestroy() {
+    // 清理Blob URL，避免内存泄漏
+    if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+      URL.revokeObjectURL(this.previewUrl)
+    }
+  },
   methods: {
     // 初始化图片预览
     async initImagePreview() {
@@ -68,13 +74,35 @@ export default {
         this.loading = true
         this.error = false
         
-        // 设置预览URL
-        this.previewUrl = fileUploadService.getAttachmentPreviewUrl(this.attachmentId, this.fileName)
+        console.log('开始加载图片文件:', {
+          attachmentId: this.attachmentId,
+          fileName: this.fileName
+        })
         
-        console.log('图片预览URL:', this.previewUrl)
+        // 使用下载接口获取图片文件内容
+        const response = await fileUploadService.downloadAttachment(this.attachmentId, this.fileName, false)
+        
+        console.log('图片文件下载响应:', response)
+        
+        if (response.success && response.data) {
+          // 获取图片数据
+          let blob
+          if (response.data.data) {
+            blob = response.data.data
+          } else {
+            blob = response.data
+          }
+          
+          // 创建Blob URL用于图片显示
+          this.previewUrl = URL.createObjectURL(blob)
+          console.log('图片Blob URL创建成功:', this.previewUrl)
+        } else {
+          throw new Error(response.message || '图片文件加载失败')
+        }
       } catch (error) {
-        console.error('初始化图片预览失败:', error)
+        console.error('图片加载失败:', error)
         this.error = true
+        this.$message.error('图片文件加载失败: ' + error.message)
       } finally {
         this.loading = false
       }
@@ -94,11 +122,17 @@ export default {
 
     // 重新加载
     retryLoad() {
-      this.initImagePreview()
+      this.refreshPreview()
     },
 
     // 刷新预览
     refreshPreview() {
+      // 清理之前的Blob URL
+      if (this.previewUrl && this.previewUrl.startsWith('blob:')) {
+        URL.revokeObjectURL(this.previewUrl)
+      }
+      
+      // 重新初始化预览
       this.initImagePreview()
     }
   }

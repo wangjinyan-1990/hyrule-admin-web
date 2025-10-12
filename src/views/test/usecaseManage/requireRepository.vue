@@ -16,17 +16,17 @@
 
     <!-- 右侧内容区 -->
     <div class="right-panel">
-      <!-- 搜索栏 -->
+      <!-- 搜索栏 - 查询条件输入框区域 -->
       <el-card id="search">
         <el-row>
           <el-col :span="24">
             <!-- 第一排查询条件 -->
             <el-row style="margin-bottom: 0px;">
             <el-col :span="6">
-                <el-input v-model="searchForm.requirePointDesc" placeholder="需求点概述"></el-input>
+                <el-input v-model="searchForm.requirePointDesc" placeholder="需求点概述" class="search-input-small"></el-input>
             </el-col>
             <el-col :span="6">
-                <el-select v-model="searchForm.requirePointType" placeholder="需求点类型" clearable>
+                <el-select v-model="searchForm.requirePointType" placeholder="需求点类型" clearable class="search-select-small">
                   <el-option
                     v-for="item in requirePointTypeOptions"
                     :key="item.dataValue"
@@ -36,7 +36,7 @@
                 </el-select>
             </el-col>
             <el-col :span="6">
-                <el-select v-model="searchForm.reviewStatus" placeholder="评审状态" clearable>
+                <el-select v-model="searchForm.reviewStatus" placeholder="评审状态" clearable class="search-select-small">
                   <el-option
                     v-for="item in reviewStatusOptions"
                     :key="item.dataValue"
@@ -50,12 +50,13 @@
                 <el-button
                   @click="toggleMoreSearch"
                   type="text"
-                  :icon="showMoreSearch ? 'el-icon-arrow-up' : 'el-icon-arrow-down'">
+                  :icon="showMoreSearch ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"
+                  class="search-button-small">
                   {{ showMoreSearch ? '收起' : '展开' }}
                 </el-button>
                 <!-- 查询和重置按钮 -->
-                <el-button @click="handleSearch" type="primary" round icon="el-icon-search">查询</el-button>
-                <el-button @click="handleReset" type="info" round icon="el-icon-refresh">重置</el-button>
+                <el-button @click="handleSearch" type="primary" round icon="el-icon-search" class="search-button-small">查询</el-button>
+                <el-button @click="handleReset" type="info" round icon="el-icon-refresh" class="search-button-small">重置</el-button>
               </el-col>
             </el-row>
           </el-col>
@@ -64,7 +65,7 @@
         <!-- 第二排查询条件 -->
         <el-row style="margin-top: 0px;">
           <el-col :span="6">
-            <el-select v-model="searchForm.requireStatus" placeholder="需求状态" clearable>
+            <el-select v-model="searchForm.requireStatus" placeholder="需求状态" clearable class="search-select-small">
                   <el-option
                     v-for="item in requireStatusOptions"
                     :key="item.dataValue"
@@ -74,7 +75,7 @@
                 </el-select>
             </el-col>
             <el-col :span="6">
-            <el-select v-model="searchForm.analysisMethod" placeholder="分析方法" clearable>
+            <el-select v-model="searchForm.analysisMethod" placeholder="分析方法" clearable class="search-select-small">
               <el-option
                 v-for="item in analysisMethodOptions"
                 :key="item.dataValue"
@@ -84,7 +85,7 @@
             </el-select>
           </el-col>
           <el-col :span="6">
-            <el-input v-model="searchForm.designer" placeholder="设计人"></el-input>
+            <el-input v-model="searchForm.designer" placeholder="设计人" class="search-input-small"></el-input>
           </el-col>
           <el-col :span="6">
             <!-- 预留空间 -->
@@ -131,18 +132,19 @@
       </div>
 
 
-      <!-- 结果列表 -->
+      <!-- 结果列表 - 需求点列表表格 -->
       <div class="table-section">
         <div class="table-wrapper">
         <el-table
           :data="tableData"
           v-loading="loading"
           @selection-change="handleSelectionChange"
+          @row-dblclick="handleRowDblClick"
           stripe
           border
-            height="500"
-            style="width: 1400px; min-width: 1400px;"
-            :key="tableKey"
+          height="500"
+          style="width: 1400px; min-width: 1400px;"
+          :key="tableKey"
         >
           <el-table-column type="selection" width="55" />
           <el-table-column prop="requirePointDesc" label="需求点概述" min-width="200" show-overflow-tooltip />
@@ -439,7 +441,7 @@ import dictionaryApi from '@/api/framework/dictionary'
 import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
 export default {
-  name: 'RequireRepository',
+  name: 'requireRepository', // 组件名与路由名一致，以便keep-alive缓存
   components: {
     DirectoryTreeSelect,
     FileUploadDialog
@@ -529,23 +531,39 @@ export default {
 
   async created() {
     await this.loadDictionaryData()
+    // 恢复保存的状态
+    this.restorePageState()
     // 只加载数据字典，不自动查询数据
+  },
+
+  activated() {
+    // 即使 keep-alive 生效，也尝试恢复状态以确保万无一失
+    this.restorePageState()
+  },
+
+  deactivated() {
+    // 保存当前状态
+    this.savePageState()
+  },
+
+  beforeDestroy() {
+    // 组件销毁前保存状态
+    this.savePageState()
   },
 
   mounted() {
     // 页面加载时不自动查询数据
     this.$nextTick(() => {
-      // 强制设置表格行高
-      const tableRows = document.querySelectorAll('.el-table__row')
-      tableRows.forEach(row => {
-        row.style.height = '35px'
+      // 强制设置查询条件输入框高度
+      const searchInputs = document.querySelectorAll('#search .el-input__inner')
+      searchInputs.forEach(input => {
+        input.style.height = '24px'
+        input.style.lineHeight = '24px'
+        input.style.fontSize = '10px'
       })
 
-      const tableCells = document.querySelectorAll('.el-table th, .el-table td')
-      tableCells.forEach(cell => {
-        cell.style.height = '35px'
-        cell.style.lineHeight = '35px'
-      })
+      // 强制设置表格行高 - 使用更强的方式
+      this.forceTableRowHeight()
     })
   },
 
@@ -561,6 +579,131 @@ export default {
   },
 
   methods: {
+    // 保存页面状态到 sessionStorage
+    savePageState() {
+      try {
+        // 获取目录树的展开状态
+        let treeExpandedKeys = []
+        const treeSelect = this.$refs.directoryTreeSelect
+        
+        if (treeSelect) {
+          if (treeSelect.getExpandedKeys) {
+            treeExpandedKeys = treeSelect.getExpandedKeys()
+          }
+          
+          // 如果获取失败，尝试直接访问组件的 expandedKeys 属性
+          if (treeExpandedKeys.length === 0 && treeSelect.expandedKeys) {
+            treeExpandedKeys = [...treeSelect.expandedKeys]
+          }
+        }
+
+        const state = {
+          selectedDirectory: this.selectedDirectory,
+          searchForm: this.searchForm,
+          pagination: this.pagination,
+          tableData: this.tableData,
+          treeExpandedKeys: treeExpandedKeys,
+          timestamp: Date.now()
+        }
+        sessionStorage.setItem('requireRepository_state', JSON.stringify(state))
+      } catch (error) {
+        console.error('保存页面状态失败:', error)
+      }
+    },
+
+    // 从 sessionStorage 恢复页面状态
+    restorePageState() {
+      try {
+        const savedState = sessionStorage.getItem('requireRepository_state')
+        if (!savedState) {
+          return
+        }
+
+        const state = JSON.parse(savedState)
+        const timeDiff = Date.now() - state.timestamp
+        
+        // 如果状态保存时间超过30分钟，则不恢复（避免过期数据）
+        if (timeDiff > 30 * 60 * 1000) {
+          sessionStorage.removeItem('requireRepository_state')
+          return
+        }
+
+        // 恢复选中的目录
+        if (state.selectedDirectory) {
+          this.selectedDirectory = state.selectedDirectory
+          this.searchForm.directoryId = state.selectedDirectory.directoryId
+          
+          // DirectoryTreeSelect 会在 created/activated 钩子中自动恢复展开状态
+          // 这里只需要设置选中节点即可
+          this.$nextTick(() => {
+            setTimeout(() => {
+              const treeSelect = this.$refs.directoryTreeSelect
+              if (treeSelect && treeSelect.setSelectedKey) {
+                // 不传递 expandedKeys，让组件自己从 sessionStorage 恢复
+                treeSelect.setSelectedKey(state.selectedDirectory.directoryId)
+              }
+            }, 1500) // 延迟更长时间，等待树完全展开
+          })
+        }
+
+        // 恢复搜索条件
+        if (state.searchForm) {
+          this.searchForm = { ...this.searchForm, ...state.searchForm }
+        }
+
+        // 恢复分页
+        if (state.pagination) {
+          this.pagination = { ...this.pagination, ...state.pagination }
+        }
+
+        // 恢复表格数据
+        if (state.tableData) {
+          this.tableData = state.tableData
+        }
+      } catch (error) {
+        console.error('恢复页面状态失败:', error)
+      }
+    },
+
+    // 强制设置表格行高
+    forceTableRowHeight() {
+      // 延迟执行，确保表格已渲染
+      setTimeout(() => {
+        // 设置所有表格行高度
+        const allRows = document.querySelectorAll('.el-table__row')
+        allRows.forEach(row => {
+          row.style.height = '24px'
+          row.style.minHeight = '24px'
+          row.style.maxHeight = '24px'
+        })
+
+        // 设置所有表格单元格高度
+        const allCells = document.querySelectorAll('.el-table th, .el-table td')
+        allCells.forEach(cell => {
+          cell.style.height = '24px'
+          cell.style.lineHeight = '24px'
+          cell.style.fontSize = '10px'
+          cell.style.padding = '0'
+        })
+
+        // 设置表头行高度
+        const headerRows = document.querySelectorAll('.el-table__header tr')
+        headerRows.forEach(row => {
+          row.style.height = '24px'
+          row.style.minHeight = '24px'
+          row.style.maxHeight = '24px'
+        })
+
+        // 设置表体行高度
+        const bodyRows = document.querySelectorAll('.el-table__body tr')
+        bodyRows.forEach(row => {
+          row.style.height = '24px'
+          row.style.minHeight = '24px'
+          row.style.maxHeight = '24px'
+        })
+      }, 100)
+    },
+
     // 切换更多搜索条件显示
     toggleMoreSearch() {
       this.showMoreSearch = !this.showMoreSearch
@@ -627,6 +770,10 @@ export default {
             // 再次强制更新
             this.$nextTick(() => {
               this.$forceUpdate()
+              // 数据更新后强制设置表格行高
+              setTimeout(() => {
+                this.forceTableRowHeight()
+              }, 200)
             })
           })
         } else {
@@ -665,8 +812,6 @@ export default {
     handleNodeSelect(data) {
       this.selectedDirectory = data
       this.searchForm.directoryId = data.directoryId
-      console.log('选中目录:', data)
-      console.log('设置directoryId:', data.directoryId)
       this.loadData()
     },
 
@@ -677,60 +822,45 @@ export default {
         return
       }
 
-      this.dialogMode = 'edit'
-      this.dialogTitle = '新增需求点'
-      this.dialogVisible = true
-      this.formData = {
-        requirePointId: '',
-        requirePointDesc: '',
-        requirePointType: '',
-        analysisMethod: '',
-        remark: '',
-        directoryId: this.selectedDirectory.directoryId,
-        systemId: this.selectedDirectory.systemId
-      }
+      // 跳转到新建需求点页面
+      this.$router.push({
+        name: 'requireDetail',
+        query: {
+          mode: 'create',
+          directoryId: this.selectedDirectory.directoryId,
+          systemId: this.selectedDirectory.systemId
+        }
+      })
     },
 
     // 编辑
-    async handleEdit(row) {
-      try {
-        this.loading = true
-        const response = await requireRepositoryApi.getRequirePointById(row.requirePointId)
-        if (response.code === 20000) {
-          this.formData = { ...response.data }
-          this.dialogMode = 'edit'
-          this.dialogTitle = '编辑需求点'
-          this.dialogVisible = true
-        } else {
-          this.$message.error(response.message || '获取详情失败')
+    handleEdit(row) {
+      // 跳转到编辑需求点页面
+      this.$router.push({
+        name: 'requireDetail',
+        query: {
+          mode: 'edit',
+          id: row.requirePointId
         }
-      } catch (error) {
-        console.error('获取需求点详情失败:', error)
-        this.$message.error('获取详情失败')
-      } finally {
-        this.loading = false
-      }
+      })
     },
 
     // 查看
-    async handleView(row) {
-      try {
-        this.loading = true
-        const response = await requireRepositoryApi.getRequirePointById(row.requirePointId)
-        if (response.code === 20000) {
-          this.formData = { ...response.data }
-          this.dialogMode = 'view'
-          this.dialogTitle = '查看需求点详情'
-          this.dialogVisible = true
-        } else {
-          this.$message.error(response.message || '获取详情失败')
+    handleView(row) {
+      // 跳转到查看需求点页面
+      this.$router.push({
+        name: 'requireDetail',
+        query: {
+          mode: 'view',
+          id: row.requirePointId
         }
-      } catch (error) {
-        console.error('获取需求点详情失败:', error)
-        this.$message.error('获取详情失败')
-      } finally {
-        this.loading = false
-      }
+      })
+    },
+
+    // 双击行事件 - 进入查看页面
+    handleRowDblClick(row) {
+      // 复用handleView方法的逻辑
+      this.handleView(row)
     },
 
     // 删除
@@ -1189,14 +1319,14 @@ export default {
 
 #search .el-input__inner {
   width: 100% !important;
-  height: 35px !important;
-  line-height: 35px !important;
+  height: 24px !important;
+  line-height: 24px !important;
 }
 
 #search .el-select .el-input__inner {
   width: 100% !important;
-  height: 35px !important;
-  line-height: 35px !important;
+  height: 24px !important;
+  line-height: 24px !important;
 }
 
 /* 按钮样式调整 */
@@ -1204,6 +1334,28 @@ export default {
   padding: 6px 8px;
   font-size: 11px;
   margin-left: 2px;
+}
+
+/* 小字体样式 - 查询条件输入框 */
+.search-input-small .el-input__inner {
+  font-size: 10px !important;
+  padding: 0 6px !important;
+}
+
+.search-select-small .el-input__inner {
+  font-size: 10px !important;
+  padding: 0 6px !important;
+}
+
+.search-select-small .el-select-dropdown__item {
+  font-size: 10px !important;
+  padding: 4px 8px !important;
+}
+
+.search-button-small {
+  font-size: 10px !important;
+  padding: 3px 6px !important;
+  height: 24px !important;
 }
 
 .el-card{
@@ -1292,45 +1444,76 @@ export default {
 }
 
 .table-wrapper .el-table th {
-  padding: 2px 0 !important;
-  font-size: 12px;
+  padding: 0px 0 !important;
+  font-size: 10px;
   font-weight: 500;
-  height: 35px !important;
-  line-height: 35px !important;
+  height: 24px !important;
+  line-height: 24px !important;
 }
 
 .table-wrapper .el-table td {
-  padding: 1px 0 !important;
-  font-size: 12px;
-  height: 35px !important;
-  line-height: 35px !important;
+  padding: 0px 0 !important;
+  font-size: 10px;
+  height: 24px !important;
+  line-height: 24px !important;
 }
 
-/* 使用更强的选择器 */
+/* 使用更强的选择器覆盖Element UI默认样式 */
 .el-table th,
 .el-table td {
-  height: 35px !important;
-  line-height: 35px !important;
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0 !important;
 }
 
 /* 针对表格行 */
 .el-table__row {
-  height: 35px !important;
+  height: 24px !important;
+}
+
+/* 强制覆盖Element UI的列高度 */
+.el-table__header-wrapper .el-table th,
+.el-table__body-wrapper .el-table td,
+.el-table__footer-wrapper .el-table td {
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0 !important;
+}
+
+/* 针对具体的列 */
+.el-table .el-table__header th,
+.el-table .el-table__body td {
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0 !important;
+}
+
+/* 覆盖所有可能的表格列样式 */
+.el-table .el-table__column {
+  height: 24px !important;
+}
+
+/* 强制设置表格行高 */
+.el-table tbody tr,
+.el-table thead tr {
+  height: 24px !important;
 }
 
 .table-wrapper .el-table .cell {
-  padding: 0 6px;
+  padding: 0 3px;
   line-height: 1.1;
-  height: 35px;
+  height: 24px;
   display: flex;
   align-items: center;
+  font-size: 10px;
 }
 
 /* 调整按钮大小 */
 .table-wrapper .el-button--mini {
-  padding: 4px 8px;
-  font-size: 11px;
+  padding: 1px 4px;
+  font-size: 8px;
   margin: 1px 2px;
+  height: 18px;
 }
 
 /* 调整操作按钮区域的大小 */
@@ -1346,10 +1529,10 @@ export default {
 
 /* 调整标签大小 */
 .table-wrapper .el-tag {
-  font-size: 11px;
-  padding: 2px 6px;
-  height: 20px;
-  line-height: 16px;
+  font-size: 8px;
+  padding: 1px 3px;
+  height: 16px;
+  line-height: 12px;
 }
 
 .pagination-container {

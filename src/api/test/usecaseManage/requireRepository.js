@@ -31,6 +31,15 @@ export default {
   },
 
   /**
+   * 根据ID查询需求点详情（别名方法）
+   * @param {string} requirePointId 需求点ID
+   * @returns {Promise} 需求点详情
+   */
+  getRequirePointDetail(requirePointId) {
+    return this.getRequirePointById(requirePointId)
+  },
+
+  /**
    * 新增需求点
    * @param {Object} data 需求点数据
    * @returns {Promise} 新增结果

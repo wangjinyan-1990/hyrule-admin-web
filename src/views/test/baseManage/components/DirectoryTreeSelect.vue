@@ -9,6 +9,7 @@
         :default-expand-all="false"
         :default-expanded-keys="defaultExpandedKeys"
         :expand-on-click-node="true"
+        :key="treeKey"
         highlight-current
         @node-click="handleNodeClick"
         @node-expand="handleNodeExpand"
@@ -73,13 +74,30 @@ export default {
       selectedKey: '', // 保存选中的节点key
       defaultExpandedKeys: [], // 默认展开的节点keys
       iconUpdateKey: 0, // 用于强制更新图标
+      treeKey: 0, // 用于强制刷新树组件
       _settingIndentation: false, // 防止重复设置缩进的标志
       _indentationTimer: null // 防抖定时器
     }
   },
   created() {
+    // 先尝试从 sessionStorage 恢复展开状态
+    this._loadExpandedStateFromStorage()
+    // 然后加载根目录
     this.loadRootDirectories()
   },
+
+  activated() {
+    // 组件从缓存中激活时，尝试恢复展开状态
+    this._loadExpandedStateFromStorage()
+    
+    // 延迟尝试恢复展开状态
+    setTimeout(() => {
+      if (this.defaultExpandedKeys.length > 0) {
+        this._expandNodesRecursively()
+      }
+    }, 300)
+  },
+
   beforeDestroy() {
     // 清理定时器，避免内存泄漏
     if (this._indentationTimer) {
@@ -87,6 +105,162 @@ export default {
     }
   },
   methods: {
+    // 从 sessionStorage 加载展开状态
+    _loadExpandedStateFromStorage() {
+      try {
+        const savedState = sessionStorage.getItem('requireRepository_state')
+        if (savedState) {
+          const state = JSON.parse(savedState)
+          if (state.treeExpandedKeys && Array.isArray(state.treeExpandedKeys) && state.treeExpandedKeys.length > 0) {
+            this.expandedKeys = [...state.treeExpandedKeys]
+            this.defaultExpandedKeys = [...state.treeExpandedKeys]
+          }
+        }
+      } catch (error) {
+        console.error('从 sessionStorage 加载展开状态失败:', error)
+      }
+    },
+
+    // 递归展开节点
+    async _expandNodesRecursively() {
+      const tree = this.$refs.directoryTree
+      if (!tree || !this.defaultExpandedKeys || this.defaultExpandedKeys.length === 0) {
+        return
+      }
+
+      // 递归展开每个节点
+      for (const nodeKey of this.defaultExpandedKeys) {
+        await this._expandNodeAndLoadChildren(nodeKey)
+      }
+    },
+
+    // 展开节点并加载其子节点
+    async _expandNodeAndLoadChildren(nodeKey) {
+      const tree = this.$refs.directoryTree
+      if (!tree || !tree.store || !tree.store.nodesMap) {
+        return
+      }
+
+      const node = tree.store.nodesMap[nodeKey]
+      if (!node) {
+        return
+      }
+
+      // 如果节点未加载子节点，先加载
+      if (!node.loaded && node.data) {
+        try {
+          // 调用正确的方法名
+          const children = await this.loadChildrenDirectories(node.data)
+          
+          if (children && children.length > 0) {
+            // 将子节点添加到 node.data.children
+            if (!node.data.children) {
+              node.data.children = []
+            }
+            node.data.children.push(...children)
+            
+            // 标记节点已加载
+            node.loaded = true
+            
+            await this.$nextTick()
+          }
+        } catch (error) {
+          // 静默处理错误
+        }
+      }
+
+      // 设置节点为展开状态
+      node.expanded = true
+    },
+
+    // 设置选中的节点（外部调用）
+    setSelectedKey(key, expandedKeys = null) {
+      this.selectedKey = key
+      
+      // 如果提供了展开的keys，更新展开状态（但不重复执行，因为 _expandNodesRecursively 已经处理过了）
+      if (expandedKeys && Array.isArray(expandedKeys) && expandedKeys.length > 0) {
+        // 只更新内部状态，不刷新树
+        this.expandedKeys = [...expandedKeys]
+        this.defaultExpandedKeys = [...expandedKeys]
+      }
+      
+      // 只设置选中状态
+      this.$nextTick(() => {
+        setTimeout(() => {
+          const tree = this.$refs.directoryTree
+          if (tree && key && typeof tree.setCurrentKey === 'function') {
+            tree.setCurrentKey(key)
+          }
+        }, 100)
+      })
+    },
+
+    // 内部方法：恢复树的状态（备用方法，现已由 _expandNodesRecursively 替代）
+    async _restoreTreeState(key) {
+      const tree = this.$refs.directoryTree
+      if (!tree) {
+        return
+      }
+
+      // 恢复展开状态 - 逐级展开确保子节点被加载
+      if (this.expandedKeys.length > 0 && tree.store && tree.store.nodesMap) {
+        // 手动逐个展开节点（确保子节点被加载）
+        for (const nodeKey of this.expandedKeys) {
+          const node = tree.store.nodesMap[nodeKey]
+          if (node) {
+            // 如果节点有子节点但未加载，先加载子节点
+            if (!node.loaded && node.data && node.data.directoryId) {
+              try {
+                const nodeData = node.data
+                if (this.loadChildDirectories) {
+                  await this.loadChildDirectories(nodeData, node)
+                  await this.$nextTick()
+                  node.expanded = true
+                }
+              } catch (error) {
+                // 静默处理错误
+              }
+            } else {
+              // 节点已加载或没有子节点，直接设置展开
+              node.expanded = true
+            }
+          }
+        }
+        
+        // 所有节点处理完成后，统一刷新树的展开状态
+        if (typeof tree.setExpandedKeys === 'function') {
+          const existingExpandedKeys = this.expandedKeys.filter(k => tree.store.nodesMap[k])
+          tree.setExpandedKeys(existingExpandedKeys)
+        }
+      }
+      
+      // 设置选中状态
+      if (key && typeof tree.setCurrentKey === 'function') {
+        tree.setCurrentKey(key)
+      }
+
+      // 强制更新视图
+      this.$forceUpdate()
+    },
+
+    // 获取当前展开的节点keys（外部调用）
+    getExpandedKeys() {
+      const tree = this.$refs.directoryTree
+      
+      if (tree && tree.store && tree.store.nodesMap) {
+        const expandedKeys = []
+        Object.keys(tree.store.nodesMap).forEach(key => {
+          const node = tree.store.nodesMap[key]
+          if (node && node.expanded) {
+            expandedKeys.push(key)
+          }
+        })
+        return expandedKeys
+      }
+      
+      return this.expandedKeys
+    },
+
     async loadRootDirectories() {
       try {
         const userId = this.$store.getters.userId || 'admin'
@@ -109,6 +283,13 @@ export default {
           // 设置节点缩进样式
           this.$nextTick(() => {
             this.setNodeIndentation()
+            
+            // 如果有保存的展开状态，加载根目录后立即恢复
+            if (this.defaultExpandedKeys.length > 0) {
+              setTimeout(() => {
+                this._expandNodesRecursively()
+              }, 300)
+            }
           })
         }
       } catch (error) {

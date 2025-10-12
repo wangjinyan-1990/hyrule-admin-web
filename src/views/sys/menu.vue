@@ -471,6 +471,24 @@ export default {
   transform: rotate(-135deg);
 }
 
+/* 减小表格行高 */
+::v-deep .el-table th,
+::v-deep .el-table td {
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+}
+
+::v-deep .el-table__row {
+  height: 24px !important;
+}
+
+::v-deep .el-table .cell {
+  padding: 0 5px !important;
+  line-height: 24px !important;
+}
+
 </style>
 
 

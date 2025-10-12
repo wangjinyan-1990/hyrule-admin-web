@@ -381,7 +381,53 @@ export default {
     this.initializeComponent();
   },
 
+  mounted() {
+    // 强制设置表格行高
+    this.$nextTick(() => {
+      this.forceTableRowHeight();
+    });
+  },
+
   methods:{
+    // 强制设置表格行高
+    forceTableRowHeight() {
+      setTimeout(() => {
+        // 设置所有表格行高度
+        const allRows = document.querySelectorAll('.el-table__row');
+        allRows.forEach(row => {
+          row.style.height = '24px';
+          row.style.minHeight = '24px';
+          row.style.maxHeight = '24px';
+        });
+
+        // 设置所有表格单元格高度
+        const allCells = document.querySelectorAll('.el-table th, .el-table td');
+        allCells.forEach(cell => {
+          cell.style.height = '24px';
+          cell.style.lineHeight = '24px';
+          cell.style.fontSize = '12px';
+          cell.style.padding = '0';
+        });
+
+        // 设置表头行高度
+        const headerRows = document.querySelectorAll('.el-table__header tr');
+        headerRows.forEach(row => {
+          row.style.height = '24px';
+          row.style.minHeight = '24px';
+          row.style.maxHeight = '24px';
+        });
+
+        // 设置表体行高度
+        const bodyRows = document.querySelectorAll('.el-table__body tr');
+        bodyRows.forEach(row => {
+          row.style.height = '24px';
+          row.style.minHeight = '24px';
+          row.style.maxHeight = '24px';
+        });
+
+      }, 100);
+    },
+
     async initializeComponent() {
       try {
         // 先设置默认选项，确保组件能正常渲染
@@ -408,6 +454,13 @@ export default {
         .then(response => {
           this.testSystemList = response.data.rows || [];
           this.total = response.data.total || 0;
+          
+          // 数据加载完成后强制设置表格行高
+          this.$nextTick(() => {
+            setTimeout(() => {
+              this.forceTableRowHeight();
+            }, 200);
+          });
         })
         .catch(error => {
           this.$message.error('获取数据失败: ' + (error.message || '未知错误'));
@@ -783,5 +836,61 @@ export default {
   .el-table th {
     background-color: #fafafa;
     font-weight: 600;
+  }
+
+  /* 减小表格行高 - 使用更强的选择器 */
+  ::v-deep .el-table th,
+  ::v-deep .el-table td {
+    height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  ::v-deep .el-table__row {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  ::v-deep .el-table .cell {
+    padding: 0 5px !important;
+    line-height: 24px !important;
+    height: 24px !important;
+  }
+
+  /* 强制覆盖表格头部和主体的行高 */
+  ::v-deep .el-table__header-wrapper .el-table th,
+  ::v-deep .el-table__body-wrapper .el-table td {
+    height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  /* 强制设置表格行高 */
+  ::v-deep .el-table tbody tr,
+  ::v-deep .el-table thead tr {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  ::v-deep .el-button--mini {
+    padding: 3px 6px !important;
+    font-size: 10px !important;
+    height: 20px !important;
+    line-height: 18px !important;
+  }
+
+  /* 针对标签的样式优化 */
+  ::v-deep .el-tag {
+    height: 18px !important;
+    line-height: 16px !important;
+    padding: 0 5px !important;
+    font-size: 10px !important;
   }
 </style>

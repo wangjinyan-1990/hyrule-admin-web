@@ -115,6 +115,13 @@ export const asyncRoutes = [
             meta: { title: '需求库', icon: 'requireRepository' }
           },
           {
+            path: 'requireDetail',
+            name: 'requireDetail',
+            component: () => import('@/views/test/usecaseManage/requireDetail'),
+            meta: { title: '需求点详情', icon: 'document', noCache: true },
+            hidden: true
+          },
+          {
             path: 'useCaseRepository',
             name: 'useCaseRepository',
             component: () => import('@/views/test/usecaseManage/useCaseRepository'),
