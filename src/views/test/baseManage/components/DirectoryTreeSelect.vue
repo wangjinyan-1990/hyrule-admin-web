@@ -75,8 +75,8 @@ export default {
       defaultExpandedKeys: [], // 默认展开的节点keys
       iconUpdateKey: 0, // 用于强制更新图标
       treeKey: 0, // 用于强制刷新树组件
-      _settingIndentation: false, // 防止重复设置缩进的标志
-      _indentationTimer: null // 防抖定时器
+      settingIndentation: false, // 防止重复设置缩进的标志
+      indentationTimer: null // 防抖定时器
     }
   },
   created() {
@@ -89,7 +89,7 @@ export default {
   activated() {
     // 组件从缓存中激活时，尝试恢复展开状态
     this._loadExpandedStateFromStorage()
-    
+
     // 延迟尝试恢复展开状态
     setTimeout(() => {
       if (this.defaultExpandedKeys.length > 0) {
@@ -151,17 +151,16 @@ export default {
         try {
           // 调用正确的方法名
           const children = await this.loadChildrenDirectories(node.data)
-          
+
           if (children && children.length > 0) {
             // 将子节点添加到 node.data.children
             if (!node.data.children) {
               node.data.children = []
             }
             node.data.children.push(...children)
-            
+
             // 标记节点已加载
             node.loaded = true
-            
             await this.$nextTick()
           }
         } catch (error) {
@@ -176,14 +175,14 @@ export default {
     // 设置选中的节点（外部调用）
     setSelectedKey(key, expandedKeys = null) {
       this.selectedKey = key
-      
+
       // 如果提供了展开的keys，更新展开状态（但不重复执行，因为 _expandNodesRecursively 已经处理过了）
       if (expandedKeys && Array.isArray(expandedKeys) && expandedKeys.length > 0) {
         // 只更新内部状态，不刷新树
         this.expandedKeys = [...expandedKeys]
         this.defaultExpandedKeys = [...expandedKeys]
       }
-      
+
       // 只设置选中状态
       this.$nextTick(() => {
         setTimeout(() => {
@@ -226,14 +225,14 @@ export default {
             }
           }
         }
-        
+
         // 所有节点处理完成后，统一刷新树的展开状态
         if (typeof tree.setExpandedKeys === 'function') {
           const existingExpandedKeys = this.expandedKeys.filter(k => tree.store.nodesMap[k])
           tree.setExpandedKeys(existingExpandedKeys)
         }
       }
-      
+
       // 设置选中状态
       if (key && typeof tree.setCurrentKey === 'function') {
         tree.setCurrentKey(key)
@@ -246,7 +245,7 @@ export default {
     // 获取当前展开的节点keys（外部调用）
     getExpandedKeys() {
       const tree = this.$refs.directoryTree
-      
+
       if (tree && tree.store && tree.store.nodesMap) {
         const expandedKeys = []
         Object.keys(tree.store.nodesMap).forEach(key => {
@@ -257,7 +256,7 @@ export default {
         })
         return expandedKeys
       }
-      
+
       return this.expandedKeys
     },
 
@@ -265,7 +264,7 @@ export default {
       try {
         const userId = this.$store.getters.userId || 'admin'
         const response = await testDirectoryApi.getSystemsByUserId(userId)
-        
+
         if (response.code === 20000 && response.data?.rows) {
           this.treeData = response.data.rows.map(item => ({
             directoryId: item.directoryId,
@@ -279,11 +278,11 @@ export default {
             isLeafDirectory: item.isLeafDirectory, // 后端提供的叶子目录标识
             children: []
           }))
-          
+
           // 设置节点缩进样式
           this.$nextTick(() => {
             this.setNodeIndentation()
-            
+
             // 如果有保存的展开状态，加载根目录后立即恢复
             if (this.defaultExpandedKeys.length > 0) {
               setTimeout(() => {
@@ -302,8 +301,8 @@ export default {
           parentData.directoryId,
           parentData.systemId
         )
-        
-        
+
+
         if (response.code === 20000 && response.data?.rows) {
           const children = response.data.rows.map(item => ({
             directoryId: item.directoryId,
@@ -317,27 +316,25 @@ export default {
             isLeafDirectory: item.isLeafDirectory, // 后端提供的叶子目录标识
             children: []
           }))
-          
-          
+
+
           // 使用Vue.set确保响应式更新
           this.$set(parentData, 'children', children)
-          
+
           // 设置hasChildren属性：根据isLeafDirectory字段判断
-            // isLeafDirectory: "1" 表示叶子目录(没有子目录)，"0" 表示不是叶子目录(有子目录)
-            const hasChildren = children.some(child => child.isLeafDirectory !== "1")
-            this.$set(parentData, 'hasChildren', hasChildren)
-            
-            
+          // isLeafDirectory: "1" 表示叶子目录(没有子目录)，"0" 表示不是叶子目录(有子目录)
+          const hasChildren = children.some(child => child.isLeafDirectory !== "1")
+          this.$set(parentData, 'hasChildren', hasChildren)
           // 更新图标更新key以强制重新渲染图标
           this.iconUpdateKey++
-          
+
           // 强制触发响应式更新
           this.$forceUpdate()
-          
+
           // 等待DOM更新后，尝试展开父节点
           await this.$nextTick()
           this.expandParentNode(parentData.directoryId)
-          
+
           // 重新设置展开图标位置（延迟执行，避免重复调用）
           this.$nextTick(() => {
             setTimeout(() => {
@@ -348,7 +345,7 @@ export default {
               }
             }, 100)
           })
-          
+
           return children
         } else {
           return []
@@ -369,25 +366,24 @@ export default {
 
     async handleNodeClick(data, node) {
       this.$emit('node-select', data)
-      
+
       // 保存当前选中的节点
       this.selectedKey = data.directoryId
-      
+
       // 如果节点没有子节点，尝试加载子目录
       if (node.childNodes.length === 0) {
         try {
           const children = await this.loadChildrenDirectories(data)
           if (children.length > 0) {
-               // 强制更新树组件
-               this.$forceUpdate()
-               
-               // 等待DOM更新后，强制展开节点
-               await this.$nextTick()
-               setTimeout(() => {
-                 this.forceExpandNode(data.directoryId)
-                 // 再次强制更新以确保图标正确显示
-                 this.$forceUpdate()
-               }, 100)
+            // 强制更新树组件
+            this.$forceUpdate()
+            // 等待DOM更新后，强制展开节点
+            await this.$nextTick()
+            setTimeout(() => {
+              this.forceExpandNode(data.directoryId)
+              // 再次强制更新以确保图标正确显示
+              this.$forceUpdate()
+            }, 100)
           } else {
           }
         } catch (error) {
@@ -415,23 +411,23 @@ export default {
       const tree = this.$refs.directoryTree
       if (tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeId]) {
         const treeNode = tree.store.nodesMap[nodeId]
-        
+
         // 添加到展开的keys中
         if (!this.expandedKeys.includes(nodeId)) {
           this.expandedKeys.push(nodeId)
         }
-        
+
         // 使用Element UI的方法展开节点
         if (typeof tree.setExpandedKeys === 'function') {
           tree.setExpandedKeys([...this.expandedKeys])
         }
-        
+
         // 设置树节点状态
         treeNode.expanded = true
-        
+
         // 强制更新
         this.$forceUpdate()
-        
+
       } else {
       }
     },
@@ -441,24 +437,24 @@ export default {
       const tree = this.$refs.directoryTree
       if (tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeId]) {
         const treeNode = tree.store.nodesMap[nodeId]
-        
+
         // 从展开的keys中移除
         const index = this.expandedKeys.indexOf(nodeId)
         if (index > -1) {
           this.expandedKeys.splice(index, 1)
         }
-        
+
         // 使用Element UI的方法收起节点
         if (typeof tree.setExpandedKeys === 'function') {
           tree.setExpandedKeys([...this.expandedKeys])
         }
-        
+
         // 设置树节点状态
         treeNode.expanded = false
-        
+
         // 强制更新
         this.$forceUpdate()
-        
+
       } else {
       }
     },
@@ -470,7 +466,7 @@ export default {
         const treeNode = tree.store.nodesMap[nodeId]
         const isInExpandedKeys = this.expandedKeys.includes(nodeId)
         const treeExpanded = treeNode?.expanded
-        
+
         console.log('节点状态调试:', {
           nodeId: nodeId,
           treeExpanded: treeExpanded,
@@ -479,7 +475,7 @@ export default {
           expandedKeys: [...this.expandedKeys],
           shouldBeExpanded: isInExpandedKeys
         })
-        
+
         // 如果状态不一致，输出警告
         if (treeExpanded !== isInExpandedKeys) {
           console.warn('状态不一致！树节点expanded:', treeExpanded, '展开keys包含:', isInExpandedKeys)
@@ -493,7 +489,7 @@ export default {
       if (this._indentationTimer) {
         clearTimeout(this._indentationTimer)
       }
-      
+
       this._indentationTimer = setTimeout(() => {
         this._doSetNodeIndentation()
       }, 50)
@@ -506,44 +502,32 @@ export default {
         if (tree && tree.$el) {
           // 直接通过CSS选择器设置缩进
           const nodes = tree.$el.querySelectorAll('.custom-tree-node[data-level]')
-          console.log('找到节点数量:', nodes.length)
-          
           nodes.forEach((node, index) => {
             const level = parseInt(node.getAttribute('data-level')) || 0
             const treeNode = node.closest('.el-tree-node')
             const content = treeNode ? treeNode.querySelector('.el-tree-node__content') : null
             const expandIcon = treeNode ? treeNode.querySelector('.el-tree-node__expand-icon') : null
-            
-            // 减少日志输出，提高性能
-            // console.log(`节点${index}:`, {
-            //   level: level,
-            //   treeNode: !!treeNode,
-            //   content: !!content,
-            //   expandIcon: !!expandIcon,
-            //   nodeText: node.textContent?.trim()
-            // })
-            
             if (content) {
               // 设置缩进：基础4px + 层级 * 8px，优化空间利用
               const paddingLeft = 4 + level * 8
-              
+
               // 强制设置样式，使用!important
               content.style.setProperty('padding-left', `${paddingLeft}px`, 'important')
               content.style.setProperty('margin-left', '0px', 'important')
               content.style.setProperty('text-indent', '0px', 'important')
-              
+
               // 同时设置父容器的样式
               if (treeNode) {
                 treeNode.style.setProperty('padding-left', '0px', 'important')
                 treeNode.style.setProperty('margin-left', '0px', 'important')
               }
-              
+
               // 设置展开图标位置：只为有子节点的节点显示展开图标
               if (expandIcon) {
                 // 直接从treeData中查找对应的节点数据
                 const nodeText = node.textContent?.trim() || ''
                 const level = parseInt(node.getAttribute('data-level')) || 0
-                
+
                 // 递归查找节点数据
                 const findNodeData = (treeData, targetText, targetLevel, currentLevel = 0) => {
                   for (const item of treeData) {
@@ -557,25 +541,19 @@ export default {
                   }
                   return null
                 }
-                
+
                 const nodeData = findNodeData(this.treeData, nodeText, level)
                 // 使用后端提供的isLeafDirectory字段判断是否有子节点
                 // isLeafDirectory: "1" 表示叶子目录(没有子目录)，"0" 表示不是叶子目录(有子目录)
                 const hasChildren = nodeData ? nodeData.isLeafDirectory !== "1" : false
-                
+
                 // 检查Element UI树的展开状态
                 const tree = this.$refs.directoryTree
-                const isExpanded = tree && tree.store && tree.store.nodesMap && tree.store.nodesMap[nodeData?.directoryId]?.expanded
-                const isInExpandedKeys = this.expandedKeys.includes(nodeData?.directoryId)
-                
-                // 减少日志输出，提高性能
-                // console.log(`🔍 节点 "${nodeText}" (层级${level}) 子节点检查: hasChildren=${hasChildren}, isExpanded=${isExpanded}`)
-                
                 if (hasChildren) {
                   // 重新设计布局：展开图标在文件夹图标的左侧，间距8px
                   // 展开图标位置：paddingLeft
                   // 文件夹图标位置：paddingLeft + 16px（展开图标宽度）+ 8px（间距）= paddingLeft + 24px
-                  
+
                   // 展开图标样式
                   expandIcon.style.setProperty('position', 'absolute', 'important')
                   expandIcon.style.setProperty('top', '50%', 'important')
@@ -594,7 +572,7 @@ export default {
                   expandIcon.style.setProperty('pointer-events', 'auto', 'important')
                   expandIcon.style.setProperty('visibility', 'visible', 'important')
                   expandIcon.style.setProperty('opacity', '1', 'important')
-                  
+
                   // 设置文件夹图标的margin-left，为展开图标预留空间
                   const folderIcon = content.querySelector('.el-icon-folder-opened')
                   if (folderIcon) {
@@ -602,35 +580,25 @@ export default {
                     folderIcon.style.setProperty('margin-left', '24px', 'important')
                     console.log(`✅ 设置文件夹图标左边距: 24px`)
                   }
-                  
+
                   // 移除之前的事件监听器，避免重复添加
                   if (expandIcon._clickHandler) {
                     expandIcon.removeEventListener('click', expandIcon._clickHandler)
                   }
-                  
+
                   // 添加展开图标的点击事件处理
                   const clickHandler = (e) => {
                     e.stopPropagation()
                     e.preventDefault()
-                    console.log('🎯 展开图标被点击:', nodeData)
-                    console.log('🎯 展开图标元素:', expandIcon)
-                    console.log('🎯 当前树数据:', this.treeData)
-                    
                     // 检查节点是否已有子节点
                     const tree = this.$refs.directoryTree
                     if (tree && tree.store && tree.store.nodesMap) {
                       const treeNode = tree.store.nodesMap[nodeData.directoryId]
                       if (treeNode) {
-                        console.log('树节点信息:', treeNode)
-                        console.log('当前展开状态:', treeNode.expanded)
-                        console.log('展开keys:', this.expandedKeys)
-                        
                         // 如果节点没有子节点，先加载子目录
                         if (!treeNode.childNodes || treeNode.childNodes.length === 0) {
-                          console.log('节点没有子节点，开始加载子目录...')
                           this.loadChildrenDirectories(nodeData).then(children => {
                             if (children.length > 0) {
-                              console.log('子目录加载成功，强制展开节点')
                               // 强制更新树组件
                               this.$forceUpdate()
                               this.$nextTick(() => {
@@ -653,17 +621,15 @@ export default {
                           console.log('节点已有子节点，直接切换展开状态')
                           // 以展开keys为准判断当前状态
                           const isCurrentlyExpanded = this.expandedKeys.includes(nodeData.directoryId)
-                          
+
                           if (isCurrentlyExpanded) {
-                            console.log('收起节点:', nodeData.directoryId)
                             this.debugNodeState(nodeData.directoryId)
                             this.forceCollapseNode(nodeData.directoryId)
                           } else {
-                            console.log('展开节点:', nodeData.directoryId)
                             this.debugNodeState(nodeData.directoryId)
                             this.forceExpandNode(nodeData.directoryId)
                           }
-                          
+
                           // 重新设置展开图标位置（避免重复调用）
                           this.$nextTick(() => {
                             if (!this._settingIndentation) {
@@ -676,33 +642,26 @@ export default {
                       }
                     }
                   }
-                  
+
                   // 添加事件监听器
                   expandIcon.addEventListener('click', clickHandler)
-                  
+
                   // 保存事件处理器引用，用于后续移除
                   expandIcon._clickHandler = clickHandler
-                  
-                  console.log(`✅ 展开图标位置: ${paddingLeft}px (文件夹图标位置: ${paddingLeft + 24}px, 展开图标右侧位置: ${paddingLeft + 16}px, 实际间距: 8px, 目标间距: 8px)`)
                 } else {
                   // 叶子节点：隐藏展开图标，文件夹图标左对齐
                   expandIcon.style.setProperty('display', 'none', 'important')
                   expandIcon.style.setProperty('visibility', 'hidden', 'important')
                   expandIcon.style.setProperty('opacity', '0', 'important')
                   expandIcon.style.setProperty('pointer-events', 'none', 'important')
-                  
+
                   // 叶子节点的文件夹图标左边距较小，用于视觉对齐
                   const folderIcon = content.querySelector('.el-icon-folder')
                   if (folderIcon) {
                     folderIcon.style.setProperty('margin-left', '16px', 'important')
-                    console.log(`✅ 叶子节点文件夹图标左边距: 16px`)
                   }
-                  
-                  console.log(`❌ 叶子节点隐藏展开图标: 节点="${nodeText}"`)
                 }
               }
-              
-              console.log(`✅ 设置节点层级${level}缩进${paddingLeft}px`, content.style.paddingLeft)
             } else {
               console.log(`❌ 未找到content元素`)
             }
@@ -715,7 +674,7 @@ export default {
     getNodeLevel(node) {
       let level = 0
       let current = node
-      
+
       // 向上查找父级节点，计算层级
       while (current && current.parentElement) {
         current = current.parentElement
@@ -728,8 +687,6 @@ export default {
           break
         }
       }
-      
-      console.log('计算节点层级:', level, node)
       return level
     },
 
@@ -755,10 +712,10 @@ export default {
         const isLeafDirectory = data.isLeafDirectory
         console.log(`节点 ${data.directoryName} 的叶子目录检查:`, {
           isLeafDirectory: isLeafDirectory,
-          iconType: isLeafDirectory === "0" ? 'black-folder' : 'normal-folder'
+          iconType: isLeafDirectory === 0 ? 'black-folder' : 'normal-folder'
         })
-        
-        if (isLeafDirectory === "0") {
+
+        if (isLeafDirectory === 0) {
           // 不是叶子目录，有子目录，使用黑色文件夹图标
           return 'el-icon-folder-opened'
         } else {
@@ -770,36 +727,22 @@ export default {
 
     async refreshData() {
       console.log('=== 开始刷新数据 ===')
-      
+
       // 保存当前展开状态
       this.saveExpandedState()
-      console.log('保存的展开状态:', this.expandedKeys)
-      console.log('保存的选中状态:', this.selectedKey)
-      
       // 设置默认展开的keys
       this.defaultExpandedKeys = [...this.expandedKeys]
-      console.log('设置defaultExpandedKeys:', this.defaultExpandedKeys)
-      
       // 完全重新加载数据
       await this.loadRootDirectories()
-      console.log('根目录数据重新加载完成')
-      
       // 重新加载所有展开节点的子目录
       await this.reloadExpandedChildren()
-      console.log('子目录数据重新加载完成')
-      
       // 强制重新渲染树组件
       const newData = [...this.treeData]
       this.treeData = []
       await this.$nextTick()
       this.treeData = newData
       await this.$nextTick()
-      
-      // 恢复展开状态
-      console.log('DOM更新完成，开始恢复状态')
       this.restoreExpandedState()
-      
-      console.log('=== 数据刷新完成 ===')
     },
 
     // 重新加载所有展开节点的子目录
@@ -807,13 +750,9 @@ export default {
       if (this.expandedKeys.length === 0) {
         return
       }
-      
-      console.log('开始重新加载展开节点的子目录:', this.expandedKeys)
-      
       for (const key of this.expandedKeys) {
         const node = this.findNodeByKey(this.treeData, key)
         if (node && node.directoryId) {
-          console.log('重新加载节点子目录:', key, node.directoryName)
           await this.loadChildrenDirectories(node)
         }
       }
@@ -847,41 +786,32 @@ export default {
             this.expandedKeys.push(key)
           }
         })
-        console.log('保存展开状态:', this.expandedKeys)
       }
     },
 
     // 恢复展开状态
     restoreExpandedState() {
       const tree = this.$refs.directoryTree
-      console.log('恢复展开状态 - tree:', !!tree, 'expandedKeys:', this.expandedKeys)
-      
       if (tree && this.expandedKeys.length > 0) {
-        console.log('开始恢复展开状态:', this.expandedKeys)
-        
         // 使用setExpandedKeys方法
         if (typeof tree.setExpandedKeys === 'function') {
-          console.log('使用setExpandedKeys方法')
           tree.setExpandedKeys(this.expandedKeys)
         } else {
-          console.log('使用降级方案：直接操作节点状态')
           // 降级方案：直接操作节点状态
           this.expandedKeys.forEach(key => {
             if (tree.store && tree.store.nodesMap && tree.store.nodesMap[key]) {
-              console.log('设置节点展开:', key)
               tree.store.nodesMap[key].expanded = true
             } else {
               console.log('节点不存在或store不可用:', key)
             }
           })
         }
-        
+
         // 恢复选中状态
         if (this.selectedKey && typeof tree.setCurrentKey === 'function') {
-          console.log('恢复选中状态:', this.selectedKey)
           tree.setCurrentKey(this.selectedKey)
         }
-        
+
         // 延迟重试恢复状态
         setTimeout(() => {
           this.retryRestoreState()
@@ -895,16 +825,13 @@ export default {
     retryRestoreState() {
       const tree = this.$refs.directoryTree
       if (tree && this.expandedKeys.length > 0) {
-        console.log('重试恢复展开状态:', this.expandedKeys)
-        
         // 强制设置展开状态
         this.expandedKeys.forEach(key => {
           if (tree.store && tree.store.nodesMap && tree.store.nodesMap[key]) {
             tree.store.nodesMap[key].expanded = true
-            console.log('重试设置节点展开:', key)
           }
         })
-        
+
         // 强制更新
         this.$forceUpdate()
       }
@@ -1164,7 +1091,7 @@ export default {
   justify-content: center !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  
+
   /* 确保图标颜色和大小 */
   color: #606266 !important;
   font-size: 12px !important;

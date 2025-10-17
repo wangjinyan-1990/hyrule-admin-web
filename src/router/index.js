@@ -124,16 +124,36 @@ export const asyncRoutes = [
           {
             path: 'useCaseRepository',
             name: 'useCaseRepository',
-            component: () => import('@/views/test/usecaseManage/useCaseRepository'),
-            meta: { title: '用例库', icon: 'useCaseRepository' }
+            component: () => import('@/views/test/usecaseManage/usecaseRepository'),
+            meta: { title: '用例库', icon: 'usecaseRepository' }
+          },
+          {
+            path: 'usecaseDetail',
+            name: 'usecaseDetail',
+            component: () => import('@/views/test/usecaseManage/usecaseDetail'),
+            meta: { title: '用例详情', icon: 'document', noCache: true },
+            hidden: true
           },
           {
             path: 'useCaseExecution',
             name: 'useCaseExecution',
-            component: () => import('@/views/test/usecaseManage/useCaseExecution'),
-            meta: { title: '执行库', icon: 'useCaseExecution' }
+            component: () => import('@/views/test/usecaseManage/usecaseExecution'),
+            meta: { title: '执行库', icon: 'usecaseExecution' }
           }
         ]
+      },
+      {
+        path: 'bugManage',
+        name: 'bugManage',
+        component: () => import('@/views/test/bugManage/bugManage'),
+        meta: { title: '缺陷管理', icon: 'bugManage' }
+      },
+      {
+        path: 'bugDetail',
+        name: 'bugDetail',
+        component: () => import('@/views/test/bugManage/bugDetail'),
+        meta: { title: '缺陷详情', icon: 'document', noCache: true },
+        hidden: true
       }
     ]
   },
