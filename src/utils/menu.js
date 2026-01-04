@@ -72,13 +72,12 @@ function resolveComponent(component) {
     '/test/baseManage/testDirectory': () => import('@/views/test/baseManage/testDirectory'),
     '/tools/toolset': () => import('@/views/tools/toolset'),
     '/tools/notebook': () => import('@/views/tools/notebook'),
-    '/nested/menu1/index': () => import('@/views/nested/menu1/index'),
-    '/nested/menu1/menu1-1': () => import('@/views/nested/menu1/menu1-1/index'),
-    '/nested/menu1/menu1-2': () => import('@/views/nested/menu1/menu1-2/index'),
-    '/nested/menu1/menu1-2/menu1-2-1': () => import('@/views/nested/menu1/menu1-2/menu1-2-1/index'),
-    '/nested/menu1/menu1-2/menu1-2-2': () => import('@/views/nested/menu1/menu1-2/menu1-2-2/index'),
-    '/nested/menu1/menu1-3': () => import('@/views/nested/menu1/menu1-3/index'),
-    '/nested/menu2/index': () => import('@/views/nested/menu2/index')
+    '/configuration/deploy/index': () => import('@/views/configuration/deploy/index'),
+    '/configuration/deploy/sitDeploy': () => import('@/views/configuration/deploy/sitDeploy/index'),
+    '/configuration/deploy/patDeploy': () => import('@/views/configuration/deploy/patDeploy/index'),
+    '/configuration/deploy/sitDeploy/menu2-1': () => import('@/views/configuration/deploy/sitDeploy/menu2-1/index'),
+    '/configuration/deploy/patDeploy/menu2-2': () => import('@/views/configuration/deploy/patDeploy/menu2-2/index'),
+    '/nested/sysConfigInfo/index': () => import('@/views/configuration/sysConfigInfo/index')
   }
 
   // 如果在映射中找到了对应的组件，返回对应的导入函数

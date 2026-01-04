@@ -70,95 +70,6 @@ export const asyncRoutes = [
   },
 
   {
-    path: '/test',
-    component: Layout,
-    name: 'test',
-    meta: { title: '测试模块', icon: 'testModule' },
-    children: [
-      {
-        path: 'baseManage',
-        name: 'baseManage',
-        component: () => import('@/views/test/baseManage/index'),
-        meta: { title: '基础管理', icon: 'baseManage' },
-        children: [
-          {
-            path: 'testSystem',
-            name: 'testSystem',
-            component: () => import('@/views/test/baseManage/testSystem'),
-            meta: { title: '测试系统维护', icon: 'testSystem' }
-          },
-          {
-            path: 'testSystemMember',
-            name: 'testSystemMember',
-            component: () => import('@/views/test/baseManage/testSystemMember'),
-            meta: { title: '系统成员维护', icon: 'testSystemMember' }
-          },
-          {
-            path: 'testDirectory',
-            name: 'testDirectory',
-            component: () => import('@/views/test/baseManage/testDirectory'),
-            meta: { title: '测试目录维护', icon: 'testDirectory' }
-          }
-        ]
-      },
-      {
-        path: 'usecaseManage',
-        name: 'usecaseManage',
-        component: () => import('@/views/test/usecaseManage/index'),
-        redirect: '/test/usecaseManage/requireRepository',
-        meta: { title: '用例管理', icon: 'usecaseManage' },
-        children: [
-          {
-            path: 'requireRepository',
-            name: 'requireRepository',
-            component: () => import('@/views/test/usecaseManage/requireRepository'),
-            meta: { title: '需求库', icon: 'requireRepository' }
-          },
-          {
-            path: 'requireDetail',
-            name: 'requireDetail',
-            component: () => import('@/views/test/usecaseManage/requireDetail'),
-            meta: { title: '需求点详情', icon: 'document', noCache: true },
-            hidden: true
-          },
-          {
-            path: 'useCaseRepository',
-            name: 'useCaseRepository',
-            component: () => import('@/views/test/usecaseManage/usecaseRepository'),
-            meta: { title: '用例库', icon: 'usecaseRepository' }
-          },
-          {
-            path: 'usecaseDetail',
-            name: 'usecaseDetail',
-            component: () => import('@/views/test/usecaseManage/usecaseDetail'),
-            meta: { title: '用例详情', icon: 'document', noCache: true },
-            hidden: true
-          },
-          {
-            path: 'useCaseExecution',
-            name: 'useCaseExecution',
-            component: () => import('@/views/test/usecaseManage/usecaseExecution'),
-            meta: { title: '执行库', icon: 'usecaseExecution' }
-          }
-        ]
-      },
-      {
-        path: 'bugManage',
-        name: 'bugManage',
-        component: () => import('@/views/test/bugManage/bugManage'),
-        meta: { title: '缺陷管理', icon: 'bugManage' }
-      },
-      {
-        path: 'bugDetail',
-        name: 'bugDetail',
-        component: () => import('@/views/test/bugManage/bugDetail'),
-        meta: { title: '缺陷详情', icon: 'document', noCache: true },
-        hidden: true
-      }
-    ]
-  },
-
-  {
     path: '/tools',
     component: Layout,
     redirect: '/tools',
@@ -308,7 +219,7 @@ export const asyncRoutes = [
         path: 'expressionCalculator',
         name: 'expressionCalculator',
         component: () => import('@/components/Tools/expressionCalculator'),
-        meta: { title: '表达式计算器', icon: 'toolset' },
+        meta: { title: '计算器', icon: 'toolset' },
         hidden: true
       },
       {
@@ -316,6 +227,13 @@ export const asyncRoutes = [
         name: 'loanCalculator',
         component: () => import('@/components/Tools/loanCalculator'),
         meta: { title: '贷款计算器', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'dateCalculator',
+        name: 'dateCalculator',
+        component: () => import('@/components/Tools/dateCalculator'),
+        meta: { title: '天数计算器', icon: 'toolset' },
         hidden: true
       },
       {
@@ -330,13 +248,6 @@ export const asyncRoutes = [
         name: 'crontabCalculator',
         component: () => import('@/components/Tools/crontabCalculator'),
         meta: { title: 'Crontab执行时间计算', icon: 'toolset' },
-        hidden: true
-      },
-      {
-        path: 'dateCalculator',
-        name: 'dateCalculator',
-        component: () => import('@/components/Tools/dateCalculator'),
-        meta: { title: '天数计算器', icon: 'toolset' },
         hidden: true
       },
       {
@@ -384,58 +295,144 @@ export const asyncRoutes = [
   },
 
   {
-    path: '/nested',
+    path: '/test',
     component: Layout,
-    redirect: '/nested/menu1',
-    name: 'Nested',
-    meta: { title: 'Nested', icon: 'nested' },
+    name: 'test',
+    meta: { title: '测试模块', icon: 'testModule' },
     children: [
       {
-        path: 'menu1',
-        component: () => import('@/views/nested/menu1/index'),
-        name: 'Menu1',
-        meta: { title: 'Menu1' },
+        path: 'baseManage',
+        name: 'baseManage',
+        component: () => import('@/views/test/baseManage/index'),
+        meta: { title: '基础管理', icon: 'baseManage' },
         children: [
           {
-            path: 'menu1-1',
-            component: () => import('@/views/nested/menu1/menu1-1'),
-            name: 'Menu1-1',
-            meta: { title: 'Menu1-1' }
+            path: 'testSystem',
+            name: 'testSystem',
+            component: () => import('@/views/test/baseManage/testSystem'),
+            meta: { title: '测试系统维护', icon: 'testSystem' }
           },
           {
-            path: 'menu1-2',
-            component: () => import('@/views/nested/menu1/menu1-2'),
-            name: 'Menu1-2',
-            meta: { title: 'Menu1-2' },
-            children: [
-              {
-                path: 'menu1-2-1',
-                component: () => import('@/views/nested/menu1/menu1-2/menu1-2-1'),
-                name: 'Menu1-2-1',
-                meta: { title: 'Menu1-2-1' }
-              },
-              {
-                path: 'menu1-2-2',
-                component: () => import('@/views/nested/menu1/menu1-2/menu1-2-2'),
-                name: 'Menu1-2-2',
-                meta: { title: 'Menu1-2-2' }
-              }
-            ]
+            path: 'testSystemMember',
+            name: 'testSystemMember',
+            component: () => import('@/views/test/baseManage/testSystemMember'),
+            meta: { title: '系统成员维护', icon: 'testSystemMember' }
           },
           {
-            path: 'menu1-3',
-            component: () => import('@/views/nested/menu1/menu1-3'),
-            name: 'Menu1-3',
-            meta: { title: 'Menu1-3' }
+            path: 'testDirectory',
+            name: 'testDirectory',
+            component: () => import('@/views/test/baseManage/testDirectory'),
+            meta: { title: '测试目录维护', icon: 'testDirectory' }
           }
         ]
       },
       {
-        path: 'menu2',
-        component: () => import('@/views/nested/menu2/index'),
-        name: 'Menu2',
-        meta: { title: 'menu2' }
+        path: 'usecaseManage',
+        name: 'usecaseManage',
+        component: () => import('@/views/test/usecaseManage/index'),
+        redirect: '/test/usecaseManage/requireRepository',
+        meta: { title: '用例管理', icon: 'usecaseManage' },
+        children: [
+          {
+            path: 'requireRepository',
+            name: 'requireRepository',
+            component: () => import('@/views/test/usecaseManage/requireRepository'),
+            meta: { title: '需求库', icon: 'requireRepository' }
+          },
+          {
+            path: 'requireDetail',
+            name: 'requireDetail',
+            component: () => import('@/views/test/usecaseManage/requireDetail'),
+            meta: { title: '需求点详情', icon: 'document', noCache: true },
+            hidden: true
+          },
+          {
+            path: 'useCaseRepository',
+            name: 'useCaseRepository',
+            component: () => import('@/views/test/usecaseManage/usecaseRepository'),
+            meta: { title: '用例库', icon: 'usecaseRepository' }
+          },
+          {
+            path: 'usecaseDetail',
+            name: 'usecaseDetail',
+            component: () => import('@/views/test/usecaseManage/usecaseDetail'),
+            meta: { title: '用例详情', icon: 'document', noCache: true },
+            hidden: true
+          },
+          {
+            path: 'useCaseExecution',
+            name: 'useCaseExecution',
+            component: () => import('@/views/test/usecaseManage/usecaseExecution'),
+            meta: { title: '执行库', icon: 'usecaseExecution' }
+          }
+        ]
+      },
+      {
+        path: 'bugManage',
+        name: 'bugManage',
+        component: () => import('@/views/test/bugManage/bugManage'),
+        meta: { title: '缺陷管理', icon: 'bugManage' }
+      },
+      {
+        path: 'bugDetail',
+        name: 'bugDetail',
+        component: () => import('@/views/test/bugManage/bugDetail'),
+        meta: { title: '缺陷详情', icon: 'document', noCache: true },
+        hidden: true
       }
+    ]
+  },
+  {
+    path: '/configuration',
+    component: Layout,
+    redirect: '/configuration/menu1',
+    name: 'configuration',
+    meta: { title: '配置管理', icon: 'nested' },
+    children: [
+      {
+        path: 'sysConfigInfo',
+        component: () => import('@/views/configuration/sysConfigInfo/index'),
+        name: 'sysConfigInfo',
+        meta: { title: '系统配置信息' }
+      },
+
+      {
+        path: 'deploy',
+        component: () => import('@/views/configuration/deploy/index'),
+        name: 'deploy',
+        meta: { title: '发版登记' },
+        children: [
+          {
+            path: 'sitDeploy',
+            component: () => import('@/views/configuration/deploy/sitDeploy'),
+            name: 'sitDeploy',
+            meta: { title: 'SIT发版' },
+            children: [
+              {
+                path: 'menu2-1',
+                component: () => import('@/views/configuration/deploy/sitDeploy/menu2-1'),
+                name: 'Menu2-1',
+                meta: { title: 'Menu2-1' }
+              }
+            ]
+          },
+          {
+            path: 'patDeploy',
+            component: () => import('@/views/configuration/deploy/patDeploy'),
+            name: 'patDeploy',
+            meta: { title: 'PAT发版' },
+            children: [
+              {
+                path: 'menu2-2',
+                component: () => import('@/views/configuration/deploy/patDeploy/menu2-2'),
+                name: 'Menu2-2',
+                meta: { title: 'Menu2-2' }
+              }
+            ]
+          }
+        ]
+      }
+
     ]
   },
 
