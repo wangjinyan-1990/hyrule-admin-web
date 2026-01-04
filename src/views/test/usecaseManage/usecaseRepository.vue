@@ -85,16 +85,6 @@
             </el-select>
           </el-col>
           <el-col :span="6">
-            <el-select v-model="searchForm.latestExeStatus" placeholder="执行状态" clearable class="search-select-small">
-              <el-option
-                v-for="item in latestExeStatusOptions"
-                :key="item.dataValue"
-                :label="item.dataName"
-                :value="item.dataValue">
-              </el-option>
-            </el-select>
-          </el-col>
-          <el-col :span="6">
             <!-- 预留空间 -->
             </el-col>
           </el-row>
@@ -233,7 +223,6 @@ import { formatDateTime } from '@/utils/index'
 
 export default {
   name: 'usecaseRepository',
-
   components: {
     DirectoryTreeSelect
   },
@@ -253,7 +242,6 @@ export default {
         testPoint: '',
         usecaseNature: '',
         prority: '',
-        latestExeStatus: '',
         isSmokeTest: '',
         creator: '',
         directoryId: ''
@@ -280,7 +268,6 @@ export default {
       testPointOptions: [],
       usecaseNatureOptions: [],
       prorityOptions: [],
-      latestExeStatusOptions: [],
 
       // 导入相关
       importDialogVisible: false,
@@ -320,19 +307,17 @@ export default {
     // 加载字典数据
     async loadDictionaryData() {
       try {
-        const [usecaseTypeRes, testPointRes, usecaseNatureRes, prorityRes, latestExeStatusRes] = await Promise.all([
-          dictionaryApi.getDictionaryList('usecase_type'),
-          dictionaryApi.getDictionaryList('test_point'),
-          dictionaryApi.getDictionaryList('usecase_nature'),
-          dictionaryApi.getDictionaryList('prority'),
-          dictionaryApi.getDictionaryList('latest_exe_status')
+        const [usecaseTypeRes, testPointRes, usecaseNatureRes, prorityRes] = await Promise.all([
+          dictionaryApi.getDictionaryList('usecaseType'),
+          dictionaryApi.getDictionaryList('testPoint'),
+          dictionaryApi.getDictionaryList('usecaseNature'),
+          dictionaryApi.getDictionaryList('prority')
         ])
 
         this.usecaseTypeOptions = usecaseTypeRes.data || []
         this.testPointOptions = testPointRes.data || []
         this.usecaseNatureOptions = usecaseNatureRes.data || []
         this.prorityOptions = prorityRes.data || []
-        this.latestExeStatusOptions = latestExeStatusRes.data || []
       } catch (error) {
         this.$message.error('加载字典数据失败')
       }
@@ -365,7 +350,6 @@ export default {
         testPoint: '',
         usecaseNature: '',
         prority: '',
-        latestExeStatus: '',
         isSmokeTest: '',
         creator: '',
         directoryId: this.searchForm.directoryId

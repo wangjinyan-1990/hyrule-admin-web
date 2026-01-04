@@ -120,6 +120,7 @@ export default {
       // 省份数据
       provinces: [
         { code: '11', name: '北京市' },
+        { code: '61', name: '陕西省' },
         { code: '12', name: '天津市' },
         { code: '13', name: '河北省' },
         { code: '14', name: '山西省' },
@@ -145,7 +146,6 @@ export default {
         { code: '52', name: '贵州省' },
         { code: '53', name: '云南省' },
         { code: '54', name: '西藏自治区' },
-        { code: '61', name: '陕西省' },
         { code: '62', name: '甘肃省' },
         { code: '63', name: '青海省' },
         { code: '64', name: '宁夏回族自治区' },
