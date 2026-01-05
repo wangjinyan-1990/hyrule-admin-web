@@ -154,7 +154,7 @@
           <el-table-column prop="creator" label="创建人" width="100" />
           <el-table-column prop="createTime" label="创建时间" width="160">
             <template slot-scope="scope">
-              {{ formatDateTime(scope.row.createTime) }}
+              {{ formatTime(scope.row.createTime) }}
             </template>
           </el-table-column>
           <el-table-column label="操作" width="200" fixed="right">
@@ -219,7 +219,7 @@
 import DirectoryTreeSelect from '@/views/test/baseManage/components/DirectoryTreeSelect'
 import usecaseApi from '@/api/test/usecaseManage/usecaseRepository'
 import dictionaryApi from '@/api/framework/dictionary'
-import { formatDateTime } from '@/utils/index'
+import { formatTime } from '@/utils/index'
 
 export default {
   name: 'usecaseRepository',
@@ -587,8 +587,8 @@ export default {
     },
 
     // 格式化日期时间
-    formatDateTime(dateTime) {
-      return formatDateTime(dateTime)
+    formatTime(dateTime) {
+      return formatTime(dateTime)
     },
 
     // 保存页面状态

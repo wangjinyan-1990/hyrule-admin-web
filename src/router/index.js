@@ -39,7 +39,7 @@ export const asyncRoutes = [
   {
     path: '/sys',
     component: Layout,
-    name: 'userManage',
+    name: 'sys',
     meta: { title: '系统管理', icon: 'sys' },
     children: [
       {
@@ -385,7 +385,6 @@ export const asyncRoutes = [
   {
     path: '/configuration',
     component: Layout,
-    redirect: '/configuration/menu1',
     name: 'configuration',
     meta: { title: '配置管理', icon: 'nested' },
     children: [
@@ -404,13 +403,13 @@ export const asyncRoutes = [
         children: [
           {
             path: 'sitDeploy',
-            component: () => import('@/views/configuration/deploy/sitDeploy'),
+            component: () => import('@/views/configuration/deploy/sitDeploy/index'),
             name: 'sitDeploy',
             meta: { title: 'SIT发版' },
             children: [
               {
                 path: 'menu2-1',
-                component: () => import('@/views/configuration/deploy/sitDeploy/menu2-1'),
+                component: () => import('@/views/configuration/deploy/sitDeploy/menu2-1/index'),
                 name: 'Menu2-1',
                 meta: { title: 'Menu2-1' }
               }
@@ -418,13 +417,13 @@ export const asyncRoutes = [
           },
           {
             path: 'patDeploy',
-            component: () => import('@/views/configuration/deploy/patDeploy'),
+            component: () => import('@/views/configuration/deploy/patDeploy/index'),
             name: 'patDeploy',
             meta: { title: 'PAT发版' },
             children: [
               {
                 path: 'menu2-2',
-                component: () => import('@/views/configuration/deploy/patDeploy/menu2-2'),
+                component: () => import('@/views/configuration/deploy/patDeploy/menu2-2/index'),
                 name: 'Menu2-2',
                 meta: { title: 'Menu2-2' }
               }

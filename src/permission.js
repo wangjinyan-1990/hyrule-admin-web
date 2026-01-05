@@ -84,7 +84,7 @@ router.beforeEach(async(to, from, next) => {
 router.afterEach((to) => {
   // finish progress bar
   NProgress.done()
-  
+
   // 将访问的路由添加到 tagsView 缓存中
   if (to.name && !to.meta.noCache) {
     store.dispatch('tagsView/addView', to)
