@@ -30,7 +30,7 @@
         :attachment-size="currentAttachmentSize"
         :upload-date="currentUploadDate"
         ref="imageViewer"
-      />
+          />
 
         <!-- PDF预览 -->
       <ViewPdfFile

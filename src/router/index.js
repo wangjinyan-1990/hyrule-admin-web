@@ -392,42 +392,41 @@ export const asyncRoutes = [
         path: 'sysConfigInfo',
         component: () => import('@/views/configuration/sysConfigInfo/index'),
         name: 'sysConfigInfo',
-        meta: { title: '系统配置信息' }
+        meta: { title: '系统配置信息', icon: 'sysConfigInfo' }
       },
 
       {
         path: 'deploy',
-        component: () => import('@/views/configuration/deploy/index'),
         name: 'deploy',
-        meta: { title: '发版登记' },
+        component: () => import('@/views/configuration/deploy/index'),
+        redirect: '/configuration/deploy/index',
+        meta: { title: '发版登记', icon: 'deploy' },
         children: [
           {
             path: 'sitDeploy',
-            component: () => import('@/views/configuration/deploy/sitDeploy/index'),
             name: 'sitDeploy',
-            meta: { title: 'SIT发版' },
-            children: [
-              {
-                path: 'menu2-1',
-                component: () => import('@/views/configuration/deploy/sitDeploy/menu2-1/index'),
-                name: 'Menu2-1',
-                meta: { title: 'Menu2-1' }
-              }
-            ]
+            component: () => import('@/views/configuration/deploy/sitDeploy/index'),
+            meta: { title: 'SIT发版' , icon: 'deploy'}
           },
           {
             path: 'patDeploy',
-            component: () => import('@/views/configuration/deploy/patDeploy/index'),
             name: 'patDeploy',
-            meta: { title: 'PAT发版' },
-            children: [
-              {
-                path: 'menu2-2',
-                component: () => import('@/views/configuration/deploy/patDeploy/menu2-2/index'),
-                name: 'Menu2-2',
-                meta: { title: 'Menu2-2' }
-              }
-            ]
+            component: () => import('@/views/configuration/deploy/patDeploy/index'),
+            meta: { title: 'PAT发版', icon: 'patDeploy' }
+          },
+          {
+            path: 'sitDeploy/menu2-1',
+            name: 'Menu2-1',
+            component: () => import('@/views/configuration/deploy/sitDeploy/menu2-1/index'),
+            meta: { title: 'Menu2-1' },
+            hidden: true
+          },
+          {
+            path: 'patDeploy/menu2-2',
+            name: 'Menu2-2',
+            component: () => import('@/views/configuration/deploy/patDeploy/menu2-2/index'),
+            meta: { title: 'Menu2-2' },
+            hidden: true
           }
         ]
       }

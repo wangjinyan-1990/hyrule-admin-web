@@ -142,9 +142,9 @@
           @row-dblclick="handleRowDblClick"
           stripe
           border
-          height="500"
-          style="width: 1400px; min-width: 1400px;"
-          :key="tableKey"
+            height="500"
+            style="width: 1400px; min-width: 1400px;"
+            :key="tableKey"
         >
           <el-table-column type="selection" width="55" />
           <el-table-column prop="requirePointDesc" label="需求点概述" min-width="200" show-overflow-tooltip />
@@ -827,9 +827,9 @@ export default {
         name: 'requireDetail',
         query: {
           mode: 'create',
-          directoryId: this.selectedDirectory.directoryId,
-          systemId: this.selectedDirectory.systemId
-        }
+        directoryId: this.selectedDirectory.directoryId,
+        systemId: this.selectedDirectory.systemId
+      }
       })
     },
 

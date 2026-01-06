@@ -71,13 +71,7 @@ function resolveComponent(component) {
     '/test/baseManage/testSystemMember': () => import('@/views/test/baseManage/testSystemMember'),
     '/test/baseManage/testDirectory': () => import('@/views/test/baseManage/testDirectory'),
     '/tools/toolset': () => import('@/views/tools/toolset'),
-    '/tools/notebook': () => import('@/views/tools/notebook'),
-    '/configuration/deploy/index': () => import('@/views/configuration/deploy/index'),
-    '/configuration/deploy/sitDeploy': () => import('@/views/configuration/deploy/sitDeploy/index'),
-    '/configuration/deploy/patDeploy': () => import('@/views/configuration/deploy/patDeploy/index'),
-    '/configuration/deploy/sitDeploy/menu2-1': () => import('@/views/configuration/deploy/sitDeploy/menu2-1/index'),
-    '/configuration/deploy/patDeploy/menu2-2': () => import('@/views/configuration/deploy/patDeploy/menu2-2/index'),
-    '/nested/sysConfigInfo/index': () => import('@/views/configuration/sysConfigInfo/index')
+    '/tools/notebook': () => import('@/views/tools/notebook')
   }
 
   // 如果在映射中找到了对应的组件，返回对应的导入函数

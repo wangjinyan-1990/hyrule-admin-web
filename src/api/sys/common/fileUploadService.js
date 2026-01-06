@@ -368,20 +368,20 @@ class FileUploadService {
 
       // 如果设置为自动下载，则触发下载
       if (autoDownload) {
-        // 创建下载链接
-        const blob = new Blob([response])
-        const url = window.URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = fileName || `attachment_${attachmentId}`
-        
-        // 触发下载
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        
-        // 清理URL对象
-        window.URL.revokeObjectURL(url)
+      // 创建下载链接
+      const blob = new Blob([response])
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = fileName || `attachment_${attachmentId}`
+      
+      // 触发下载
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      // 清理URL对象
+      window.URL.revokeObjectURL(url)
       }
 
       return {
