@@ -17,15 +17,6 @@ export function getDeployRecordDetail(deployId) {
   })
 }
 
-// 创建发版登记
-export function createDeployRecord(data) {
-  return request({
-    url: '/configuration/deploy/record',
-    method: 'post',
-    data
-  })
-}
-
 // 更新发版登记
 export function updateDeployRecord(data) {
   return request({
@@ -46,7 +37,6 @@ export function deleteDeployRecord(deployId) {
 export default {
   getDeployRecordList,
   getDeployRecordDetail,
-  createDeployRecord,
   updateDeployRecord,
   deleteDeployRecord
 }

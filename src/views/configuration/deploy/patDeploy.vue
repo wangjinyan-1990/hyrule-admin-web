@@ -1,5 +1,5 @@
-<template functional>
-  <div style="padding:30px;">
-    <el-alert :closable="false" title="PAT发版" type="warning" />
-  </div>
-</template>
+<html>
+<div>
+  <h2>PAT发版</h2>
+</div>
+</html>

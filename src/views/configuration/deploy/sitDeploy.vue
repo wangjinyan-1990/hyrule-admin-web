@@ -1,5 +1,6 @@
-<template functional>
-  <div style="padding:30px;">
-    <el-alert :closable="false" title="SIT发版" type="warning" />
+<html>
+  <div>
+    <h2>SIT发版</h2>
   </div>
-</template>
+</html>
+

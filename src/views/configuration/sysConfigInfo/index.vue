@@ -5,7 +5,7 @@
       <el-row>
         <el-col :span="18">
           <el-input v-model="searchModel.systemName" placeholder="系统名称" style="width: 200px; margin-right: 10px;"></el-input>
-          <el-input v-model="searchModel.userName" placeholder="人员名称" style="width: 200px; margin-right: 10px;"></el-input>
+          <el-input v-model="searchModel.configurationPeopleNames" placeholder="人员名称" style="width: 200px; margin-right: 10px;"></el-input>
           <el-button @click="getSysConfigInfoList" type="primary" round icon="el-icon-search">查询</el-button>
           <el-button @click="resetSearch" type="info" round icon="el-icon-refresh">重置</el-button>
         </el-col>
@@ -26,22 +26,21 @@
 
     <!-- 结果栏 -->
     <el-card>
-      <el-table 
-        :data="sysConfigInfoList" 
-        stripe 
-        style="width: 100%" 
-        @row-dblclick="handleEdit" 
-        @current-change="handleRowChange" 
+      <el-table
+        :data="sysConfigInfoList"
+        stripe
+        style="width: 100%"
+        @row-dblclick="handleEdit"
+        @current-change="handleRowChange"
         highlight-current-row>
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="configurationId" label="配置ID" width="80" v-if="false"></el-table-column>
         <el-table-column prop="systemId" label="系统ID" width="100" v-if="false"></el-table-column>
         <el-table-column prop="systemName" label="系统名称" width="200"></el-table-column>
         <el-table-column prop="privateToken" label="访问令牌" min-width="200" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="userName" label="配置人员" min-width="200" show-overflow-tooltip>
+        <el-table-column prop="configurationPeopleNames" label="配置人员" min-width="200" show-overflow-tooltip>
           <template slot-scope="scope">
-            <span v-if="scope.row.userName">{{ scope.row.userName }}</span>
-            <span v-else style="color: #999;">未配置</span>
+            {{ scope.row.configurationPeopleNames || '未配置' }}
           </template>
         </el-table-column>
       </el-table>
@@ -60,9 +59,9 @@
     <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="600px" @close="resetForm">
       <el-form ref="sysConfigInfoFormRef" :model="sysConfigInfoForm" :rules="rules" label-width="100px">
         <el-form-item label="系统" prop="systemId">
-          <el-input 
-            v-model="sysConfigInfoForm.systemName" 
-            placeholder="请选择系统" 
+          <el-input
+            v-model="sysConfigInfoForm.systemName"
+            placeholder="请选择系统"
             readonly
             @click.native="handleSelectSystem">
             <el-button slot="append" icon="el-icon-search" @click="handleSelectSystem"></el-button>
@@ -72,9 +71,9 @@
           <el-input v-model="sysConfigInfoForm.privateToken" placeholder="请输入访问令牌"></el-input>
         </el-form-item>
         <el-form-item label="配置人员" prop="configurationPeopleIds">
-          <el-input 
-            v-model="sysConfigInfoForm.userName" 
-            placeholder="请选择配置人员" 
+          <el-input
+            v-model="sysConfigInfoForm.configurationPeopleNames"
+            placeholder="请选择配置人员"
             readonly
             @click.native="handleSelectUsers">
             <el-button slot="append" icon="el-icon-search" @click="handleSelectUsers"></el-button>
@@ -161,7 +160,7 @@ export default {
         pageNo: 1,
         pageSize: 10,
         systemName: '',
-        userName: ''
+        configurationPeopleNames: ''
       },
       sysConfigInfoList: [],
       dialogVisible: false,
@@ -175,7 +174,7 @@ export default {
         systemName: '',
         privateToken: '',
         configurationPeopleIds: '',
-        userName: '',
+        configurationPeopleNames: '',
         selectedUsers: []
       },
       rules: {
@@ -209,12 +208,35 @@ export default {
       this.getSysConfigInfoList();
     },
     getSysConfigInfoList(){
-      sysConfigInfoApi.getSysConfigInfoList(this.searchModel).then(response => {
-        if (response.code === 20000) {
-          this.sysConfigInfoList = response.data.rows || [];
-          this.total = response.data.total || 0;
+      // 构建查询参数，排除 configurationPeopleIds 和 systemId
+      const queryParams = {
+        pageNo: this.searchModel.pageNo,
+        pageSize: this.searchModel.pageSize,
+        systemName: this.searchModel.systemName,
+        configurationPeopleNames: this.searchModel.configurationPeopleNames
+      };
+      sysConfigInfoApi.getSysConfigInfoList(queryParams).then(response => {
+        // request拦截器已经返回了response.data，所以response就是后端返回的数据
+        // 检查API响应结构，支持多种格式
+        let responseData = null
+        if (response.code === 20000 && response.data) {
+          // 格式：{code: 20000, data: {rows: [], total: 0}}
+          responseData = response.data
+        } else if (response.rows || response.total !== undefined) {
+          // 直接格式：{rows: [], total: 0} 或 {code: 20000, rows: [], total: 0}
+          responseData = response
+        } else if (response.data && (response.data.rows || response.data.total !== undefined)) {
+          // 嵌套格式：{data: {rows: [], total: 0}}
+          responseData = response.data
+        }
+        
+        if (responseData) {
+          const rows = responseData.rows || [];
+          // 直接赋值，保持原始数据结构
+          this.sysConfigInfoList = rows;
+          this.total = responseData.total || 0;
         } else {
-          this.$message.error(response.message || '获取系统配置信息列表失败');
+          this.$message.error('获取系统配置信息列表失败：响应数据格式不正确');
         }
       }).catch(error => {
         this.$message.error('获取系统配置信息列表失败');
@@ -222,7 +244,7 @@ export default {
     },
     resetSearch(){
       this.searchModel.systemName = '';
-      this.searchModel.userName = '';
+      this.searchModel.configurationPeopleNames = '';
       this.searchModel.pageNo = 1;
       this.getSysConfigInfoList();
     },
@@ -278,7 +300,7 @@ export default {
             systemName: this.selectedRow.systemName || '',
             privateToken: this.selectedRow.privateToken || '',
             configurationPeopleIds: this.selectedRow.configurationPeopleIds || '',
-            userName: this.selectedRow.userName || '',
+            configurationPeopleNames: this.selectedRow.configurationPeopleNames || '',
             selectedUsers: this.selectedRow.selectedUsers || []
           };
           // 如果有配置人员IDs但没有selectedUsers，需要解析
@@ -331,13 +353,13 @@ export default {
     submitForm(){
       this.$refs.sysConfigInfoFormRef.validate(valid => {
         if (!valid) return;
-        
+
         // 处理配置人员IDs
         let configurationPeopleIds = '';
         if (this.sysConfigInfoForm.selectedUsers && this.sysConfigInfoForm.selectedUsers.length > 0) {
           configurationPeopleIds = this.sysConfigInfoForm.selectedUsers.map(user => user.userId).join(',');
         }
-        
+
         const payload = {
           systemId: this.sysConfigInfoForm.systemId,
           privateToken: this.sysConfigInfoForm.privateToken,
@@ -388,8 +410,8 @@ export default {
     handleUserConfirm(users){
       if (users && users.length > 0) {
         this.sysConfigInfoForm.selectedUsers = users;
-        // 更新显示的用户名称（用顿号分隔）
-        this.sysConfigInfoForm.userName = users.map(user => user.userName).join('、');
+        // 更新显示的用户名称（用英文逗号分隔）
+        this.sysConfigInfoForm.userName = users.map(user => user.userName).join(',');
       }
     },
     // 移除用户
@@ -397,7 +419,7 @@ export default {
       this.sysConfigInfoForm.selectedUsers.splice(index, 1);
       // 更新显示的用户名称
       if (this.sysConfigInfoForm.selectedUsers.length > 0) {
-        this.sysConfigInfoForm.userName = this.sysConfigInfoForm.selectedUsers.map(user => user.userName).join('、');
+        this.sysConfigInfoForm.userName = this.sysConfigInfoForm.selectedUsers.map(user => user.userName).join(',');
       } else {
         this.sysConfigInfoForm.userName = '';
       }

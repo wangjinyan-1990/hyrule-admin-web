@@ -14,7 +14,7 @@
       >
         <sidebar-item
           v-for="route in permission_routes"
-          :key="route.path"
+          :key="route.name || route.path"
           :item="route"
           :base-path="route.path"
         />

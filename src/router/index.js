@@ -397,15 +397,16 @@ export const asyncRoutes = [
 
       {
         path: 'deploy',
+        component: () => import('@/views/configuration/deploy/index'),
         name: 'deploy',
-        component: () => import('@/views/configuration/deploy/deployRecord'),
+        redirect: '/configuration/deploy/record',
         meta: { title: '发版登记', icon: 'deploy' },
         children: [
           {
-            path: 'deploy',
+            path: 'record',
             name: 'deployRecord',
             component: () => import('@/views/configuration/deploy/deployRecord'),
-            meta: { title: '发版记录', icon: 'deploy' }
+            meta: { title: '发版记录', icon: 'deployRecord' }
           },
           {
             path: 'sitDeploy',

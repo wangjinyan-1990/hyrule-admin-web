@@ -2,16 +2,18 @@
   <div>
     <!-- 搜索栏 -->
     <el-card id="search">
+      <!-- 第一行：查询条件和查询、重置按钮 -->
       <el-row>
-        <el-col :span="18">
-          <el-input v-model="searchModel.systemName" placeholder="系统名称" style="width: 200px; margin-right: 10px;"></el-input>
+        <el-col :span="24">
+          <el-input v-model="searchModel.systemName" placeholder="系统名称" size="small" style="width: 200px; margin-right: 10px;"></el-input>
           <el-date-picker
             v-model="searchModel.startDate"
             type="date"
             placeholder="开始日期"
             format="yyyy-MM-dd"
             value-format="yyyy-MM-dd"
-            style="width: 150px; margin-right: 10px;">
+            size="small"
+            style="width: 140px; margin-right: 10px;">
           </el-date-picker>
           <el-date-picker
             v-model="searchModel.endDate"
@@ -19,20 +21,23 @@
             placeholder="截止日期"
             format="yyyy-MM-dd"
             value-format="yyyy-MM-dd"
-            style="width: 150px; margin-right: 10px;">
+            size="small"
+            style="width: 140px; margin-right: 10px;">
           </el-date-picker>
-          <el-select v-model="searchModel.testStage" placeholder="测试阶段" clearable style="width: 120px; margin-right: 10px;">
+          <el-select v-model="searchModel.testStage" placeholder="测试阶段" clearable size="small" style="width: 80px; margin-right: 10px;">
             <el-option label="SIT" value="SIT"></el-option>
             <el-option label="PAT" value="PAT"></el-option>
           </el-select>
-          <el-input v-model="searchModel.sendTestCode" placeholder="送测单编号" style="width: 150px; margin-right: 10px;"></el-input>
-          <el-button @click="getDeployRecordList" type="primary" round icon="el-icon-search">查询</el-button>
-          <el-button @click="resetSearch" type="info" round icon="el-icon-refresh">重置</el-button>
+          <el-input v-model="searchModel.sendTestCode" placeholder="送测单编号" size="small" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-button @click="getDeployRecordList" type="primary" size="small" round icon="el-icon-search">查询</el-button>
+          <el-button @click="resetSearch" type="info" size="small" round icon="el-icon-refresh">重置</el-button>
         </el-col>
-        <!-- align是对齐，right就是右对齐 -->
-        <el-col :span="6" align="right">
-          <el-button @click="handleSitDeploy" type="primary" icon="el-icon-edit">SIT发版</el-button>
-          <el-button @click="handlePatDeploy" type="success" icon="el-icon-edit" style="margin-left: 10px;">PAT发版</el-button>
+      </el-row>
+      <!-- 第二行：SIT发版和PAT发版按钮 -->
+      <el-row style="margin-top: 10px;">
+        <el-col :span="24" align="left">
+          <el-button @click="handleSitDeploy" type="primary" size="small" icon="el-icon-edit">SIT发版</el-button>
+          <el-button @click="handlePatDeploy" type="success" size="small" icon="el-icon-edit" style="margin-left: 10px;">PAT发版</el-button>
         </el-col>
       </el-row>
     </el-card>
