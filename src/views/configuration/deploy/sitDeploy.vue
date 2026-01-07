@@ -3,33 +3,16 @@
     <el-card>
       <el-form ref="deployFormRef" :model="deployForm" :rules="rules" label-width="120px">
         <!-- 第一行：Merge_Request 和解析按钮 -->
-        <el-form-item label="Merge_Request:" prop="mergeRequest">
-          <el-input 
-            v-model="deployForm.mergeRequest" 
-            placeholder="请输入Merge_Request"
-            style="width: calc(100% - 110px); display: inline-block; margin-right: 10px;">
+        <el-form-item label="Merge_Request:" prop="mergeRequest" class="merge-request-item">
+          <el-input v-model="deployForm.mergeRequest" placeholder="请输入Merge_Request" style="width: calc(100% - 110px); display: inline-block; margin-right: 10px;">
           </el-input>
-          <el-button type="primary" @click="handleParse" :loading="parsing" style="vertical-align: top;">解析</el-button>
-          <div style="margin-top: 5px; color: #909399; font-size: 12px; margin-left: 0;">
-            若无MR，只为登记版本请填'1'
+          <el-button type="primary" @click="handleParseMR" :loading="parsing" :disabled="isMergeRequestOne" style="vertical-align: top;">解析</el-button>
+          <div style="margin-top: 5px; color: #f56c6c; font-size: 12px; margin-left: 0;">
+            *若无MR，只为登记版本请填'1'
           </div>
         </el-form-item>
 
-        <!-- 第二行：合并状态和送测单编号 -->
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="合并状态:" prop="mergeState">
-              <el-input v-model="deployForm.mergeState" placeholder="请输入合并状态"></el-input>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="送测单编号:" prop="sendTestCode">
-              <el-input v-model="deployForm.sendTestCode" placeholder="请输入送测单编号"></el-input>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <!-- 第三行：系统和组件 -->
+        <!-- 第二行：系统和组件 -->
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="系统:" prop="systemId">
@@ -49,6 +32,19 @@
           </el-col>
         </el-row>
 
+        <!-- 第三行：合并状态和送测单编号 -->
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="合并状态:" prop="mergeState">
+              <el-input v-model="deployForm.mergeState" placeholder="请输入合并状态"></el-input>
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="送测单编号:" prop="sendTestCode">
+              <el-input v-model="deployForm.sendTestCode" placeholder="请输入送测单编号"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
         <!-- 第四行：是否执行sql和是否更新配置 -->
         <el-row :gutter="20">
           <el-col :span="12">
@@ -83,6 +79,7 @@
             type="textarea"
             :rows="6"
             placeholder="请输入代码清单"
+            :disabled="isMergeRequestOne"
             class="code-list-textarea">
           </el-input>
         </el-form-item>
@@ -120,6 +117,11 @@
   margin-bottom: 22px;
 }
 
+/* Merge_Request 行间距调整 */
+.merge-request-item {
+  margin-bottom: 10px !important;
+}
+
 /* 代码清单文本域滚动条样式 */
 .code-list-textarea ::v-deep .el-textarea__inner {
   overflow-y: auto;
@@ -129,6 +131,7 @@
 
 <script>
 import deployRecordApi from '@/api/configuration/deploy/deployRecord'
+import sitDeployApi from '@/api/configuration/deploy/sitDeploy'
 import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelector'
 
 export default {
@@ -160,9 +163,6 @@ export default {
         systemId: [
           { required: true, message: '请选择系统', trigger: 'change' }
         ],
-        componentInfo: [
-          { required: true, message: '请输入组件信息', trigger: 'blur' }
-        ],
         recordNum: [
           { required: true, message: '请输入版本数', trigger: 'blur' },
           { type: 'number', message: '版本数必须为数字', trigger: 'blur', transform: value => Number(value) }
@@ -171,6 +171,12 @@ export default {
           { required: true, message: '请输入代码清单', trigger: 'blur' }
         ]
       }
+    }
+  },
+  computed: {
+    // 检查 Merge Request 是否为 '1'
+    isMergeRequestOne() {
+      return this.deployForm.mergeRequest === '1'
     }
   },
   created() {
@@ -211,21 +217,49 @@ export default {
     },
 
     // 解析Merge_Request
-    handleParse() {
+    handleParseMR() {
       if (!this.deployForm.mergeRequest) {
         this.$message.warning('请输入Merge_Request')
         return
       }
-      
+
+      if (!this.deployForm.systemId) {
+        this.$message.warning('请先选择系统')
+        return
+      }
+
       this.parsing = true
-      // TODO: 调用解析接口，解析Merge_Request并填充表单
-      // 这里暂时模拟解析逻辑
-      setTimeout(() => {
+      sitDeployApi.parseMergeRequest(this.deployForm.mergeRequest, this.deployForm.systemId).then(response => {
         this.parsing = false
-        this.$message.success('解析成功')
-        // 解析后可以自动填充一些字段
-        // 例如：this.deployForm.componentInfo = '解析出的组件信息'
-      }, 1000)
+        if (response.code === 20000 && response.data) {
+          const data = response.data
+          // 解析后自动填充表单字段
+          if (data.componentInfo) {
+            this.deployForm.componentInfo = data.componentInfo
+          }
+          if (data.versionCode) {
+            this.deployForm.versionCode = data.versionCode
+          }
+          if (data.codeList) {
+            this.deployForm.codeList = data.codeList
+          }
+          if (data.sendTestCode) {
+            this.deployForm.sendTestCode = data.sendTestCode
+          }
+          if (data.mergeState) {
+            this.deployForm.mergeState = data.mergeState
+          }
+          if (data.recordNum !== undefined && data.recordNum !== null) {
+            this.deployForm.recordNum = data.recordNum
+          }
+          this.$message.success('解析成功')
+        } else {
+          this.$message.error(response.message || '解析失败')
+        }
+      }).catch(error => {
+        this.parsing = false
+        this.$message.error('解析失败，请重试')
+      })
     },
 
     // 选择系统
@@ -252,7 +286,7 @@ export default {
         }
 
         this.submitting = true
-        
+
         // 构建提交数据，将布尔值转换为0/1
         const payload = {
           testStage: this.deployForm.testStage,
