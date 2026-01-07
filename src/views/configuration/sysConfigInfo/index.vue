@@ -37,6 +37,7 @@
         <el-table-column prop="configurationId" label="配置ID" width="80" v-if="false"></el-table-column>
         <el-table-column prop="systemId" label="系统ID" width="100" v-if="false"></el-table-column>
         <el-table-column prop="systemName" label="系统名称" width="200"></el-table-column>
+        <el-table-column prop="sysAbbreviation" label="系统简称" width="150"></el-table-column>
         <el-table-column prop="privateToken" label="访问令牌" min-width="200" show-overflow-tooltip></el-table-column>
         <el-table-column prop="configurationPeopleNames" label="配置人员" min-width="200" show-overflow-tooltip>
           <template slot-scope="scope">
@@ -65,6 +66,14 @@
             readonly
             @click.native="handleSelectSystem">
             <el-button slot="append" icon="el-icon-search" @click="handleSelectSystem"></el-button>
+          </el-input>
+        </el-form-item>
+        <el-form-item label="系统简称" prop="sysAbbreviation">
+          <el-input 
+            v-model="sysConfigInfoForm.sysAbbreviation" 
+            placeholder="请输入系统简称（只能为字母和数字）"
+            maxlength="50"
+            @input="handleSysAbbreviationInput">
           </el-input>
         </el-form-item>
         <el-form-item label="访问令牌" prop="privateToken">
@@ -172,6 +181,7 @@ export default {
         configurationId: '',
         systemId: '',
         systemName: '',
+        sysAbbreviation: '',
         privateToken: '',
         configurationPeopleIds: '',
         configurationPeopleNames: '',
@@ -180,6 +190,10 @@ export default {
       rules: {
         systemId: [
           { required: true, message: '请选择系统', trigger: 'change' }
+        ],
+        sysAbbreviation: [
+          { required: true, message: '请输入系统简称', trigger: 'blur' },
+          { pattern: /^[a-zA-Z0-9]+$/, message: '系统简称只能为字母和数字', trigger: 'blur' }
         ],
         privateToken: [
           { required: true, message: '请输入访问令牌', trigger: 'blur' }
@@ -298,6 +312,7 @@ export default {
             configurationId: this.selectedRow.configurationId,
             systemId: this.selectedRow.systemId,
             systemName: this.selectedRow.systemName || '',
+            sysAbbreviation: this.selectedRow.sysAbbreviation || '',
             privateToken: this.selectedRow.privateToken || '',
             configurationPeopleIds: this.selectedRow.configurationPeopleIds || '',
             configurationPeopleNames: this.selectedRow.configurationPeopleNames || '',
@@ -318,6 +333,7 @@ export default {
                 configurationId: data.configurationId,
                 systemId: data.systemId,
                 systemName: data.systemName || '',
+                sysAbbreviation: data.sysAbbreviation || '',
                 privateToken: data.privateToken || '',
                 configurationPeopleIds: data.configurationPeopleIds || '',
                 userName: data.userName || '',
@@ -344,6 +360,7 @@ export default {
         configurationId: '',
         systemId: '',
         systemName: '',
+        sysAbbreviation: '',
         privateToken: '',
         configurationPeopleIds: '',
         userName: '',
@@ -362,6 +379,7 @@ export default {
 
         const payload = {
           systemId: this.sysConfigInfoForm.systemId,
+          sysAbbreviation: this.sysConfigInfoForm.sysAbbreviation,
           privateToken: this.sysConfigInfoForm.privateToken,
           configurationPeopleIds: configurationPeopleIds
         };
@@ -387,6 +405,11 @@ export default {
           });
         }
       });
+    },
+    // 系统简称输入限制（只允许字母和数字）
+    handleSysAbbreviationInput(value) {
+      // 只保留字母和数字
+      this.sysConfigInfoForm.sysAbbreviation = value.replace(/[^a-zA-Z0-9]/g, '');
     },
     // 选择系统
     handleSelectSystem(){
