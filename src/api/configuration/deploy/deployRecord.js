@@ -9,11 +9,11 @@ export function getDeployRecordList(params) {
   })
 }
 
-// 获取发版登记详情
-export function getDeployRecordDetail(deployId) {
+// 删除发版登记
+export function deleteDeployRecord(deployId) {
   return request({
     url: `/configuration/deploy/record/${deployId}`,
-    method: 'get'
+    method: 'delete'
   })
 }
 
@@ -26,27 +26,17 @@ export function updateDeployRecord(data) {
   })
 }
 
-// 创建发版登记
-export function createDeployRecord(data) {
-  return request({
-    url: '/configuration/deploy/record',
-    method: 'post',
-    data
-  })
-}
-
-// 删除发版登记
-export function deleteDeployRecord(deployId) {
+// 获取发版登记详情
+export function getDeployRecordDetail(deployId) {
   return request({
     url: `/configuration/deploy/record/${deployId}`,
-    method: 'delete'
+    method: 'get'
   })
 }
 
 export default {
   getDeployRecordList,
-  getDeployRecordDetail,
-  createDeployRecord,
+  deleteDeployRecord,
   updateDeployRecord,
-  deleteDeployRecord
+  getDeployRecordDetail
 }

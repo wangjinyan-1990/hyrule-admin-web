@@ -25,6 +25,7 @@
         height="400"
         @current-change="handleCurrentChange"
         @row-click="handleRowClick"
+        @row-dblclick="handleRowDblClick"
         highlight-current-row
         style="width: 100%;">
 
@@ -237,6 +238,14 @@ export default {
       this.$refs.systemTable.setCurrentRow(row);
     },
 
+    // 行双击事件（直接确认选择）
+    handleRowDblClick(row) {
+      this.selectedSystem = row;
+      this.$refs.systemTable.setCurrentRow(row);
+      // 双击直接确认选择
+      this.handleConfirm();
+    },
+
     // 移除系统
     removeSystem() {
       this.selectedSystem = null;
@@ -305,6 +314,22 @@ export default {
 
 .el-table__body tr:hover {
   background-color: #f5f7fa;
+}
+
+/* 减小表格行高和字体 */
+::v-deep .el-table td {
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+::v-deep .el-table th {
+  padding: 4px 0;
+  font-size: 12px;
+}
+
+::v-deep .el-table .cell {
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 /* 确保对话框内容占满宽度 */

@@ -9,6 +9,35 @@ export function parseMergeRequest(mergeRequest, systemId) {
   })
 }
 
+// 创建发版登记（SIT）
+export function createSITDeployRecord(data) {
+  return request({
+    url: '/configuration/deploy/sit/record',
+    method: 'post',
+    data
+  })
+}
+
+// 更新发版登记（SIT）
+export function updateSITDeployRecord(data) {
+  return request({
+    url: '/configuration/deploy/sit/record',
+    method: 'put',
+    data
+  })
+}
+
+// 获取发版登记详情（SIT）
+export function getSITDeployRecordDetail(deployId) {
+  return request({
+    url: `/configuration/deploy/sit/record/${deployId}`,
+    method: 'get'
+  })
+}
+
 export default {
-  parseMergeRequest
+  parseMergeRequest,
+  createSITDeployRecord,
+  updateSITDeployRecord,
+  getSITDeployRecordDetail
 }

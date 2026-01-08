@@ -36,7 +36,7 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="合并状态:" prop="mergeState">
-              <el-input v-model="deployForm.mergeState" placeholder="请输入合并状态"></el-input>
+              <el-input v-model="deployForm.mergeState" placeholder="请输入合并状态" readonly disabled></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -69,7 +69,14 @@
 
         <!-- 第五行：版本数 -->
         <el-form-item label="版本数:" prop="recordNum">
-          <el-input v-model="deployForm.recordNum" placeholder="请输入版本数" type="number"></el-input>
+          <el-input
+            v-model="deployForm.recordNum"
+            placeholder="请输入版本数（1-20）"
+            type="number"
+            :min="1"
+            :max="20"
+            @input="handleRecordNumInput">
+          </el-input>
         </el-form-item>
 
         <!-- 代码清单 -->
@@ -130,7 +137,6 @@
 </style>
 
 <script>
-import deployRecordApi from '@/api/configuration/deploy/deployRecord'
 import sitDeployApi from '@/api/configuration/deploy/sitDeploy'
 import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelector'
 
@@ -165,7 +171,8 @@ export default {
         ],
         recordNum: [
           { required: true, message: '请输入版本数', trigger: 'blur' },
-          { type: 'number', message: '版本数必须为数字', trigger: 'blur', transform: value => Number(value) }
+          { type: 'number', message: '版本数必须为数字', trigger: 'blur', transform: value => Number(value) },
+          { type: 'number', min: 1, max: 20, message: '版本数必须在1-20之间', trigger: 'blur', transform: value => Number(value) }
         ],
         codeList: [
           { required: true, message: '请输入代码清单', trigger: 'blur' }
@@ -189,7 +196,7 @@ export default {
   methods: {
     // 加载发版登记数据（编辑模式）
     loadDeployData(deployId) {
-      deployRecordApi.getDeployRecordDetail(deployId).then(response => {
+      sitDeployApi.getSITDeployRecordDetail(deployId).then(response => {
         if (response.code === 20000 && response.data) {
           const data = response.data
           // 将后端返回的0/1转换为布尔值
@@ -278,6 +285,27 @@ export default {
       }
     },
 
+    // 版本数输入限制（1-20）
+    handleRecordNumInput(value) {
+      if (value === '' || value === null || value === undefined) {
+        this.deployForm.recordNum = null
+        return
+      }
+      const numValue = Number(value)
+      if (isNaN(numValue)) {
+        this.deployForm.recordNum = null
+        return
+      }
+      // 限制在1-20之间
+      if (numValue < 1) {
+        this.deployForm.recordNum = 1
+      } else if (numValue > 20) {
+        this.deployForm.recordNum = 20
+      } else {
+        this.deployForm.recordNum = numValue
+      }
+    },
+
     // 提交表单
     handleSubmit() {
       this.$refs.deployFormRef.validate(valid => {
@@ -304,23 +332,38 @@ export default {
         // 如果有deployId，说明是编辑，否则是新增
         if (this.deployForm.deployId) {
           payload.deployId = this.deployForm.deployId
-          deployRecordApi.updateDeployRecord(payload).then(() => {
-            this.$message.success('更新成功')
-            this.submitting = false
-            // 可以跳转回列表页或清空表单
-            this.resetForm()
-          }).catch(() => {
-            this.$message.error('更新失败')
+          sitDeployApi.updateSITDeployRecord(payload).then(response => {
+            // 检查响应格式
+            if (response.code === 20000 || response.code === 200 || response.success === true) {
+              this.$message.success(response.message || '更新成功')
+              this.submitting = false
+              // 跳转回列表页
+              this.$router.push('/configuration/deploy/record')
+            } else {
+              this.$message.error(response.message || '更新失败')
+              this.submitting = false
+            }
+          }).catch(error => {
+            const errorMsg = error.response?.data?.message || error.message || '更新失败，请重试'
+            this.$message.error(errorMsg)
             this.submitting = false
           })
         } else {
           // 调用创建接口
-          deployRecordApi.createDeployRecord(payload).then(() => {
-            this.$message.success('登记成功')
-            this.submitting = false
-            this.resetForm()
-          }).catch(() => {
-            this.$message.error('登记失败')
+          sitDeployApi.createSITDeployRecord(payload).then(response => {
+            // 检查响应格式
+            if (response.code === 20000 || response.code === 200 || response.success === true) {
+              this.$message.success(response.message || '登记成功')
+              this.submitting = false
+              // 跳转回列表页
+              this.$router.push('/configuration/deploy/record')
+            } else {
+              this.$message.error(response.message || '登记失败')
+              this.submitting = false
+            }
+          }).catch(error => {
+            const errorMsg = error.response?.data?.message || error.message || '登记失败，请重试'
+            this.$message.error(errorMsg)
             this.submitting = false
           })
         }

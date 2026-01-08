@@ -44,11 +44,7 @@
 
     <!-- 结果栏 -->
     <el-card>
-      <el-table 
-        :data="deployRecordList" 
-        stripe 
-        style="width: 100%" 
-        highlight-current-row>
+      <el-table :data="deployRecordList" stripe style="width: 100%" highlight-current-row class="deploy-record-table">
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="deployId" label="部署Id" width="80" v-if="false"></el-table-column>
         <el-table-column prop="systemName" label="系统" width="150" show-overflow-tooltip></el-table-column>
@@ -60,17 +56,49 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="versionCode" label="版本号" width="120" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="recordNum" label="版本登记数量" width="120" align="center"></el-table-column>
-        <el-table-column prop="codeList" label="代码清单" min-width="150" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="isRunSql" label="是否执行sql" width="110" align="center">
+        <el-table-column prop="versionCode" label="版本号" min-width="150" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="recordNum" label="版本登记数量" width="100" align="center"></el-table-column>
+        <el-table-column prop="codeList" label="代码清单" min-width="150">
+          <template slot-scope="scope">
+            <el-tooltip
+              v-if="scope.row.codeList"
+              :content="scope.row.codeList"
+              placement="top"
+              popper-class="code-list-tooltip"
+              :disabled="!scope.row.codeList">
+              <span
+                @dblclick="handleCodeListDblClick(scope.row)"
+                :style="{
+                  cursor: 'pointer',
+                  color: '#409EFF',
+                  backgroundColor: scope.row.codeList ? '#f3e5f5' : 'transparent',
+                  display: 'block',
+                  padding: '0 5px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }">
+                {{ scope.row.codeList || '-' }}
+              </span>
+            </el-tooltip>
+            <span
+              v-else
+              :style="{
+                display: 'block',
+                padding: '0 5px'
+              }">
+              -
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="isRunSql" label="是否执行sql" width="80" align="center">
           <template slot-scope="scope">
             <el-tag :type="scope.row.isRunSql ? 'success' : 'info'" size="small">
               {{ scope.row.isRunSql ? '是' : '否' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="isUpdateConfig" label="是否更新配置" width="120" align="center">
+        <el-table-column prop="isUpdateConfig" label="是否更新配置" width="90" align="center">
           <template slot-scope="scope">
             <el-tag :type="scope.row.isUpdateConfig ? 'success' : 'info'" size="small">
               {{ scope.row.isUpdateConfig ? '是' : '否' }}
@@ -95,6 +123,25 @@
       layout="total, sizes, prev, pager, next, jumper"
       :total="total">
     </el-pagination>
+
+    <!-- 代码清单弹窗 -->
+    <el-dialog
+      title="代码清单"
+      :visible.sync="codeListDialogVisible"
+      width="60%"
+      :close-on-click-modal="false">
+      <el-input
+        v-model="codeListContent"
+        type="textarea"
+        :rows="15"
+        readonly
+        ref="codeListTextarea">
+      </el-input>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="codeListDialogVisible = false">关 闭</el-button>
+        <el-button type="primary" @click="handleCopyCodeList">复 制</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -128,6 +175,79 @@
   .el-table__body tr:not(.current-row):hover > td {
     background-color: #f5f7fa !important;
   }
+
+  /* 减小表格行高 - 使用更强的选择器 */
+  .deploy-record-table th,
+  .deploy-record-table td {
+    height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  .deploy-record-table .el-table__row {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  .deploy-record-table .cell {
+    padding: 0 5px !important;
+    line-height: 24px !important;
+    height: 24px !important;
+  }
+
+  /* 强制覆盖表格头部和主体的行高 */
+  .deploy-record-table .el-table__header-wrapper .el-table th,
+  .deploy-record-table .el-table__body-wrapper .el-table td {
+    height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    font-size: 12px !important;
+  }
+
+  /* 强制设置表格行高 */
+  .deploy-record-table tbody tr,
+  .deploy-record-table thead tr {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  /* 针对具体的列 */
+  .deploy-record-table .el-table__header th,
+  .deploy-record-table .el-table__body td {
+    height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+  }
+
+  /* 标签样式 */
+  .deploy-record-table .el-tag {
+    font-size: 12px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    padding: 0 5px !important;
+  }
+
+</style>
+
+<style>
+  /* 代码清单 tooltip 换行样式 */
+  .code-list-tooltip {
+    max-width: 500px !important;
+    white-space: pre-wrap !important;
+    word-break: break-all !important;
+  }
+
+  .code-list-tooltip .el-tooltip__popper {
+    max-width: 500px !important;
+  }
 </style>
 
 <script>
@@ -147,7 +267,9 @@ export default {
         testStage: '',
         sendTestCode: ''
       },
-      deployRecordList: []
+      deployRecordList: [],
+      codeListDialogVisible: false,
+      codeListContent: ''
     }
   },
 
@@ -157,7 +279,7 @@ export default {
     const todayStr = this.formatDate(today)
     this.searchModel.startDate = todayStr
     this.searchModel.endDate = todayStr
-    
+
     this.getDeployRecordList()
   },
 
@@ -169,7 +291,7 @@ export default {
       const day = String(date.getDate()).padStart(2, '0')
       return `${year}-${month}-${day}`
     },
-    
+
     // 格式化日期时间为 yyyy-MM-dd HH:mm:ss
     formatDateTime(dateTimeStr) {
       if (!dateTimeStr) return ''
@@ -182,17 +304,17 @@ export default {
       const seconds = String(date.getSeconds()).padStart(2, '0')
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     },
-    
+
     handleSizeChange(pageSize){
       this.searchModel.pageSize = pageSize
       this.getDeployRecordList()
     },
-    
+
     handleCurrentChange(pageNo){
       this.searchModel.pageNo = pageNo
       this.getDeployRecordList()
     },
-    
+
     getDeployRecordList(){
       // 构建查询参数，按部署时间点倒序
       const params = {
@@ -200,7 +322,7 @@ export default {
         orderBy: 'deployTime',
         orderDirection: 'DESC'
       }
-      
+
       deployRecordApi.getDeployRecordList(params).then(response => {
         if (response.code === 20000) {
           this.deployRecordList = response.data.rows || []
@@ -212,12 +334,12 @@ export default {
         this.$message.error('获取发版登记列表失败')
       })
     },
-    
+
     resetSearch(){
       // 重置为当天日期
       const today = new Date()
       const todayStr = this.formatDate(today)
-      
+
       this.searchModel.systemName = ''
       this.searchModel.startDate = todayStr
       this.searchModel.endDate = todayStr
@@ -226,15 +348,65 @@ export default {
       this.searchModel.pageNo = 1
       this.getDeployRecordList()
     },
-    
+
     // 跳转到SIT发版页面
     handleSitDeploy(){
       this.$router.push('/configuration/deploy/sitDeploy')
     },
-    
+
     // 跳转到PAT发版页面
     handlePatDeploy(){
       this.$router.push('/configuration/deploy/patDeploy')
+    },
+
+    // 双击代码清单
+    handleCodeListDblClick(row) {
+      this.codeListContent = row.codeList || ''
+      this.codeListDialogVisible = true
+    },
+
+    // 复制代码清单
+    handleCopyCodeList() {
+      if (!this.codeListContent) {
+        this.$message.warning('代码清单内容为空')
+        return
+      }
+
+      // 使用 Clipboard API 复制
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(this.codeListContent).then(() => {
+          this.$message.success('复制成功')
+        }).catch(() => {
+          // 如果 Clipboard API 失败，使用备用方法
+          this.fallbackCopyText(this.codeListContent)
+        })
+      } else {
+        // 备用复制方法
+        this.fallbackCopyText(this.codeListContent)
+      }
+    },
+
+    // 备用复制方法
+    fallbackCopyText(text) {
+      const textArea = document.createElement('textarea')
+      textArea.value = text
+      textArea.style.position = 'fixed'
+      textArea.style.left = '-999999px'
+      textArea.style.top = '-999999px'
+      document.body.appendChild(textArea)
+      textArea.focus()
+      textArea.select()
+      try {
+        const successful = document.execCommand('copy')
+        if (successful) {
+          this.$message.success('复制成功')
+        } else {
+          this.$message.error('复制失败，请手动复制')
+        }
+      } catch (err) {
+        this.$message.error('复制失败，请手动复制')
+      }
+      document.body.removeChild(textArea)
     }
   }
 }

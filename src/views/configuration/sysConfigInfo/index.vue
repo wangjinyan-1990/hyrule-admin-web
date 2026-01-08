@@ -69,12 +69,7 @@
           </el-input>
         </el-form-item>
         <el-form-item label="系统简称" prop="sysAbbreviation">
-          <el-input 
-            v-model="sysConfigInfoForm.sysAbbreviation" 
-            placeholder="请输入系统简称（只能为字母和数字）"
-            maxlength="50"
-            @input="handleSysAbbreviationInput">
-          </el-input>
+          <el-input v-model="sysConfigInfoForm.sysAbbreviation" placeholder="请输入系统简称（只能为字母和数字）" maxlength="50" @input="handleSysAbbreviationInput"></el-input>
         </el-form-item>
         <el-form-item label="访问令牌" prop="privateToken">
           <el-input v-model="sysConfigInfoForm.privateToken" placeholder="请输入访问令牌"></el-input>
@@ -243,7 +238,7 @@ export default {
           // 嵌套格式：{data: {rows: [], total: 0}}
           responseData = response.data
         }
-        
+
         if (responseData) {
           const rows = responseData.rows || [];
           // 直接赋值，保持原始数据结构
