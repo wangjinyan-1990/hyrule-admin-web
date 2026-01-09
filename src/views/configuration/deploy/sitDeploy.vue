@@ -326,6 +326,7 @@ export default {
           isRunSql: this.deployForm.isRunSql ? 1 : 0,
           isUpdateConfig: this.deployForm.isUpdateConfig ? 1 : 0,
           sendTestCode: this.deployForm.sendTestCode,
+          mergeRequest: this.deployForm.mergeRequest || '',
           deployTime: new Date().toISOString()
         }
 
