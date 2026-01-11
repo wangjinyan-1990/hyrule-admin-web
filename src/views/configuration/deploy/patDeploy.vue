@@ -60,7 +60,7 @@
                 v-model="deployForm.sourceBranch" 
                 placeholder="请输入源分支"
                 :disabled="isGitlabUrlOne"
-                readonly>
+                :readonly="isGitlabUrlOne">
               </el-input>
             </el-form-item>
           </el-col>
@@ -70,7 +70,7 @@
                 v-model="deployForm.targetBranch" 
                 placeholder="请输入目标分支"
                 :disabled="isGitlabUrlOne"
-                readonly>
+                :readonly="isGitlabUrlOne">
               </el-input>
             </el-form-item>
           </el-col>
@@ -105,6 +105,7 @@
             type="textarea"
             :rows="6"
             placeholder="请输入代码清单"
+            :disabled="isGitlabUrlOne"
             class="code-list-textarea">
           </el-input>
         </el-form-item>
@@ -184,8 +185,14 @@ export default {
         targetBranch: ''
       },
       rules: {
+        gitlabUrl: [
+          { required: true, message: '请输入Gitlab URL', trigger: 'blur' }
+        ],
         systemId: [
           { required: true, message: '请选择系统', trigger: 'change' }
+        ],
+        sendTestCode: [
+          { required: true, message: '请输入送测单编号', trigger: 'blur' }
         ],
         recordNum: [
           { required: true, message: '请输入版本登记数', trigger: 'blur' },
@@ -199,27 +206,64 @@ export default {
               // 如果 gitlabUrl 为 '1'，代码清单非必填
               if (gitlabUrl === '1') {
                 callback()
-              } else if (gitlabUrl.startsWith('http')) {
-                // 如果 gitlabUrl 是以 'http' 开头的 gitlab 仓库地址，代码清单必填
+              } else if (gitlabUrl.startsWith('http://')) {
+                // 如果 gitlabUrl 是以 'http://' 开头的，代码清单必填
                 if (!value || value.trim() === '') {
                   callback(new Error('请输入代码清单'))
                 } else {
                   callback()
                 }
               } else {
-                // 其他情况，代码清单必填
-                if (!value || value.trim() === '') {
-                  callback(new Error('请输入代码清单'))
-                } else {
-                  callback()
-                }
+                // 其他情况，代码清单非必填
+                callback()
               }
             },
             trigger: 'blur'
           }
         ],
-        sendTestCode: [
-          { required: true, message: '请输入送测单编号', trigger: 'blur' }
+        sourceBranch: [
+          {
+            validator: (rule, value, callback) => {
+              const gitlabUrl = this.deployForm.gitlabUrl || ''
+              // 如果 gitlabUrl 为 '1'，源分支非必填
+              if (gitlabUrl === '1') {
+                callback()
+              } else if (gitlabUrl.startsWith('http://')) {
+                // 如果 gitlabUrl 是以 'http://' 开头的，源分支必填
+                if (!value || value.trim() === '') {
+                  callback(new Error('请输入源分支'))
+                } else {
+                  callback()
+                }
+              } else {
+                // 其他情况，源分支非必填
+                callback()
+              }
+            },
+            trigger: 'blur'
+          }
+        ],
+        targetBranch: [
+          {
+            validator: (rule, value, callback) => {
+              const gitlabUrl = this.deployForm.gitlabUrl || ''
+              // 如果 gitlabUrl 为 '1'，目标分支非必填
+              if (gitlabUrl === '1') {
+                callback()
+              } else if (gitlabUrl.startsWith('http://')) {
+                // 如果 gitlabUrl 是以 'http://' 开头的，目标分支必填
+                if (!value || value.trim() === '') {
+                  callback(new Error('请输入目标分支'))
+                } else {
+                  callback()
+                }
+              } else {
+                // 其他情况，目标分支非必填
+                callback()
+              }
+            },
+            trigger: 'blur'
+          }
         ]
       }
     }
@@ -240,12 +284,22 @@ export default {
   methods: {
     // Gitlab URL 变化处理
     handleGitlabUrlChange() {
+      // 触发字段验证
+      this.$nextTick(() => {
+        if (this.$refs.deployFormRef) {
+          this.$refs.deployFormRef.validateField('codeList')
+          this.$refs.deployFormRef.validateField('sourceBranch')
+          this.$refs.deployFormRef.validateField('targetBranch')
+        }
+      })
+      
       if (this.deployForm.gitlabUrl === '1') {
         // 如果填的是'1'，清空并禁用源分支和目标分支
         this.deployForm.sourceBranch = ''
         this.deployForm.targetBranch = ''
-      } else if (this.deployForm.gitlabUrl && this.deployForm.gitlabUrl !== '1') {
-        // 如果不是'1'，设置默认值
+        this.deployForm.codeList = ''
+      } else if (this.deployForm.gitlabUrl && this.deployForm.gitlabUrl.startsWith('http://')) {
+        // 如果是 http:// 开头，设置默认值
         if (!this.deployForm.sourceBranch) {
           this.deployForm.sourceBranch = 'sit'
         }
