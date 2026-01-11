@@ -79,6 +79,9 @@
       <el-button type="text" class="tool-button" @click="handleToolClick('pdf转doc')">
         pdf转doc
       </el-button>
+      <el-button type="text" class="tool-button" @click="handleToolClick('网络策略清单加工')">
+        网络策略清单加工
+      </el-button>
     </div>
   </div>
 </template>
@@ -168,6 +171,9 @@ export default {
           break
         case 'pdf转doc':
           this.openPdfToDocConverter()
+          break
+        case '网络策略清单加工':
+          this.networkPolicyListProcess()
           break
         default:
           this.$message.info(`${toolName} 功能开发中...`)
@@ -374,6 +380,14 @@ export default {
       this.$router.push({
         name: 'pdfToDocConverter',
         params: { tool: 'pdftodoc' }
+      })
+    },
+    
+    networkPolicyListProcess() {
+      // 网络策略清单加工
+      this.$router.push({
+        name: 'networkPolicyListProcess',
+        params: { tool: 'networkPolicyListProcess' }
       })
     }
   }

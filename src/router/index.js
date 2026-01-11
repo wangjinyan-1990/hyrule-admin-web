@@ -265,6 +265,13 @@ export const asyncRoutes = [
         hidden: true
       },
       {
+        path: 'networkPolicyListProcess',
+        name: 'networkPolicyListProcess',
+        component: () => import('@/components/Tools/networkPolicyListProcess'),
+        meta: { title: '网络策略清单加工', icon: 'toolset' },
+        hidden: true
+      },
+      {
         path: 'notebook',
         name: 'notebook',
         component: () => import('@/views/tools/notebook'),
@@ -423,6 +430,22 @@ export const asyncRoutes = [
         ]
       }
 
+    ]
+  },
+
+  {
+    path: '/environment',
+    component: Layout,
+    redirect: '/environment/environmentList',
+    name: 'environment',
+    meta: { title: '环境管理', icon: 'environment' },
+    children: [
+      {
+        path: 'environmentList',
+        name: 'environmentList',
+        component: () => import('@/views/environment/environmentList'),
+        meta: { title: '环境清单', icon: 'environmentList' }
+      }
     ]
   },
 

@@ -86,7 +86,9 @@ export default {
       },
       userList: [],
       total: 0,
-      selectedUsers: []
+      selectedUsers: [], // 当前页面的选中项
+      allSelectedUsers: [], // 所有已选中的用户（跨页面）
+      selectedUserIds: [] // 已选用户的ID列表，用于快速查找
     }
   },
   computed: {
@@ -117,6 +119,8 @@ export default {
       this.userList = [];
       this.total = 0;
       this.selectedUsers = [];
+      this.allSelectedUsers = [];
+      this.selectedUserIds = [];
     },
     getUserList() {
       userApi.getUserList(this.searchModel).then(response => {
@@ -127,6 +131,11 @@ export default {
         }
         this.userList = users;
         this.total = response.data.total;
+        
+        // 数据加载后，恢复之前已选中用户的选中状态
+        this.$nextTick(() => {
+          this.restoreSelection();
+        });
       });
     },
     resetSearch() {
@@ -143,14 +152,58 @@ export default {
       this.getUserList();
     },
     handleSelectionChange(selection) {
+      // 更新当前页面的选中项
       this.selectedUsers = selection;
+      
+      // 获取当前页面选中用户的ID列表
+      const currentPageSelectedIds = selection.map(user => user.userId);
+      
+      // 移除当前页面中取消选中的用户
+      this.allSelectedUsers = this.allSelectedUsers.filter(user => {
+        // 如果用户不在当前页面，保留
+        const isInCurrentPage = this.userList.some(u => u.userId === user.userId);
+        if (!isInCurrentPage) {
+          return true;
+        }
+        // 如果用户在当前页面，检查是否被选中
+        return currentPageSelectedIds.includes(user.userId);
+      });
+      
+      // 添加当前页面新选中的用户
+      selection.forEach(user => {
+        const exists = this.allSelectedUsers.some(u => u.userId === user.userId);
+        if (!exists) {
+          this.allSelectedUsers.push(user);
+        }
+      });
+      
+      // 更新已选用户ID列表
+      this.selectedUserIds = this.allSelectedUsers.map(user => user.userId);
+    },
+    
+    // 恢复选中状态
+    restoreSelection() {
+      if (!this.$refs.userTable) {
+        return;
+      }
+      
+      // 清除所有选中状态
+      this.$refs.userTable.clearSelection();
+      
+      // 恢复之前已选中用户的选中状态
+      this.userList.forEach(user => {
+        if (this.selectedUserIds.includes(user.userId)) {
+          this.$refs.userTable.toggleRowSelection(user, true);
+        }
+      });
     },
     handleConfirm() {
-      if (this.selectedUsers.length === 0) {
+      if (this.allSelectedUsers.length === 0) {
         this.$message.warning('请先选择用户');
         return;
       }
-      this.$emit('confirm', this.selectedUsers);
+      // 返回所有已选中的用户（跨页面）
+      this.$emit('confirm', this.allSelectedUsers);
       this.handleClose();
     },
     handleClose() {
