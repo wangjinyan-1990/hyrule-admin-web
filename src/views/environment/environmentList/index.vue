@@ -5,7 +5,14 @@
       <el-row>
         <el-col :span="18">
           <el-input v-model="searchModel.systemName" placeholder="系统名称" style="width: 150px; margin-right: 10px;"></el-input>
-          <el-input v-model="searchModel.envName" placeholder="环境名称" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-select v-model="searchModel.envId" placeholder="环境名称" clearable style="width: 150px; margin-right: 10px;">
+            <el-option
+              v-for="env in envOptions"
+              :key="env.envId"
+              :label="env.envName"
+              :value="env.envId">
+            </el-option>
+          </el-select>
           <el-input v-model="searchModel.serverName" placeholder="服务名称" style="width: 150px; margin-right: 10px;"></el-input>
           <el-input v-model="searchModel.ipAddress" placeholder="主机地址" style="width: 150px; margin-right: 10px;"></el-input>
           <el-button @click="getEnvironmentList" type="primary" round icon="el-icon-search">查询</el-button>
@@ -34,7 +41,8 @@
         style="width: 100%"
         @row-dblclick="handleEdit"
         @current-change="handleRowChange"
-        highlight-current-row>
+        highlight-current-row
+        class="environment-list-table">
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="envListId" label="环境清单Id" width="100" v-if="false"></el-table-column>
         <el-table-column prop="envId" label="环境Id" width="80" v-if="false"></el-table-column>
@@ -75,14 +83,13 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="环境" prop="envId">
-              <el-select v-model="environmentListForm.envId" placeholder="请选择环境" style="width: 100%;" @change="handleEnvChange">
-                <el-option
-                  v-for="env in envOptions"
-                  :key="env.envId"
-                  :label="env.envName"
-                  :value="env.envId">
-                </el-option>
-              </el-select>
+              <el-input
+                v-model="environmentListForm.envName"
+                placeholder="请选择环境"
+                readonly
+                @click.native="handleSelectEnv">
+                <el-button slot="append" icon="el-icon-search" @click="handleSelectEnv"></el-button>
+              </el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -121,24 +128,11 @@
             </el-form-item>
           </el-col>
         </el-row>
-        <el-form-item label="配置人员" prop="configurationPeopleIds">
+        <el-form-item label="配置人员" prop="configurationPeopleNames">
           <el-input
             v-model="environmentListForm.configurationPeopleNames"
-            placeholder="请选择配置人员"
-            readonly
-            @click.native="handleSelectUsers">
-            <el-button slot="append" icon="el-icon-search" @click="handleSelectUsers"></el-button>
+            placeholder="请输入配置人员名称（多个人员用、分隔）">
           </el-input>
-          <div v-if="environmentListForm.selectedUsers && environmentListForm.selectedUsers.length > 0" style="margin-top: 10px;">
-            <el-tag
-              v-for="(user, index) in environmentListForm.selectedUsers"
-              :key="user.userId"
-              closable
-              @close="removeUser(index)"
-              style="margin-right: 8px; margin-bottom: 8px;">
-              {{ user.userName }}
-            </el-tag>
-          </div>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input
@@ -155,6 +149,13 @@
       </span>
     </el-dialog>
 
+    <!-- 环境选择器 -->
+    <EnvSingleSelector
+      v-model="envSelectorVisible"
+      :selectedEnvId="environmentListForm.envId"
+      @confirm="handleEnvConfirm">
+    </EnvSingleSelector>
+
     <!-- 系统选择器 -->
     <TestSystemSingleSelector
       v-model="systemSelectorVisible"
@@ -162,11 +163,6 @@
       @confirm="handleSystemConfirm">
     </TestSystemSingleSelector>
 
-    <!-- 用户选择器 -->
-    <UserMultipleSelector
-      v-model="userSelectorVisible"
-      @confirm="handleUserConfirm">
-    </UserMultipleSelector>
   </div>
 </template>
 
@@ -200,18 +196,77 @@
   .el-table__body tr:not(.current-row):hover > td {
     background-color: #f5f7fa !important;
   }
+
+  /* 减小表格行高 - 使用更强的选择器 */
+  .environment-list-table th,
+  .environment-list-table td {
+    height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  .environment-list-table .el-table__row {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  .environment-list-table .cell {
+    padding: 0 5px !important;
+    line-height: 24px !important;
+    height: 24px !important;
+  }
+
+  /* 强制覆盖表格头部和主体的行高 */
+  .environment-list-table .el-table__header-wrapper .el-table th,
+  .environment-list-table .el-table__body-wrapper .el-table td {
+    height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+    font-size: 12px !important;
+  }
+
+  /* 强制设置表格行高 */
+  .environment-list-table tbody tr,
+  .environment-list-table thead tr {
+    height: 24px !important;
+    min-height: 24px !important;
+    max-height: 24px !important;
+  }
+
+  /* 针对具体的列 */
+  .environment-list-table .el-table__header th,
+  .environment-list-table .el-table__body td {
+    height: 24px !important;
+    line-height: 24px !important;
+    padding: 0 !important;
+    font-size: 12px !important;
+  }
+
+  /* 标签样式 */
+  .environment-list-table .el-tag {
+    font-size: 12px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    padding: 0 5px !important;
+  }
 </style>
 
 <script>
 import environmentListApi from '@/api/environment/environmentList'
 import environmentApi from '@/api/environment/environment'
+import EnvSingleSelector from '@/views/sys/common/EnvSingleSelector'
 import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelector'
-import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
 
   export default {
   components: {
-    TestSystemSingleSelector,
-    UserMultipleSelector
+    EnvSingleSelector,
+    TestSystemSingleSelector
   },
   data(){
     return{
@@ -220,17 +275,17 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
         pageNo: 1,
         pageSize: 10,
         systemName: '',
-        envName: '',
+        envId: '',
         serverName: '',
         ipAddress: ''
       },
+      envOptions: [],
       environmentList: [],
       dialogVisible: false,
       isEdit: false,
       selectedRow: null,
+      envSelectorVisible: false,
       systemSelectorVisible: false,
-      userSelectorVisible: false,
-      envOptions: [],
       environmentListForm: {
         envListId: '',
         envId: '',
@@ -241,9 +296,7 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
         ipAddress: '',
         portInfo: '',
         linkAddress: '',
-        configurationPeopleIds: '',
         configurationPeopleNames: '',
-        selectedUsers: [],
         remark: ''
       },
       rules: {
@@ -287,35 +340,69 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
       const queryParams = {
         pageNo: this.searchModel.pageNo,
         pageSize: this.searchModel.pageSize,
-        systemName: this.searchModel.systemName,
-        envName: this.searchModel.envName,
-        serverName: this.searchModel.serverName,
-        ipAddress: this.searchModel.ipAddress
+        systemName: this.searchModel.systemName, // 模糊查询
+        envId: this.searchModel.envId,
+        serverName: this.searchModel.serverName, // 模糊查询
+        ipAddress: this.searchModel.ipAddress // 模糊查询
       };
       environmentListApi.getEnvironmentList(queryParams).then(response => {
-        let responseData = null
-        if (response.code === 20000 && response.data) {
-          responseData = response.data
-        } else if (response.rows || response.total !== undefined) {
-          responseData = response
-        } else if (response.data && (response.data.rows || response.data.total !== undefined)) {
-          responseData = response.data
+        // 优先处理数组格式的响应
+        if (Array.isArray(response)) {
+          this.environmentList = response;
+          this.total = response.length;
+          return;
         }
 
-        if (responseData) {
-          const rows = responseData.rows || [];
-          this.environmentList = rows;
-          this.total = responseData.total || 0;
-        } else {
-          this.$message.error('获取环境清单列表失败：响应数据格式不正确');
+        // 处理包装在data中的数组
+        if (response.data) {
+          if (Array.isArray(response.data)) {
+            // data直接是数组格式
+            this.environmentList = response.data;
+            this.total = response.data.length;
+            return;
+          } else if (response.data.rows && Array.isArray(response.data.rows)) {
+            // data中有rows字段（分页格式）
+            this.environmentList = response.data.rows;
+            this.total = response.data.total || response.data.rows.length;
+            return;
+          }
         }
+
+        // 处理其他可能的格式
+        if (response.code === 20000 && response.data) {
+          if (Array.isArray(response.data)) {
+            this.environmentList = response.data;
+            this.total = response.data.length;
+            return;
+          } else if (response.data.rows && Array.isArray(response.data.rows)) {
+            this.environmentList = response.data.rows;
+            this.total = response.data.total || response.data.rows.length;
+            return;
+          }
+        }
+
+        // 处理直接包含rows和total的格式
+        if (response.rows && Array.isArray(response.rows)) {
+          this.environmentList = response.rows;
+          this.total = response.total || response.rows.length;
+          return;
+        }
+
+        // 如果都不匹配，输出错误
+        console.warn('获取环境清单列表失败：响应数据格式不正确', response);
+        this.$message.error('获取环境清单列表失败：响应数据格式不正确');
+        this.environmentList = [];
+        this.total = 0;
       }).catch(error => {
-        this.$message.error('获取环境清单列表失败');
+        console.error('获取环境清单列表失败', error);
+        this.$message.error('获取环境清单列表失败：' + (error.message || '网络错误'));
+        this.environmentList = [];
+        this.total = 0;
       });
     },
     resetSearch(){
       this.searchModel.systemName = '';
-      this.searchModel.envName = '';
+      this.searchModel.envId = '';
       this.searchModel.serverName = '';
       this.searchModel.ipAddress = '';
       this.searchModel.pageNo = 1;
@@ -375,14 +462,9 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
             ipAddress: this.selectedRow.ipAddress || '',
             portInfo: this.selectedRow.portInfo || '',
             linkAddress: this.selectedRow.linkAddress || '',
-            configurationPeopleIds: this.selectedRow.configurationPeopleIds || '',
             configurationPeopleNames: this.selectedRow.configurationPeopleNames || '',
-            selectedUsers: this.selectedRow.selectedUsers || [],
             remark: this.selectedRow.remark || ''
           };
-          if (this.environmentListForm.configurationPeopleIds && !this.environmentListForm.selectedUsers.length) {
-            this.environmentListForm.selectedUsers = [];
-          }
         } else {
           environmentListApi.getEnvironmentListDetail(this.selectedRow.envListId).then(response => {
             if (response.code === 20000) {
@@ -397,14 +479,9 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
                 ipAddress: data.ipAddress || '',
                 portInfo: data.portInfo || '',
                 linkAddress: data.linkAddress || '',
-                configurationPeopleIds: data.configurationPeopleIds || '',
                 configurationPeopleNames: data.configurationPeopleNames || '',
-                selectedUsers: data.selectedUsers || [],
                 remark: data.remark || ''
               };
-              if (this.environmentListForm.configurationPeopleIds && !this.environmentListForm.selectedUsers.length) {
-                this.environmentListForm.selectedUsers = [];
-              }
             } else {
               this.$message.error(response.message || '获取环境清单详情失败');
             }
@@ -428,20 +505,13 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
         ipAddress: '',
         portInfo: '',
         linkAddress: '',
-        configurationPeopleIds: '',
         configurationPeopleNames: '',
-        selectedUsers: [],
         remark: ''
       };
     },
     submitForm(){
       this.$refs.environmentListFormRef.validate(valid => {
         if (!valid) return;
-
-        let configurationPeopleIds = '';
-        if (this.environmentListForm.selectedUsers && this.environmentListForm.selectedUsers.length > 0) {
-          configurationPeopleIds = this.environmentListForm.selectedUsers.map(user => user.userId).join(',');
-        }
 
         const payload = {
           envId: this.environmentListForm.envId,
@@ -450,7 +520,7 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
           ipAddress: this.environmentListForm.ipAddress,
           portInfo: this.environmentListForm.portInfo || '',
           linkAddress: this.environmentListForm.linkAddress || '',
-          configurationPeopleIds: configurationPeopleIds,
+          configurationPeopleNames: this.environmentListForm.configurationPeopleNames || '',
           remark: this.environmentListForm.remark || ''
         };
 
@@ -474,24 +544,65 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
         }
       });
     },
-    // 加载环境选项
+    // 加载环境选项（用于查询条件下拉选择）
     loadEnvOptions(){
       environmentApi.getEnvironmentList({ pageNo: 1, pageSize: 1000 }).then(response => {
-        if (response.code === 20000 && response.data) {
-          this.envOptions = response.data.rows || [];
-        } else if (response.rows) {
-          this.envOptions = response.rows || [];
+        // 优先处理数组格式的响应
+        if (Array.isArray(response)) {
+          this.envOptions = response;
+          return;
         }
-      }).catch(() => {
-        // 如果加载失败，使用空数组
+
+        // 处理包装在data中的数组
+        if (response.data) {
+          if (Array.isArray(response.data)) {
+            // data直接是数组格式
+            this.envOptions = response.data;
+            return;
+          } else if (response.data.rows && Array.isArray(response.data.rows)) {
+            // data中有rows字段（分页格式）
+            this.envOptions = response.data.rows;
+            return;
+          }
+        }
+
+        // 处理其他可能的格式
+        if (response.code === 20000 && response.data) {
+          if (Array.isArray(response.data)) {
+            this.envOptions = response.data;
+            return;
+          } else if (response.data.rows && Array.isArray(response.data.rows)) {
+            this.envOptions = response.data.rows;
+            return;
+          }
+        }
+
+        // 处理直接包含rows的格式
+        if (response.rows && Array.isArray(response.rows)) {
+          this.envOptions = response.rows;
+          return;
+        }
+
+        // 如果都不匹配，输出警告
+        console.warn('获取环境选项失败：响应数据格式不正确', response);
+        this.envOptions = [];
+      }).catch(error => {
+        console.error('获取环境选项失败', error);
         this.envOptions = [];
       });
     },
-    // 环境选择变化
-    handleEnvChange(envId){
-      const selectedEnv = this.envOptions.find(env => env.envId === envId);
-      if (selectedEnv) {
-        this.environmentListForm.envName = selectedEnv.envName || '';
+    // 选择环境（用于表单中的环境选择器）
+    handleSelectEnv(){
+      this.envSelectorVisible = true;
+    },
+    // 环境选择确认
+    handleEnvConfirm(envId, envName, env){
+      if (env) {
+        this.environmentListForm.envId = env.envId;
+        this.environmentListForm.envName = env.envName || '';
+      } else if (envId && envName) {
+        this.environmentListForm.envId = envId;
+        this.environmentListForm.envName = envName;
       }
     },
     // 选择系统
@@ -506,26 +617,6 @@ import UserMultipleSelector from '@/views/sys/common/UserMultipleSelector'
       } else if (systemId && systemName) {
         this.environmentListForm.systemId = systemId;
         this.environmentListForm.systemName = systemName;
-      }
-    },
-    // 选择用户
-    handleSelectUsers(){
-      this.userSelectorVisible = true;
-    },
-    // 用户选择确认
-    handleUserConfirm(users){
-      if (users && users.length > 0) {
-        this.environmentListForm.selectedUsers = users;
-        this.environmentListForm.configurationPeopleNames = users.map(user => user.userName).join('、');
-      }
-    },
-    // 移除用户
-    removeUser(index){
-      this.environmentListForm.selectedUsers.splice(index, 1);
-      if (this.environmentListForm.selectedUsers.length > 0) {
-        this.environmentListForm.configurationPeopleNames = this.environmentListForm.selectedUsers.map(user => user.userName).join('、');
-      } else {
-        this.environmentListForm.configurationPeopleNames = '';
       }
     }
   }

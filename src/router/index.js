@@ -438,7 +438,7 @@ export const asyncRoutes = [
     component: Layout,
     redirect: '/environment/environmentList',
     name: 'environment',
-    meta: { title: '环境管理', icon: 'environment' },
+    meta: { title: '环境管理', icon: 'environment', alwaysShow: true },
     children: [
       {
         path: 'environmentList',

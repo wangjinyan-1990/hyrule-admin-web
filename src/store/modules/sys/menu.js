@@ -12,18 +12,22 @@ function hasPermission(menus, route) {
     return true // admin用户显示所有未隐藏的菜单
   }
   
+  // 对于有子路由的父路由，先检查子路由是否有权限
+  // 这样即使父菜单不在权限列表中，只要子菜单有权限，父菜单也会显示
+  if (route.children && route.children.length > 0) {
+    const hasValidChildren = route.children.some(child => hasPermission(menus, child))
+    if (hasValidChildren) {
+      return true // 如果子路由有权限，父路由也显示
+    }
+  }
+  
   // 检查路由是否在用户菜单权限中
   if (route.meta && route.meta.title) {
     const hasPermission = menus.some(menu => menu.title === route.meta.title)
     // console.log(`检查路由权限: ${route.meta.title} -> ${hasPermission}`)
     return hasPermission
   }
-  // 对于没有title的路由，检查其子路由是否有权限
-  if (route.children && route.children.length > 0) {
-    const hasValidChildren = route.children.some(child => hasPermission(menus, child))
-    // console.log(`检查父路由权限: ${route.path} -> ${hasValidChildren}`)
-    return hasValidChildren
-  }
+  
   return false
 }
 
