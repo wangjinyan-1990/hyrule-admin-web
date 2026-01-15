@@ -43,10 +43,44 @@ export function deleteEnvironmentList(envListId) {
   })
 }
 
+// 导出环境清单
+export function exportEnvironmentList(params) {
+  return request({
+    url: '/env/environmentList/export',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
+// 导入环境清单
+export function importEnvironmentList(formData) {
+  return request({
+    url: '/env/environmentList/import',
+    method: 'post',
+    data: formData,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+// 下载导入模板
+export function downloadImportTemplate() {
+  return request({
+    url: '/env/environmentList/template',
+    method: 'get',
+    responseType: 'blob'
+  })
+}
+
 export default {
   getEnvironmentList,
   getEnvironmentListDetail,
   createEnvironmentList,
   updateEnvironmentList,
-  deleteEnvironmentList
+  deleteEnvironmentList,
+  exportEnvironmentList,
+  importEnvironmentList,
+  downloadImportTemplate
 }

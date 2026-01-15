@@ -4,8 +4,8 @@
     <el-card id="search">
       <el-row>
         <el-col :span="18">
-          <el-input v-model="searchModel.systemName" placeholder="系统名称" style="width: 150px; margin-right: 10px;"></el-input>
-          <el-select v-model="searchModel.envId" placeholder="环境名称" clearable style="width: 150px; margin-right: 10px;">
+          <el-input v-model="searchModel.systemName" placeholder="系统名称" size="small" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-select v-model="searchModel.envId" placeholder="环境名称" clearable size="small" style="width: 150px; margin-right: 10px;">
             <el-option
               v-for="env in envOptions"
               :key="env.envId"
@@ -13,8 +13,8 @@
               :value="env.envId">
             </el-option>
           </el-select>
-          <el-input v-model="searchModel.serverName" placeholder="服务名称" style="width: 150px; margin-right: 10px;"></el-input>
-          <el-input v-model="searchModel.ipAddress" placeholder="主机地址" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-input v-model="searchModel.serverName" placeholder="服务名称" size="small" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-input v-model="searchModel.ipAddress" placeholder="主机地址" size="small" style="width: 150px; margin-right: 10px;"></el-input>
           <el-button @click="getEnvironmentList" type="primary" round icon="el-icon-search">查询</el-button>
           <el-button @click="resetSearch" type="info" round icon="el-icon-refresh">重置</el-button>
         </el-col>
@@ -29,6 +29,12 @@
           <el-tooltip content="删除" placement="top">
             <el-button @click="handleDelete" type="danger" icon="el-icon-delete" circle :disabled="!selectedRow"></el-button>
           </el-tooltip>
+        </el-col>
+      </el-row>
+      <el-row style="margin-top: 15px;">
+        <el-col :span="24">
+          <el-button @click="handleImport" type="warning" size="small" round icon="el-icon-upload2">导入</el-button>
+          <el-button @click="handleExport" type="success" size="small" round icon="el-icon-download" :disabled="environmentList.length === 0">导出</el-button>
         </el-col>
       </el-row>
     </el-card>
@@ -52,7 +58,19 @@
         <el-table-column prop="serverName" label="服务名称" width="150" show-overflow-tooltip></el-table-column>
         <el-table-column prop="ipAddress" label="主机地址" width="150" show-overflow-tooltip></el-table-column>
         <el-table-column prop="portInfo" label="端口信息" width="120" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="linkAddress" label="链接地址" min-width="200" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="linkAddress" label="链接地址" min-width="200" show-overflow-tooltip>
+          <template slot-scope="scope">
+            <a 
+              v-if="scope.row.linkAddress" 
+              :href="scope.row.linkAddress" 
+              target="_blank" 
+              style="color: #409EFF; text-decoration: none;"
+              @click.stop>
+              {{ scope.row.linkAddress }}
+            </a>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="configurationPeopleNames" label="配置人员" min-width="150" show-overflow-tooltip>
           <template slot-scope="scope">
             <span v-if="scope.row.configurationPeopleNames">{{ scope.row.configurationPeopleNames }}</span>
@@ -163,6 +181,33 @@
       @confirm="handleSystemConfirm">
     </TestSystemSingleSelector>
 
+    <!-- 导入对话框 -->
+    <el-dialog
+      title="导入环境清单"
+      :visible.sync="importDialogVisible"
+      width="500px"
+      :close-on-click-modal="false"
+      @close="handleImportDialogClose">
+      <el-upload
+        ref="upload"
+        :http-request="handleUploadRequest"
+        :file-list="fileList"
+        :auto-upload="false"
+        :on-change="handleFileChange"
+        :before-upload="beforeUpload"
+        :limit="1"
+        accept=".xlsx,.xls"
+        drag>
+        <i class="el-icon-upload"></i>
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+        <div class="el-upload__tip" slot="tip">只能上传xlsx/xls文件，且不超过10MB</div>
+      </el-upload>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="importDialogVisible = false">取消</el-button>
+        <el-button @click="downloadTemplate" type="info">下载模板</el-button>
+        <el-button @click="submitUpload" type="primary" :loading="uploading">确定导入</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -263,7 +308,7 @@ import environmentApi from '@/api/environment/environment'
 import EnvSingleSelector from '@/views/sys/common/EnvSingleSelector'
 import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelector'
 
-  export default {
+export default {
   components: {
     EnvSingleSelector,
     TestSystemSingleSelector
@@ -273,7 +318,7 @@ import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelecto
       total: 0,
       searchModel: {
         pageNo: 1,
-        pageSize: 10,
+        pageSize: 20,
         systemName: '',
         envId: '',
         serverName: '',
@@ -286,6 +331,9 @@ import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelecto
       selectedRow: null,
       envSelectorVisible: false,
       systemSelectorVisible: false,
+      importDialogVisible: false,
+      fileList: [],
+      uploading: false,
       environmentListForm: {
         envListId: '',
         envId: '',
@@ -330,6 +378,8 @@ import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelecto
   methods:{
     handleSizeChange(pageSize){
       this.searchModel.pageSize = pageSize;
+      // 改变每页条数时，重置到第一页
+      this.searchModel.pageNo = 1;
       this.getEnvironmentList();
     },
     handleCurrentChange(pageNo){
@@ -345,56 +395,70 @@ import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelecto
         serverName: this.searchModel.serverName, // 模糊查询
         ipAddress: this.searchModel.ipAddress // 模糊查询
       };
+      
       environmentListApi.getEnvironmentList(queryParams).then(response => {
-        // 优先处理数组格式的响应
-        if (Array.isArray(response)) {
-          this.environmentList = response;
+        // request拦截器已经返回了response.data，所以response就是后端返回的数据
+        // 检查API响应结构，支持多种格式
+        let responseData = null;
+        
+        // 优先处理标准分页格式：{code: 20000, data: {rows: [], total: 0}}
+        if (response.code === 20000 && response.data) {
+          if (response.data.rows && Array.isArray(response.data.rows)) {
+            responseData = response.data;
+          } else if (Array.isArray(response.data)) {
+            // data直接是数组格式（非分页）
+            // 前端分页处理
+            const startIndex = (this.searchModel.pageNo - 1) * this.searchModel.pageSize;
+            const endIndex = startIndex + this.searchModel.pageSize;
+            this.environmentList = response.data.slice(startIndex, endIndex);
+            this.total = response.data.length;
+            return;
+          }
+        }
+        
+        // 处理直接格式：{rows: [], total: 0} 或 {code: 20000, rows: [], total: 0}
+        if (!responseData && (response.rows || response.total !== undefined)) {
+          responseData = response;
+        }
+        
+        // 处理嵌套格式：{data: {rows: [], total: 0}}
+        if (!responseData && response.data && (response.data.rows || response.data.total !== undefined)) {
+          responseData = response.data;
+        }
+        
+        // 处理数组格式（非分页，应该避免这种情况）
+        if (!responseData && Array.isArray(response)) {
+          // 前端分页处理
+          const startIndex = (this.searchModel.pageNo - 1) * this.searchModel.pageSize;
+          const endIndex = startIndex + this.searchModel.pageSize;
+          this.environmentList = response.slice(startIndex, endIndex);
           this.total = response.length;
           return;
         }
 
-        // 处理包装在data中的数组
-        if (response.data) {
-          if (Array.isArray(response.data)) {
-            // data直接是数组格式
-            this.environmentList = response.data;
-            this.total = response.data.length;
-            return;
-          } else if (response.data.rows && Array.isArray(response.data.rows)) {
-            // data中有rows字段（分页格式）
-            this.environmentList = response.data.rows;
-            this.total = response.data.total || response.data.rows.length;
-            return;
+        if (responseData) {
+          const rows = responseData.rows || [];
+          const total = responseData.total !== undefined ? responseData.total : rows.length;
+          
+          // 如果后端返回的数据量超过pageSize，说明后端没有正确分页，需要前端处理
+          if (rows.length > this.searchModel.pageSize) {
+            // 前端分页处理：根据pageNo和pageSize截取数据
+            const startIndex = (this.searchModel.pageNo - 1) * this.searchModel.pageSize;
+            const endIndex = startIndex + this.searchModel.pageSize;
+            this.environmentList = rows.slice(startIndex, endIndex);
+            this.total = total;
+          } else {
+            // 后端已经正确分页，直接使用
+            this.environmentList = rows;
+            this.total = total;
           }
+        } else {
+          // 如果都不匹配，输出错误
+          this.$message.error('获取环境清单列表失败：响应数据格式不正确');
+          this.environmentList = [];
+          this.total = 0;
         }
-
-        // 处理其他可能的格式
-        if (response.code === 20000 && response.data) {
-          if (Array.isArray(response.data)) {
-            this.environmentList = response.data;
-            this.total = response.data.length;
-            return;
-          } else if (response.data.rows && Array.isArray(response.data.rows)) {
-            this.environmentList = response.data.rows;
-            this.total = response.data.total || response.data.rows.length;
-            return;
-          }
-        }
-
-        // 处理直接包含rows和total的格式
-        if (response.rows && Array.isArray(response.rows)) {
-          this.environmentList = response.rows;
-          this.total = response.total || response.rows.length;
-          return;
-        }
-
-        // 如果都不匹配，输出错误
-        console.warn('获取环境清单列表失败：响应数据格式不正确', response);
-        this.$message.error('获取环境清单列表失败：响应数据格式不正确');
-        this.environmentList = [];
-        this.total = 0;
       }).catch(error => {
-        console.error('获取环境清单列表失败', error);
         this.$message.error('获取环境清单列表失败：' + (error.message || '网络错误'));
         this.environmentList = [];
         this.total = 0;
@@ -584,10 +648,8 @@ import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelecto
         }
 
         // 如果都不匹配，输出警告
-        console.warn('获取环境选项失败：响应数据格式不正确', response);
         this.envOptions = [];
       }).catch(error => {
-        console.error('获取环境选项失败', error);
         this.envOptions = [];
       });
     },
@@ -618,6 +680,141 @@ import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelecto
         this.environmentListForm.systemId = systemId;
         this.environmentListForm.systemName = systemName;
       }
+    },
+    // 导出环境清单
+    async handleExport() {
+      try {
+        const params = {
+          ...this.searchModel
+        };
+        const response = await environmentListApi.exportEnvironmentList(params);
+
+        // 创建下载链接
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const fileName = `环境清单_${new Date().getTime()}.xlsx`;
+        link.download = fileName;
+        link.click();
+        window.URL.revokeObjectURL(url);
+
+        this.$message.success('导出成功');
+      } catch (error) {
+        this.$message.error('导出失败：' + (error.message || '网络错误'));
+      }
+    },
+    // 导入环境清单
+    handleImport() {
+      this.importDialogVisible = true;
+      this.fileList = [];
+    },
+    // 下载导入模板
+    async downloadTemplate() {
+      try {
+        const response = await environmentListApi.downloadImportTemplate();
+
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = '环境清单导入模板.xlsx';
+        link.click();
+        window.URL.revokeObjectURL(url);
+
+        this.$message.success('模板下载成功');
+      } catch (error) {
+        this.$message.error('模板下载失败：' + (error.message || '网络错误'));
+      }
+    },
+    // 上传前检查
+    beforeUpload(file) {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                     file.type === 'application/vnd.ms-excel' ||
+                     file.name.endsWith('.xlsx') ||
+                     file.name.endsWith('.xls');
+      const isLt10M = file.size / 1024 / 1024 < 10;
+
+      if (!isExcel) {
+        this.$message.error('只能上传Excel文件!');
+        return false;
+      }
+      if (!isLt10M) {
+        this.$message.error('文件大小不能超过10MB!');
+        return false;
+      }
+      return true;
+    },
+    // 文件列表变化
+    handleFileChange(file, fileList) {
+      // 限制只能选择一个文件，如果选择了新文件，清除旧文件
+      if (fileList.length > 1) {
+        this.fileList = [fileList[fileList.length - 1]];
+        // 同步更新 el-upload 组件的 fileList
+        this.$nextTick(() => {
+          if (this.$refs.upload) {
+            this.$refs.upload.fileList = this.fileList;
+          }
+        });
+      } else {
+        this.fileList = fileList;
+      }
+    },
+    // 导入对话框关闭时清除文件列表
+    handleImportDialogClose() {
+      this.fileList = [];
+      this.uploading = false;
+      // 清除 el-upload 组件的文件列表
+      if (this.$refs.upload) {
+        this.$refs.upload.clearFiles();
+      }
+    },
+    // 自定义上传请求（使用 http-request）
+    async handleUploadRequest(options) {
+      try {
+        const formData = new FormData();
+        formData.append('file', options.file);
+        
+        const response = await environmentListApi.importEnvironmentList(formData);
+        
+        if (response.code === 20000 || response.code === 200) {
+          this.$message.success('导入成功');
+          this.importDialogVisible = false;
+          this.fileList = [];
+          this.getEnvironmentList();
+        } else {
+          this.$message.error('导入失败：' + (response.message || '未知错误'));
+          // 导入失败时清除文件列表
+          this.fileList = [];
+          if (this.$refs.upload) {
+            this.$refs.upload.clearFiles();
+          }
+        }
+        this.uploading = false;
+      } catch (error) {
+        this.$message.error('导入失败：' + (error.message || '网络错误'));
+        // 导入失败时清除文件列表
+        this.fileList = [];
+        if (this.$refs.upload) {
+          this.$refs.upload.clearFiles();
+        }
+        this.uploading = false;
+      }
+    },
+    // 提交上传
+    submitUpload() {
+      // 使用 el-upload 组件的 fileList 来检查
+      const uploadFileList = this.$refs.upload ? this.$refs.upload.fileList : this.fileList;
+      if (!uploadFileList || uploadFileList.length === 0) {
+        this.$message.warning('请先选择要上传的文件');
+        return;
+      }
+      this.uploading = true;
+      this.$refs.upload.submit();
     }
   }
 };
