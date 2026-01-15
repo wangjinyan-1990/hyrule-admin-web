@@ -10,8 +10,8 @@ export function parseMergeRequest(mergeRequest, systemId) {
 }
 
 // 创建发版登记（SIT）
-// data 参数包括：testStage, systemId, componentInfo, versionCode, recordNum, codeList, 
-// isRunSql, isUpdateConfig, sendTestCode, mergeRequest, deployTime 等
+// data 参数包括：testStage, systemId, componentInfo, versionCode, recordNum, codeList,
+// isRunSql, isUpdateConfig, sendTestInfo, mergeRequest, deployTime 等
 export function createSITDeployRecord(data) {
   return request({
     url: '/configuration/deploy/sit/record',

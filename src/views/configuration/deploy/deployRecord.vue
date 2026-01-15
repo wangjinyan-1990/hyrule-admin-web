@@ -28,7 +28,7 @@
             <el-option label="SIT" value="SIT"></el-option>
             <el-option label="PAT" value="PAT"></el-option>
           </el-select>
-          <el-input v-model="searchModel.sendTestCode" placeholder="送测单编号" size="small" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-input v-model="searchModel.sendTestInfo" placeholder="送测单信息" size="small" style="width: 150px; margin-right: 10px;"></el-input>
           <el-button @click="getDeployRecordList" type="primary" size="small" round icon="el-icon-search">查询</el-button>
           <el-button @click="resetSearch" type="info" size="small" round icon="el-icon-refresh">重置</el-button>
         </el-col>
@@ -105,7 +105,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="sendTestCode" label="送测单编号" width="150" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="sendTestInfo" label="送测单信息" width="150" show-overflow-tooltip></el-table-column>
         <el-table-column prop="deployTime" label="部署时间点" width="160">
           <template slot-scope="scope">
             <span v-if="scope.row.deployTime">{{ formatDateTime(scope.row.deployTime) }}</span>
@@ -265,7 +265,7 @@ export default {
         startDate: '',
         endDate: '',
         testStage: '',
-        sendTestCode: ''
+        sendTestInfo: ''
       },
       deployRecordList: [],
       codeListDialogVisible: false,
@@ -344,7 +344,7 @@ export default {
       this.searchModel.startDate = todayStr
       this.searchModel.endDate = todayStr
       this.searchModel.testStage = ''
-      this.searchModel.sendTestCode = ''
+      this.searchModel.sendTestInfo = ''
       this.searchModel.pageNo = 1
       this.getDeployRecordList()
     },

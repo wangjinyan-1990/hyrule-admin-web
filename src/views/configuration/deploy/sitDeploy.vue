@@ -32,7 +32,7 @@
           </el-col>
         </el-row>
 
-        <!-- 第三行：合并状态和送测单编号 -->
+        <!-- 第三行：合并状态和送测单信息 -->
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="合并状态:" prop="mergeState">
@@ -40,8 +40,8 @@
             </el-form-item>
           </el-col>
           <el-col :span="12">
-            <el-form-item label="送测单编号:" prop="sendTestCode">
-              <el-input v-model="deployForm.sendTestCode" placeholder="请输入送测单编号"></el-input>
+            <el-form-item label="送测单信息:" prop="sendTestInfo">
+              <el-input v-model="deployForm.sendTestInfo" placeholder="请输入送测单信息"></el-input>
             </el-form-item>
           </el-col>
         </el-row>
@@ -161,7 +161,7 @@ export default {
         codeList: '',
         isRunSql: false,
         isUpdateConfig: false,
-        sendTestCode: '',
+        sendTestInfo: '',
         mergeRequest: '',
         mergeState: ''
       },
@@ -211,7 +211,7 @@ export default {
             codeList: data.codeList || '',
             isRunSql: data.isRunSql === 1 || data.isRunSql === '1' || data.isRunSql === true,
             isUpdateConfig: data.isUpdateConfig === 1 || data.isUpdateConfig === '1' || data.isUpdateConfig === true,
-            sendTestCode: data.sendTestCode || '',
+            sendTestInfo: data.sendTestInfo || '',
             mergeRequest: data.mergeRequest || '',
             mergeState: data.mergeState || ''
           }
@@ -250,8 +250,8 @@ export default {
           if (data.codeList) {
             this.deployForm.codeList = data.codeList
           }
-          if (data.sendTestCode) {
-            this.deployForm.sendTestCode = data.sendTestCode
+          if (data.sendTestInfo) {
+            this.deployForm.sendTestInfo = data.sendTestInfo
           }
           if (data.mergeState) {
             this.deployForm.mergeState = data.mergeState
@@ -325,7 +325,7 @@ export default {
           codeList: this.deployForm.codeList,
           isRunSql: this.deployForm.isRunSql ? 1 : 0,
           isUpdateConfig: this.deployForm.isUpdateConfig ? 1 : 0,
-          sendTestCode: this.deployForm.sendTestCode,
+          sendTestInfo: this.deployForm.sendTestInfo,
           mergeRequest: this.deployForm.mergeRequest || '',
           deployTime: new Date().toISOString()
         }
@@ -387,7 +387,7 @@ export default {
         codeList: '',
         isRunSql: false,
         isUpdateConfig: false,
-        sendTestCode: '',
+        sendTestInfo: '',
         mergeRequest: '',
         mergeState: ''
       }

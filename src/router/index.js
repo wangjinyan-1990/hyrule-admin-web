@@ -393,7 +393,7 @@ export const asyncRoutes = [
     path: '/configuration',
     component: Layout,
     name: 'configuration',
-    meta: { title: '配置管理', icon: 'nested' },
+    meta: { title: '配置管理', icon: 'configuration' },
     children: [
       {
         path: 'sysConfigInfo',

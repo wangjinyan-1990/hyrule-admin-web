@@ -31,11 +31,11 @@
           </el-col>
         </el-row>
 
-        <!-- 第三行：送测单编号和版本登记数 -->
+        <!-- 第三行：送测单信息和版本登记数 -->
         <el-row :gutter="20">
           <el-col :span="12">
-            <el-form-item label="送测单编号:" prop="sendTestCode">
-              <el-input v-model="deployForm.sendTestCode" placeholder="请输入送测单编号"></el-input>
+            <el-form-item label="送测单信息:" prop="sendTestInfo">
+              <el-input v-model="deployForm.sendTestInfo" placeholder="请输入送测单信息"></el-input>
             </el-form-item>
           </el-col>
           <el-col :span="12">
@@ -179,7 +179,7 @@ export default {
         codeList: '',
         isRunSql: false, // 默认false，对应0
         isUpdateConfig: false, // 默认false，对应0
-        sendTestCode: '',
+        sendTestInfo: '',
         gitlabUrl: '',
         sourceBranch: '',
         targetBranch: ''
@@ -191,8 +191,8 @@ export default {
         systemId: [
           { required: true, message: '请选择系统', trigger: 'change' }
         ],
-        sendTestCode: [
-          { required: true, message: '请输入送测单编号', trigger: 'blur' }
+        sendTestInfo: [
+          { required: true, message: '请输入送测单信息', trigger: 'blur' }
         ],
         recordNum: [
           { required: true, message: '请输入版本登记数', trigger: 'blur' },
@@ -364,7 +364,7 @@ export default {
           codeList: this.deployForm.codeList,
           isRunSql: this.deployForm.isRunSql ? 1 : 0, // 转换为1/0
           isUpdateConfig: this.deployForm.isUpdateConfig ? 1 : 0, // 转换为1/0
-          sendTestCode: this.deployForm.sendTestCode,
+          sendTestInfo: this.deployForm.sendTestInfo,
           sourceBranch: this.deployForm.sourceBranch,
           targetBranch: this.deployForm.targetBranch,
           deployTime: new Date().toISOString()
@@ -405,7 +405,7 @@ export default {
         codeList: '',
         isRunSql: false,
         isUpdateConfig: false,
-        sendTestCode: '',
+        sendTestInfo: '',
         gitlabUrl: '',
         sourceBranch: '',
         targetBranch: ''
