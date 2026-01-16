@@ -4,7 +4,7 @@
       <el-form ref="deployFormRef" :model="deployForm" :rules="rules" label-width="120px">
         <!-- 第一行：Merge_Request 和解析按钮 -->
         <el-form-item label="Merge_Request:" prop="mergeRequest" class="merge-request-item">
-          <el-input v-model="deployForm.mergeRequest" placeholder="请输入Merge_Request" style="width: calc(100% - 110px); display: inline-block; margin-right: 10px;">
+          <el-input v-model="deployForm.mergeRequest" placeholder="请输入Merge_Request" @input="handleMergeRequestChange" style="width: calc(100% - 110px); display: inline-block; margin-right: 10px;">
           </el-input>
           <el-button type="primary" @click="handleParseMR" :loading="parsing" :disabled="isMergeRequestOne" style="vertical-align: top;">解析</el-button>
           <div style="margin-top: 5px; color: #f56c6c; font-size: 12px; margin-left: 0;">
@@ -175,7 +175,23 @@ export default {
           { type: 'number', min: 1, max: 20, message: '版本数必须在1-20之间', trigger: 'blur', transform: value => Number(value) }
         ],
         codeList: [
-          { required: true, message: '请输入代码清单', trigger: 'blur' }
+          {
+            validator: (rule, value, callback) => {
+              const mergeRequest = this.deployForm.mergeRequest || ''
+              // 如果 mergeRequest 为 '1'，代码清单非必填
+              if (mergeRequest === '1') {
+                callback()
+              } else {
+                // 如果 mergeRequest 不是 '1'，代码清单必填
+                if (!value || value.trim() === '') {
+                  callback(new Error('请输入代码清单'))
+                } else {
+                  callback()
+                }
+              }
+            },
+            trigger: 'blur'
+          }
         ]
       }
     }
@@ -221,6 +237,36 @@ export default {
       }).catch(() => {
         this.$message.error('获取发版登记详情失败')
       })
+    },
+
+    // Merge Request 变化处理
+    handleMergeRequestChange() {
+      // 触发字段验证
+      this.$nextTick(() => {
+        if (this.$refs.deployFormRef) {
+          this.$refs.deployFormRef.validateField('codeList')
+        }
+      })
+      
+      if (this.deployForm.mergeRequest === '1') {
+        // 如果填的是'1'，清空代码清单
+        this.deployForm.codeList = ''
+      }
+    },
+
+    // Merge Request 变化处理
+    handleMergeRequestChange() {
+      // 触发字段验证
+      this.$nextTick(() => {
+        if (this.$refs.deployFormRef) {
+          this.$refs.deployFormRef.validateField('codeList')
+        }
+      })
+      
+      if (this.deployForm.mergeRequest === '1') {
+        // 如果填的是'1'，清空代码清单
+        this.deployForm.codeList = ''
+      }
     },
 
     // 解析Merge_Request

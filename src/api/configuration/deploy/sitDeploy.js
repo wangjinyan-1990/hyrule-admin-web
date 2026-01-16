@@ -20,7 +20,7 @@ export function createSITDeployRecord(data) {
   })
 }
 
-// 更新发版登记（SIT）
+// 更新发版登记（SIT)
 export function updateSITDeployRecord(data) {
   return request({
     url: '/configuration/deploy/sit/record',
