@@ -373,20 +373,25 @@ export default {
 
         // 调用创建接口
         patDeployApi.createPATDeployRecord(payload).then(response => {
+          this.submitting = false
           // 检查响应格式
           if (response.code === 20000 || response.code === 200 || response.success === true) {
-            this.$message.success(response.message || '登记成功')
-            this.submitting = false
+            // 成功：显示后端返回的 message，如果有 data 也一并显示
+            const successMsg = response.message || '合并登记成功'
+            const dataInfo = response.data ? ` (${response.data})` : ''
+            this.$message.success(successMsg + dataInfo)
             // 跳转回列表页
             this.$router.push('/configuration/deploy/record')
           } else {
-            this.$message.error(response.message || '登记失败')
-            this.submitting = false
+            // 失败：显示后端返回的 message
+            const errorMsg = response.message || '合并失败'
+            this.$message.error(errorMsg)
           }
         }).catch(error => {
+          this.submitting = false
+          // 从错误响应中提取 message
           const errorMsg = error.response?.data?.message || error.message || '登记失败，请重试'
           this.$message.error(errorMsg)
-          this.submitting = false
         })
       })
     },
