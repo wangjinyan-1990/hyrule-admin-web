@@ -63,7 +63,8 @@ export default {
     },
     async logout() {
       await this.$store.dispatch('user/logout')
-      this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+      // 注销后强制刷新页面，清除浏览器缓存的状态
+      window.location.href = `/login?redirect=${encodeURIComponent(this.$route.fullPath)}`
     }
   }
 }

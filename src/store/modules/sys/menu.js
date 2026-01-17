@@ -61,6 +61,10 @@ const mutations = {
   SET_ROUTES: (state, routes) => {
     state.addRoutes = routes
     state.routes = constantRoutes.concat(routes)
+  },
+  RESET_STATE: (state) => {
+    state.routes = []
+    state.addRoutes = []
   }
 }
 
@@ -104,6 +108,11 @@ const actions = {
         reject(error)
       })
     })
+  },
+
+  // 重置菜单状态
+  resetState({ commit }) {
+    commit('RESET_STATE')
   }
 }
 

@@ -232,10 +232,16 @@ export default {
             mergeState: data.mergeState || ''
           }
         } else {
-          this.$message.error(response.message || '获取发版登记详情失败')
+          this.$message.error({
+            message: response.message || '获取发版登记详情失败',
+            duration: 2000
+          })
         }
       }).catch(() => {
-        this.$message.error('获取发版登记详情失败')
+        this.$message.error({
+          message: '获取发版登记详情失败',
+          duration: 2000
+        })
       })
     },
 
@@ -272,12 +278,18 @@ export default {
     // 解析Merge_Request
     handleParseMR() {
       if (!this.deployForm.mergeRequest) {
-        this.$message.warning('请输入Merge_Request')
+        this.$message.warning({
+          message: '请输入Merge_Request',
+          duration: 2000
+        })
         return
       }
 
       if (!this.deployForm.systemId) {
-        this.$message.warning('请先选择系统')
+        this.$message.warning({
+          message: '请先选择系统',
+          duration: 2000
+        })
         return
       }
 
@@ -305,13 +317,22 @@ export default {
           if (data.recordNum !== undefined && data.recordNum !== null) {
             this.deployForm.recordNum = data.recordNum
           }
-          this.$message.success('解析成功')
+          this.$message.success({
+            message: '解析成功',
+            duration: 2000
+          })
         } else {
-          this.$message.error(response.message || '解析失败')
+          this.$message.error({
+            message: response.message || '解析失败',
+            duration: 2000
+          })
         }
       }).catch(error => {
         this.parsing = false
-        this.$message.error('解析失败，请重试')
+        this.$message.error({
+          message: '解析失败，请重试',
+          duration: 2000
+        })
       })
     },
 
@@ -382,17 +403,26 @@ export default {
           sitDeployApi.updateSITDeployRecord(payload).then(response => {
             // 检查响应格式
             if (response.code === 20000 || response.code === 200 || response.success === true) {
-              this.$message.success(response.message || '更新成功')
+              this.$message.success({
+                message: response.message || '更新成功',
+                duration: 2000
+              })
               this.submitting = false
               // 跳转回列表页
               this.$router.push('/configuration/deploy/record')
             } else {
-              this.$message.error(response.message || '更新失败')
+              this.$message.error({
+                message: response.message || '更新失败',
+                duration: 2000
+              })
               this.submitting = false
             }
           }).catch(error => {
             const errorMsg = error.response?.data?.message || error.message || '更新失败，请重试'
-            this.$message.error(errorMsg)
+            this.$message.error({
+              message: errorMsg,
+              duration: 2000
+            })
             this.submitting = false
           })
         } else {
@@ -400,17 +430,26 @@ export default {
           sitDeployApi.createSITDeployRecord(payload).then(response => {
             // 检查响应格式
             if (response.code === 20000 || response.code === 200 || response.success === true) {
-              this.$message.success(response.message || '登记成功')
+              this.$message.success({
+                message: response.message || '登记成功',
+                duration: 2000
+              })
               this.submitting = false
               // 跳转回列表页
               this.$router.push('/configuration/deploy/record')
             } else {
-              this.$message.error(response.message || '登记失败')
+              this.$message.error({
+                message: response.message || '登记失败',
+                duration: 2000
+              })
               this.submitting = false
             }
           }).catch(error => {
             const errorMsg = error.response?.data?.message || error.message || '登记失败，请重试'
-            this.$message.error(errorMsg)
+            this.$message.error({
+              message: errorMsg,
+              duration: 2000
+            })
             this.submitting = false
           })
         }

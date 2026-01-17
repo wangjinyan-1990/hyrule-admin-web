@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 下载模板
 export function downloadTemplate() {
   return request({
-    url: '/tools/networkPolicyListProcess/downloadTemplate',
+    url: '/tools/networkPolicyList/downloadTemplate',
     method: 'get',
     responseType: 'blob'
   })
@@ -12,14 +12,14 @@ export function downloadTemplate() {
 // 加工网络策略清单
 export function processNetworkPolicyList(formData) {
   return request({
-    url: '/tools/networkPolicyListProcess/process',
+    url: '/tools/networkPolicyList/process',
     method: 'post',
     data: formData,
     headers: {
       'Content-Type': 'multipart/form-data'
     },
     responseType: 'blob',
-    timeout: 60000 // 60秒超时，因为文件处理可能需要较长时间
+    timeout: 80000 // 80秒超时，因为文件处理可能需要较长时间
   })
 }
 

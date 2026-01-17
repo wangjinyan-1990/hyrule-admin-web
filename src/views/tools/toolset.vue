@@ -173,7 +173,7 @@ export default {
           this.openPdfToDocConverter()
           break
         case '网络策略清单加工':
-          this.networkPolicyListProcess()
+          this.networkPolicyList()
           break
         default:
           this.$message.info(`${toolName} 功能开发中...`)
@@ -382,12 +382,12 @@ export default {
         params: { tool: 'pdftodoc' }
       })
     },
-    
-    networkPolicyListProcess() {
+
+    networkPolicyList() {
       // 网络策略清单加工
       this.$router.push({
-        name: 'networkPolicyListProcess',
-        params: { tool: 'networkPolicyListProcess' }
+        name: 'networkPolicyList',
+        params: { tool: 'networkPolicyList' }
       })
     }
   }

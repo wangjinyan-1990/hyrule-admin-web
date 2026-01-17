@@ -86,11 +86,15 @@ const actions = {
   },
 
   // user logout
-  logout({ commit, state }) {
+  logout({ commit, state, dispatch }) {
     return new Promise((resolve) => {
       removeToken() // must remove token first
       resetRouter()
       commit('RESET_STATE')
+      // 清空菜单状态
+      dispatch('menu/resetState', null, { root: true }).catch(() => {})
+      // 清空标签页状态
+      dispatch('tagsView/delAllViews', null, { root: true }).catch(() => {})
       resolve()
     })
   },

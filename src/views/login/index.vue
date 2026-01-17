@@ -124,8 +124,8 @@ export default {
           })
           .then((accessRoutes) => {
             // 不调用 this.$router.addRoutes(accessRoutes)，避免路由重复定义
-            // 跳转到主页
-            this.$router.push({ path: this.redirect || '/' })
+            // 登录成功后强制刷新页面，清除浏览器缓存的状态
+            window.location.href = this.redirect || '/'
           })
           .catch((error) => {
             this.$message.error(error.message || '登录失败')

@@ -265,9 +265,9 @@ export const asyncRoutes = [
         hidden: true
       },
       {
-        path: 'networkPolicyListProcess',
-        name: 'networkPolicyListProcess',
-        component: () => import('@/components/Tools/networkPolicyListProcess'),
+        path: 'networkPolicyList',
+        name: 'networkPolicyList',
+        component: () => import('@/components/Tools/networkPolicyList'),
         meta: { title: '网络策略清单加工', icon: 'toolset' },
         hidden: true
       },
@@ -310,7 +310,6 @@ export const asyncRoutes = [
       {
         path: 'baseManage',
         name: 'baseManage',
-        component: () => import('@/views/test/baseManage/index'),
         meta: { title: '基础管理', icon: 'baseManage' },
         children: [
           {
@@ -336,8 +335,6 @@ export const asyncRoutes = [
       {
         path: 'usecaseManage',
         name: 'usecaseManage',
-        component: () => import('@/views/test/usecaseManage/index'),
-        redirect: '/test/usecaseManage/requireRepository',
         meta: { title: '用例管理', icon: 'usecaseManage' },
         children: [
           {
@@ -436,7 +433,6 @@ export const asyncRoutes = [
   {
     path: '/environment',
     component: Layout,
-    redirect: '/environment/environmentList',
     name: 'environment',
     meta: { title: '环境管理', icon: 'environment', alwaysShow: true },
     children: [
@@ -445,6 +441,28 @@ export const asyncRoutes = [
         name: 'environmentList',
         component: () => import('@/views/environment/environmentList'),
         meta: { title: '环境清单', icon: 'environmentList' }
+      }
+    ]
+  },
+
+  {
+    path: '/statistics',
+    component: Layout,
+    name: 'statistics',
+    meta: { title: '统计分析', icon: 'statistics', alwaysShow: true },
+    children: [
+      {
+        path: 'configurationStat',
+        name: 'configurationStat',
+        meta: { title: '配置相关', icon: 'arrow', alwaysShow: true },
+        children: [
+          {
+            path: 'deployBySysStat',
+            name: 'deployBySysStat',
+            component: () => import('@/views/statistics/configurationStat/deployBySysStat'),
+            meta: { title: '各系统发版数统计', icon: 'stars' }
+          }
+        ]
       }
     ]
   },
