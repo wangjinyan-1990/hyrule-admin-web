@@ -450,17 +450,20 @@ export const asyncRoutes = [
     component: Layout,
     name: 'statistics',
     meta: { title: '统计分析', icon: 'statistics', alwaysShow: true },
+    redirect: '/statistics/configurationStat/deployBySysStat',
     children: [
       {
         path: 'configurationStat',
+        component: () => import('@/views/statistics/configurationStat/index'),
         name: 'configurationStat',
         meta: { title: '配置相关', icon: 'arrow', alwaysShow: true },
+        redirect: '/statistics/configurationStat/deployBySysStat',
         children: [
           {
             path: 'deployBySysStat',
             name: 'deployBySysStat',
             component: () => import('@/views/statistics/configurationStat/deployBySysStat'),
-            meta: { title: '各系统发版数统计', icon: 'stars' }
+            meta: { title: '各系统发版数统计', icon: 'star' }
           }
         ]
       }
