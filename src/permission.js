@@ -5,10 +5,11 @@ import NProgress from 'nprogress' // progress bar
 import 'nprogress/nprogress.css' // progress bar style
 import { getToken } from '@/utils/auth' // get token from cookie
 import getPageTitle from '@/utils/get-page-title'
+import { dynamicRoutes } from './router' // 动态路由
 
 NProgress.configure({ showSpinner: false }) // NProgress Configuration
 
-const whiteList = ['/login'] // no redirect whitelist
+const whiteList = ['/login', '/404'] // no redirect whitelist
 
 router.beforeEach(async(to, from, next) => {
   // start progress bar
@@ -62,7 +63,7 @@ router.beforeEach(async(to, from, next) => {
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')
           Message.error(error || 'Has Error')
-          next(`/login?redirect=${to.path}`)
+          next(`/login?redirect=${to.fullPath}`)
           NProgress.done()
         }
       }
@@ -75,7 +76,11 @@ router.beforeEach(async(to, from, next) => {
       next()
     } else {
       // other pages that do not have permission to access are redirected to the login page.
-      next(`/login?redirect=${to.path}`)
+      // 如果目标路径是 /login，说明可能是注销操作，不显示提示
+      if (to.path !== '/login') {
+        Message.warning('请先登录')
+      }
+      next(`/login?redirect=${to.fullPath}`)
       NProgress.done()
     }
   }

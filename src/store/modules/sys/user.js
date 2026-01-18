@@ -1,6 +1,7 @@
 import { login, getUserInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
-import { resetRouter } from '@/router'
+import { resetRouter, dynamicRoutes } from '@/router'
+import router from '@/router'
 
 const getDefaultState = () => {
   return {
@@ -41,22 +42,46 @@ const mutations = {
 
 const actions = {
   // user login
-  login({ commit }, userInfo) {
+  login({ commit, dispatch }, userInfo) {
     const { loginName, password } = userInfo
     return new Promise((resolve, reject) => {
       login({ loginName: loginName.trim(), password: password }).then(response => {
         const { data } = response
         commit('SET_TOKEN', data.token)
         setToken(data.token)
+        
+        // 如果登录接口返回 menus，立即注入动态路由
+        if (data.menus && Array.isArray(data.menus)) {
+          commit('SET_MENUS', data.menus)
+          dispatch('injectDynamicRoutes', data.menus)
+        }
+        
         resolve()
       }).catch(error => {
         reject(error)
       })
     })
   },
+  
+  // 注入动态路由
+  injectDynamicRoutes({ commit, state }, menus) {
+    if (!menus || !Array.isArray(menus)) {
+      menus = state.menus || []
+    }
+    
+    // 根据后端返回的菜单码过滤动态路由
+    const hasRoutes = dynamicRoutes.filter(r => menus.includes(r.name))
+    
+    // 动态添加路由
+    if (hasRoutes.length > 0) {
+      router.addRoutes(hasRoutes)
+    }
+    
+    return hasRoutes
+  },
 
   // get user info
-  getUserInfo({ commit, state }) {
+  getUserInfo({ commit, state, dispatch }) {
     return new Promise((resolve, reject) => {
       getUserInfo(state.token).then(response => {
         const { data } = response
@@ -70,7 +95,8 @@ const actions = {
           userId, 
           userName, 
           roleIds, 
-          avatar 
+          avatar,
+          menus // 支持从 getUserInfo 接口获取 menus
         } = data
         
         // 允许无角色用户登录
@@ -78,6 +104,13 @@ const actions = {
         commit('SET_NAME', userName)
         commit('SET_ROLES', Array.isArray(roleIds) ? roleIds : [])
         commit('SET_AVATAR', avatar)
+        
+        // 如果 getUserInfo 返回 menus，注入动态路由
+        if (menus && Array.isArray(menus)) {
+          commit('SET_MENUS', menus)
+          dispatch('injectDynamicRoutes', menus)
+        }
+        
         resolve(data)
       }).catch(error => {
         reject(error)

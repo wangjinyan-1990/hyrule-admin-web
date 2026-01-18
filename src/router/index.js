@@ -6,6 +6,9 @@ Vue.use(Router)
 /* Layout */
 import Layout from '@/layout'
 
+/* 动态路由模块（可选：按权限后端返回） */
+import testRoute from './modules/test'
+
 export const constantRoutes = [
   {
     path: '/login',
@@ -72,7 +75,7 @@ export const asyncRoutes = [
   {
     path: '/tools',
     component: Layout,
-    redirect: '/tools',
+    redirect: '/tools/toolset',
     name: 'tools',
     meta: { title: '实用工具', icon: 'tools' },
     children: [
@@ -80,7 +83,7 @@ export const asyncRoutes = [
         path: 'toolset',
         name: 'toolset',
         component: () => import('@/views/tools/toolset'),
-        meta: { title: '工具集', icon: 'toolset' }
+        meta: { title: '工具广场', icon: 'toolset' }
       },
       {
         path: 'rmbConverter',
@@ -310,6 +313,7 @@ export const asyncRoutes = [
       {
         path: 'baseManage',
         name: 'baseManage',
+        component: () => import('@/views/test/baseManage/index'),
         meta: { title: '基础管理', icon: 'baseManage' },
         children: [
           {
@@ -335,6 +339,7 @@ export const asyncRoutes = [
       {
         path: 'usecaseManage',
         name: 'usecaseManage',
+        component: () => import('@/views/test/usecaseManage/index'),
         meta: { title: '用例管理', icon: 'usecaseManage' },
         children: [
           {
@@ -481,6 +486,13 @@ export const asyncRoutes = [
     ]
   }
 ]
+
+// 动态路由（可选：按权限后端返回，登录后通过 router.addRoutes 动态注入）
+// 使用示例：
+// import { dynamicRoutes } from '@/router'
+// const userRoutes = dynamicRoutes.filter(r => resp.menus.includes(r.name))
+// router.addRoutes(userRoutes)
+export const dynamicRoutes = [testRoute]
 
 const createRouter = () => new Router({
   // mode: 'history', // require service support
