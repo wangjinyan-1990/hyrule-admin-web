@@ -53,18 +53,18 @@
     <el-card>
       <el-table :data="deployRecordList" stripe style="width: 100%" highlight-current-row class="deploy-record-table">
         <el-table-column type="index" width="55" label="序号"></el-table-column>
-        <el-table-column prop="deployId" label="部署Id" width="80" v-if="false"></el-table-column>
-        <el-table-column prop="systemName" label="系统" width="150" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="componentInfo" label="组件信息" min-width="150" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="testStage" label="测试阶段" width="100">
+        <el-table-column prop="deployId" label="部署Id" width="30" v-if="false"></el-table-column>
+        <el-table-column prop="systemName" label="系统" width="140" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="componentInfo" label="组件信息" min-width="80" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="sendTestInfo" label="送测单信息" width="150" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="versionCode" label="版本号" min-width="90" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="testStage" label="测试阶段" width="60">
           <template slot-scope="scope">
             <el-tag :type="scope.row.testStage === 'SIT' ? 'primary' : 'success'" size="small">
               {{ scope.row.testStage }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="versionCode" label="版本号" min-width="150" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="recordNum" label="版本登记数量" width="100" align="center"></el-table-column>
         <el-table-column prop="codeList" label="代码清单" min-width="150">
           <template slot-scope="scope">
             <el-tooltip
@@ -112,8 +112,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="sendTestInfo" label="送测单信息" width="150" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="deployTime" label="部署时间点" width="160">
+        <el-table-column prop="recordNum" label="版本登记数量" width="70" align="center"></el-table-column>
+        <el-table-column prop="deployTime" label="部署时间点" width="130">
           <template slot-scope="scope">
             <span v-if="scope.row.deployTime">{{ formatDateTime(scope.row.deployTime) }}</span>
             <span v-else style="color: #999;">-</span>
@@ -298,7 +298,7 @@ export default {
     loadSystemNameOptions(){
       testSystemApi.getTestSystemList({ pageNo: 1, pageSize: 1000 }).then(response => {
         let systemList = [];
-        
+
         // 优先处理数组格式的响应
         if (Array.isArray(response)) {
           systemList = response;

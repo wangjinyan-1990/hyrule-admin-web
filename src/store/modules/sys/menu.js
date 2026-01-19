@@ -1,6 +1,22 @@
 import menuApi from '@/api/menu'
 import { constantRoutes, asyncRoutes } from '@/router'
 
+// 将树形菜单数据扁平化
+function flattenMenus(menus, result = []) {
+  if (!Array.isArray(menus)) {
+    return result
+  }
+  menus.forEach(menu => {
+    if (menu) {
+      result.push(menu)
+      if (menu.children && Array.isArray(menu.children)) {
+        flattenMenus(menu.children, result)
+      }
+    }
+  })
+  return result
+}
+
 // 判断是否有权限访问路由
 function hasPermission(menus, route) {
   // 如果没有菜单数据，检查是否为admin用户（通过传入空数组来判断）
@@ -12,19 +28,24 @@ function hasPermission(menus, route) {
     return true // admin用户显示所有未隐藏的菜单
   }
   
-  // 对于有子路由的父路由，先检查子路由是否有权限
-  // 这样即使父菜单不在权限列表中，只要子菜单有权限，父菜单也会显示
+  // 对于有子路由的父路由，先递归检查子路由是否有权限
+  // 这样即使父菜单或中间层菜单不在权限列表中，只要最终子菜单有权限，父菜单也会显示
   if (route.children && route.children.length > 0) {
+    // 递归检查所有子路由（包括多层嵌套）
     const hasValidChildren = route.children.some(child => hasPermission(menus, child))
     if (hasValidChildren) {
-      return true // 如果子路由有权限，父路由也显示
+      return true // 如果任何子路由有权限，父路由也显示
     }
   }
   
   // 检查路由是否在用户菜单权限中
   if (route.meta && route.meta.title) {
-    const hasPermission = menus.some(menu => menu.title === route.meta.title)
-    // console.log(`检查路由权限: ${route.meta.title} -> ${hasPermission}`)
+    // 支持菜单数据中的 title 字段匹配
+    const hasPermission = menus.some(menu => {
+      // 支持 menu.title 或 menu.menuName 字段
+      const menuTitle = menu.title || menu.menuName || ''
+      return menuTitle === route.meta.title
+    })
     return hasPermission
   }
   
@@ -36,17 +57,26 @@ export function filterAsyncRoutes(routes, menus) {
   const res = []
   routes.forEach(route => {
     const tmp = { ...route }
-    // console.log(`检查路由: ${tmp.path} (${tmp.meta?.title})`)
+    // 检查当前路由是否有权限（包括通过子路由间接有权限的情况）
     if (hasPermission(menus, tmp)) {
-      if (tmp.children) {
-        // console.log(`过滤子路由: ${tmp.path}`)
+      // 如果有权限，再递归过滤子路由
+      if (tmp.children && tmp.children.length > 0) {
         tmp.children = filterAsyncRoutes(tmp.children, menus)
-        // console.log(`过滤后子路由: ${tmp.path}`, tmp.children)
+        // 如果过滤后子路由为空，但原路由有子路由，且当前路由本身不在权限列表中
+        // 说明是通过子路由间接有权限的，但子路由被过滤掉了，所以当前路由也应该被过滤掉
+        if (tmp.children.length === 0) {
+          // 检查当前路由本身是否在权限列表中
+          const routeInMenus = tmp.meta && tmp.meta.title && menus.some(menu => {
+            const menuTitle = menu.title || menu.menuName || ''
+            return menuTitle === tmp.meta.title
+          })
+          if (!routeInMenus) {
+            // 当前路由本身不在权限列表中，且子路由都被过滤掉了，跳过该路由
+            return
+          }
+        }
       }
       res.push(tmp)
-      // console.log(`✅ 添加路由: ${tmp.path}`)
-    } else {
-      // console.log(`❌ 跳过路由: ${tmp.path}`)
     }
   })
   return res
@@ -71,26 +101,22 @@ const mutations = {
 const actions = {
   generateRoutes({ commit, rootState }, menus) {
     return new Promise(resolve => {
-      // console.log('=== 生成路由 ===')
-      // console.log('用户菜单数据:', menus)
-      // console.log('异步路由配置:', asyncRoutes)
-      // console.log('用户信息:', rootState.user)
       // 检查是否为admin用户
       const userName = rootState.user.userName
       const userId = rootState.user.userId
       const isAdmin = (userName === '超级管理员' || userId === 'admin')
-      // console.log('用户信息:', { userName, userId, isAdmin })
+      
       let accessedRoutes = []
       if (isAdmin) {
         // admin用户显示所有未隐藏的菜单
-        // console.log('admin用户，显示所有未隐藏菜单')
         accessedRoutes = filterAsyncRoutes(asyncRoutes, [])
       } else {
-        // 普通用户：优先显示测试模块，然后根据菜单权限过滤
-        // console.log('普通用户，优先显示测试模块')
-        accessedRoutes = filterAsyncRoutes(asyncRoutes, menus || [])
+        // 普通用户：根据菜单权限过滤
+        // 如果菜单数据是树形结构，先扁平化
+        const flatMenus = Array.isArray(menus) ? flattenMenus(menus) : []
+        accessedRoutes = filterAsyncRoutes(asyncRoutes, flatMenus)
       }
-      // console.log('过滤后的路由:', accessedRoutes)
+      
       commit('SET_ROUTES', accessedRoutes)
       resolve(accessedRoutes)
     })
@@ -101,8 +127,6 @@ const actions = {
     return new Promise((resolve, reject) => {
       menuApi.getUserMenus().then(response => {
         const { data } = response
-        // console.log('=== 获取用户菜单 ===')
-        // console.log('菜单数据:', data)
         resolve(data)
       }).catch(error => {
         reject(error)
