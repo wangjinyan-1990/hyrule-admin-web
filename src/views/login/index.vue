@@ -125,7 +125,13 @@ export default {
           .then((accessRoutes) => {
             // 不调用 this.$router.addRoutes(accessRoutes)，避免路由重复定义
             // 登录成功后强制刷新页面，清除浏览器缓存的状态
-            window.location.href = this.redirect || '/'
+            // 使用 hash 路由格式跳转
+            let redirectPath = this.redirect || '/'
+            // 如果路径不是以 # 开头，则添加 hash 前缀
+            if (!redirectPath.startsWith('#')) {
+              redirectPath = '/#' + redirectPath
+            }
+            window.location.href = redirectPath
           })
           .catch((error) => {
             this.$message.error(error.message || '登录失败')

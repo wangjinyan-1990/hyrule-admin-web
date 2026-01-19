@@ -5,7 +5,14 @@
       <!-- 第一行：查询条件和查询、重置按钮 -->
       <el-row>
         <el-col :span="24">
-          <el-input v-model="searchModel.systemName" placeholder="系统名称" size="small" style="width: 200px; margin-right: 10px;"></el-input>
+          <el-select v-model="searchModel.systemName" placeholder="系统名称" clearable filterable size="small" style="width: 200px; margin-right: 10px;">
+            <el-option
+              v-for="system in systemNameOptions"
+              :key="system"
+              :label="system"
+              :value="system">
+            </el-option>
+          </el-select>
           <el-date-picker
             v-model="searchModel.startDate"
             type="date"
@@ -252,6 +259,7 @@
 
 <script>
 import deployRecordApi from '@/api/configuration/deploy/deployRecord'
+import testSystemApi from '@/api/test/baseManage/testSystem'
 
 export default {
   name: 'DeployRecord',
@@ -268,6 +276,7 @@ export default {
         sendTestInfo: ''
       },
       deployRecordList: [],
+      systemNameOptions: [],
       codeListDialogVisible: false,
       codeListContent: ''
     }
@@ -281,9 +290,46 @@ export default {
     this.searchModel.endDate = todayStr
 
     this.getDeployRecordList()
+    this.loadSystemNameOptions()
   },
 
   methods:{
+    // 加载系统名称选项（用于查询条件下拉选择）
+    loadSystemNameOptions(){
+      testSystemApi.getTestSystemList({ pageNo: 1, pageSize: 1000 }).then(response => {
+        let systemList = [];
+        
+        // 优先处理数组格式的响应
+        if (Array.isArray(response)) {
+          systemList = response;
+        } else if (response.data) {
+          if (Array.isArray(response.data)) {
+            systemList = response.data;
+          } else if (response.data.rows && Array.isArray(response.data.rows)) {
+            systemList = response.data.rows;
+          }
+        } else if (response.code === 20000 && response.data) {
+          if (Array.isArray(response.data)) {
+            systemList = response.data;
+          } else if (response.data.rows && Array.isArray(response.data.rows)) {
+            systemList = response.data.rows;
+          }
+        } else if (response.rows && Array.isArray(response.rows)) {
+          systemList = response.rows;
+        }
+
+        // 从系统列表中提取唯一的系统名称
+        const systemNameSet = new Set();
+        systemList.forEach(system => {
+          if (system.systemName) {
+            systemNameSet.add(system.systemName);
+          }
+        });
+        this.systemNameOptions = Array.from(systemNameSet).sort();
+      }).catch(error => {
+        this.systemNameOptions = [];
+      });
+    },
     // 格式化日期为 yyyy-MM-dd
     formatDate(date) {
       const year = date.getFullYear()

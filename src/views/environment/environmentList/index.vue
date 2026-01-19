@@ -4,7 +4,14 @@
     <el-card id="search">
       <el-row>
         <el-col :span="18">
-          <el-input v-model="searchModel.systemName" placeholder="系统名称" size="small" style="width: 150px; margin-right: 10px;"></el-input>
+          <el-select v-model="searchModel.systemName" placeholder="系统名称" clearable filterable size="small" style="width: 150px; margin-right: 10px;">
+            <el-option
+              v-for="system in systemNameOptions"
+              :key="system"
+              :label="system"
+              :value="system">
+            </el-option>
+          </el-select>
           <el-select v-model="searchModel.envId" placeholder="环境名称" clearable size="small" style="width: 150px; margin-right: 10px;">
             <el-option
               v-for="env in envOptions"
@@ -50,20 +57,20 @@
         highlight-current-row
         class="environment-list-table">
         <el-table-column type="index" width="55" label="序号"></el-table-column>
-        <el-table-column prop="envListId" label="环境清单Id" width="100" v-if="false"></el-table-column>
-        <el-table-column prop="envId" label="环境Id" width="80" v-if="false"></el-table-column>
-        <el-table-column prop="envName" label="环境名称" width="120" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="systemId" label="系统ID" width="100" v-if="false"></el-table-column>
-        <el-table-column prop="systemName" label="系统名称" width="150" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="envListId" label="环境清单Id" width="30" v-if="false"></el-table-column>
+        <el-table-column prop="envId" label="环境Id" width="30" v-if="false"></el-table-column>
+        <el-table-column prop="envName" label="环境名称" width="70" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="systemId" label="系统ID" width="30" v-if="false"></el-table-column>
+        <el-table-column prop="systemName" label="系统名称" width="100" show-overflow-tooltip></el-table-column>
         <el-table-column prop="serverName" label="服务名称" width="150" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="ipAddress" label="主机地址" width="150" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="portInfo" label="端口信息" width="120" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="linkAddress" label="链接地址" min-width="200" show-overflow-tooltip>
+        <el-table-column prop="ipAddress" label="主机地址" width="90" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="portInfo" label="端口信息" width="70" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="linkAddress" label="链接地址" min-width="180" show-overflow-tooltip>
           <template slot-scope="scope">
-            <a 
-              v-if="scope.row.linkAddress" 
-              :href="scope.row.linkAddress" 
-              target="_blank" 
+            <a
+              v-if="scope.row.linkAddress"
+              :href="scope.row.linkAddress"
+              target="_blank"
               style="color: #409EFF; text-decoration: none;"
               @click.stop>
               {{ scope.row.linkAddress }}
@@ -71,7 +78,7 @@
             <span v-else style="color: #999;">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="configurationPeopleNames" label="配置人员" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="configurationPeopleNames" label="配置人员" min-width="70" show-overflow-tooltip>
           <template slot-scope="scope">
             <span v-if="scope.row.configurationPeopleNames">{{ scope.row.configurationPeopleNames }}</span>
             <span v-else style="color: #999;">未配置</span>
@@ -305,6 +312,7 @@
 <script>
 import environmentListApi from '@/api/environment/environmentList'
 import environmentApi from '@/api/environment/environment'
+import testSystemApi from '@/api/test/baseManage/testSystem'
 import EnvSingleSelector from '@/views/sys/common/EnvSingleSelector'
 import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelector'
 
@@ -325,6 +333,7 @@ export default {
         ipAddress: ''
       },
       envOptions: [],
+      systemNameOptions: [],
       environmentList: [],
       dialogVisible: false,
       isEdit: false,
@@ -373,6 +382,7 @@ export default {
   created(){
     this.getEnvironmentList();
     this.loadEnvOptions();
+    this.loadSystemNameOptions();
   },
 
   methods:{
@@ -395,12 +405,12 @@ export default {
         serverName: this.searchModel.serverName, // 模糊查询
         ipAddress: this.searchModel.ipAddress // 模糊查询
       };
-      
+
       environmentListApi.getEnvironmentList(queryParams).then(response => {
         // request拦截器已经返回了response.data，所以response就是后端返回的数据
         // 检查API响应结构，支持多种格式
         let responseData = null;
-        
+
         // 优先处理标准分页格式：{code: 20000, data: {rows: [], total: 0}}
         if (response.code === 20000 && response.data) {
           if (response.data.rows && Array.isArray(response.data.rows)) {
@@ -415,17 +425,17 @@ export default {
             return;
           }
         }
-        
+
         // 处理直接格式：{rows: [], total: 0} 或 {code: 20000, rows: [], total: 0}
         if (!responseData && (response.rows || response.total !== undefined)) {
           responseData = response;
         }
-        
+
         // 处理嵌套格式：{data: {rows: [], total: 0}}
         if (!responseData && response.data && (response.data.rows || response.data.total !== undefined)) {
           responseData = response.data;
         }
-        
+
         // 处理数组格式（非分页，应该避免这种情况）
         if (!responseData && Array.isArray(response)) {
           // 前端分页处理
@@ -439,7 +449,7 @@ export default {
         if (responseData) {
           const rows = responseData.rows || [];
           const total = responseData.total !== undefined ? responseData.total : rows.length;
-          
+
           // 如果后端返回的数据量超过pageSize，说明后端没有正确分页，需要前端处理
           if (rows.length > this.searchModel.pageSize) {
             // 前端分页处理：根据pageNo和pageSize截取数据
@@ -606,6 +616,42 @@ export default {
             this.$message.error('新增失败');
           });
         }
+      });
+    },
+    // 加载系统名称选项（用于查询条件下拉选择）
+    loadSystemNameOptions(){
+      testSystemApi.getTestSystemList({ pageNo: 1, pageSize: 1000 }).then(response => {
+        let systemList = [];
+        
+        // 优先处理数组格式的响应
+        if (Array.isArray(response)) {
+          systemList = response;
+        } else if (response.data) {
+          if (Array.isArray(response.data)) {
+            systemList = response.data;
+          } else if (response.data.rows && Array.isArray(response.data.rows)) {
+            systemList = response.data.rows;
+          }
+        } else if (response.code === 20000 && response.data) {
+          if (Array.isArray(response.data)) {
+            systemList = response.data;
+          } else if (response.data.rows && Array.isArray(response.data.rows)) {
+            systemList = response.data.rows;
+          }
+        } else if (response.rows && Array.isArray(response.rows)) {
+          systemList = response.rows;
+        }
+
+        // 从系统列表中提取唯一的系统名称
+        const systemNameSet = new Set();
+        systemList.forEach(system => {
+          if (system.systemName) {
+            systemNameSet.add(system.systemName);
+          }
+        });
+        this.systemNameOptions = Array.from(systemNameSet).sort();
+      }).catch(error => {
+        this.systemNameOptions = [];
       });
     },
     // 加载环境选项（用于查询条件下拉选择）
@@ -778,9 +824,9 @@ export default {
       try {
         const formData = new FormData();
         formData.append('file', options.file);
-        
+
         const response = await environmentListApi.importEnvironmentList(formData);
-        
+
         if (response.code === 20000 || response.code === 200) {
           this.$message.success('导入成功');
           this.importDialogVisible = false;

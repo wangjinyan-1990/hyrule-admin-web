@@ -176,7 +176,7 @@ export default {
         
         // 清理URL对象
         setTimeout(() => {
-          window.URL.revokeObjectURL(url)
+        window.URL.revokeObjectURL(url)
         }, 100)
 
         this.$message.success('模板下载成功')
@@ -228,7 +228,7 @@ export default {
           }
         })
       } else {
-        this.fileList = fileList
+      this.fileList = fileList
       }
       this.selectedFile = file.raw || file
     },
@@ -299,7 +299,7 @@ export default {
         
         // 清理URL对象
         setTimeout(() => {
-          window.URL.revokeObjectURL(url)
+        window.URL.revokeObjectURL(url)
         }, 100)
 
         this.processResult = {

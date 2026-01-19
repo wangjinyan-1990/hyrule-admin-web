@@ -56,8 +56,8 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="源分支:" prop="sourceBranch">
-              <el-input
-                v-model="deployForm.sourceBranch"
+              <el-input 
+                v-model="deployForm.sourceBranch" 
                 placeholder="请输入源分支"
                 :disabled="isGitlabUrlOne"
                 :readonly="isGitlabUrlOne">
@@ -66,8 +66,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="目标分支:" prop="targetBranch">
-              <el-input
-                v-model="deployForm.targetBranch"
+              <el-input 
+                v-model="deployForm.targetBranch" 
                 placeholder="请输入目标分支"
                 :disabled="isGitlabUrlOne"
                 :readonly="isGitlabUrlOne">
@@ -292,7 +292,7 @@ export default {
           this.$refs.deployFormRef.validateField('targetBranch')
         }
       })
-
+      
       if (this.deployForm.gitlabUrl === '1') {
         // 如果填的是'1'，清空并禁用源分支和目标分支
         this.deployForm.sourceBranch = ''

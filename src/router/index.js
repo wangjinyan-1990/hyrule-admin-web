@@ -277,29 +277,38 @@ export const asyncRoutes = [
       {
         path: 'notebook',
         name: 'notebook',
-        component: () => import('@/views/tools/notebook'),
-        meta: { title: '记事本', icon: 'notebook' }
-      },
-      {
-        path: 'noteEditor/:noteId',
-        name: 'noteEditor',
-        component: () => import('@/views/tools/noteDetail'),
-        meta: { title: '编辑笔记', icon: 'notebook' },
-        hidden: true
-      },
-      {
-        path: 'noteViewer/:noteId',
-        name: 'noteViewer',
-        component: () => import('@/views/tools/noteDetail'),
-        meta: { title: '查看笔记', icon: 'notebook' },
-        hidden: true
-      },
-      {
-        path: 'viewAttachment/:attachmentId',
-        name: 'viewAttachment',
-        component: () => import('@/views/sys/common/ViewAttachment'),
-        meta: { title: '附件预览', icon: 'document' },
-        hidden: true
+        component: () => import('@/views/tools/notebook/index'),
+        redirect: { name: 'notebookList' },
+        meta: { title: '记事本', icon: 'notebook' },
+        children: [
+          {
+            path: 'list',
+            name: 'notebookList',
+            component: () => import('@/views/tools/notebook'),
+            meta: { title: '记事本', icon: 'notebook' }
+          },
+          {
+            path: 'noteEditor/:noteId',
+            name: 'noteEditor',
+            component: () => import('@/views/tools/noteDetail'),
+            meta: { title: '编辑笔记', icon: 'notebook' },
+            hidden: true
+          },
+          {
+            path: 'noteViewer/:noteId',
+            name: 'noteViewer',
+            component: () => import('@/views/tools/noteDetail'),
+            meta: { title: '查看笔记', icon: 'notebook' },
+            hidden: true
+          },
+          {
+            path: 'viewAttachment/:attachmentId',
+            name: 'viewAttachment',
+            component: () => import('@/views/sys/common/ViewAttachment'),
+            meta: { title: '附件预览', icon: 'document' },
+            hidden: true
+          }
+        ]
       }
     ]
   },
