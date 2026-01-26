@@ -54,8 +54,8 @@
       <el-table :data="deployRecordList" stripe style="width: 100%" highlight-current-row class="deploy-record-table">
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="deployId" label="部署Id" width="30" v-if="false"></el-table-column>
-        <el-table-column prop="systemName" label="系统" width="140" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="componentInfo" label="组件信息" min-width="80" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="systemName" label="系统" width="100" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="componentInfo" label="组件信息" min-width="70" show-overflow-tooltip></el-table-column>
         <el-table-column prop="sendTestInfo" label="送测单信息" width="150" show-overflow-tooltip></el-table-column>
         <el-table-column prop="versionCode" label="版本号" min-width="90" show-overflow-tooltip></el-table-column>
         <el-table-column prop="testStage" label="测试阶段" width="60">

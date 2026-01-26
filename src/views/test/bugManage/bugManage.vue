@@ -419,7 +419,7 @@
     </el-dialog>
 
     <!-- 导入对话框 -->
-    <FileUploadDialog
+    <FileUploadSingleDialog
       title="导入需求点"
       :visible.sync="importDialogVisible"
       tips="请先下载导入模板，按照模板格式填写数据后上传"
@@ -435,14 +435,14 @@
 </template>
 
 <script>
-import FileUploadDialog from '@/views/sys/common/FileUploadDialog.vue'
+import FileUploadSingleDialog from '@/views/sys/common/FileUploadSingleDialog.vue'
 import dictionaryApi from '@/api/framework/dictionary'
 import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
 export default {
   name: 'requireRepository', // 组件名与路由名一致，以便keep-alive缓存
   components: {
-    FileUploadDialog
+    FileUploadSingleDialog
   },
   data() {
     return {

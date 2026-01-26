@@ -64,8 +64,8 @@ export default {
     async logout() {
       await this.$store.dispatch('user/logout')
       // 注销后强制刷新页面，清除浏览器缓存的状态
-      // 使用 hash 路由格式跳转到登录页
-      window.location.href = `/#/login?redirect=${encodeURIComponent(this.$route.fullPath)}`
+      // 使用 hash 路由格式跳转到登录页，不保留 redirect 参数
+      window.location.href = '/#/login'
     }
   }
 }

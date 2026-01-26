@@ -467,18 +467,9 @@ export default {
         const isInExpandedKeys = this.expandedKeys.includes(nodeId)
         const treeExpanded = treeNode?.expanded
 
-        console.log('节点状态调试:', {
-          nodeId: nodeId,
-          treeExpanded: treeExpanded,
-          inExpandedKeys: isInExpandedKeys,
-          childNodes: treeNode?.childNodes?.length,
-          expandedKeys: [...this.expandedKeys],
-          shouldBeExpanded: isInExpandedKeys
-        })
-
-        // 如果状态不一致，输出警告
+        // 如果状态不一致，静默处理
         if (treeExpanded !== isInExpandedKeys) {
-          console.warn('状态不一致！树节点expanded:', treeExpanded, '展开keys包含:', isInExpandedKeys)
+          // 状态不一致时的处理逻辑
         }
       }
     },
@@ -578,7 +569,6 @@ export default {
                   if (folderIcon) {
                     // 文件夹图标左边距 = 展开图标宽度(16px) + 间距(8px) = 24px
                     folderIcon.style.setProperty('margin-left', '24px', 'important')
-                    console.log(`✅ 设置文件夹图标左边距: 24px`)
                   }
 
                   // 移除之前的事件监听器，避免重复添加
@@ -618,15 +608,12 @@ export default {
                           }).catch(error => {
                           })
                         } else {
-                          console.log('节点已有子节点，直接切换展开状态')
                           // 以展开keys为准判断当前状态
                           const isCurrentlyExpanded = this.expandedKeys.includes(nodeData.directoryId)
 
                           if (isCurrentlyExpanded) {
-                            this.debugNodeState(nodeData.directoryId)
                             this.forceCollapseNode(nodeData.directoryId)
                           } else {
-                            this.debugNodeState(nodeData.directoryId)
                             this.forceExpandNode(nodeData.directoryId)
                           }
 
@@ -662,8 +649,6 @@ export default {
                   }
                 }
               }
-            } else {
-              console.log(`❌ 未找到content元素`)
             }
           })
         }
@@ -710,10 +695,6 @@ export default {
         // isLeafDirectory: "0" 表示不是叶子目录(有子目录)，使用黑色文件夹图标
         // isLeafDirectory: "1" 表示是叶子目录(没有子目录)，使用普通文件夹图标
         const isLeafDirectory = data.isLeafDirectory
-        console.log(`节点 ${data.directoryName} 的叶子目录检查:`, {
-          isLeafDirectory: isLeafDirectory,
-          iconType: isLeafDirectory === 0 ? 'black-folder' : 'normal-folder'
-        })
 
         if (isLeafDirectory === 0) {
           // 不是叶子目录，有子目录，使用黑色文件夹图标
@@ -726,8 +707,6 @@ export default {
     },
 
     async refreshData() {
-      console.log('=== 开始刷新数据 ===')
-
       // 保存当前展开状态
       this.saveExpandedState()
       // 设置默认展开的keys
@@ -801,8 +780,6 @@ export default {
           this.expandedKeys.forEach(key => {
             if (tree.store && tree.store.nodesMap && tree.store.nodesMap[key]) {
               tree.store.nodesMap[key].expanded = true
-            } else {
-              console.log('节点不存在或store不可用:', key)
             }
           })
         }
@@ -816,8 +793,6 @@ export default {
         setTimeout(() => {
           this.retryRestoreState()
         }, 200)
-      } else {
-        console.log('无法恢复状态 - tree:', !!tree, 'expandedKeys长度:', this.expandedKeys.length)
       }
     },
 

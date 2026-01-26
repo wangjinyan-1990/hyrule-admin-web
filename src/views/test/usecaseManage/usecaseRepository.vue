@@ -115,11 +115,28 @@
           <el-col :span="12">
             <el-button @click="handleAdd" type="primary" icon="el-icon-plus" class="search-button-small">新建用例</el-button>
             <el-button @click="handleBatchDelete" type="danger" icon="el-icon-delete" class="search-button-small" :disabled="!hasSelection">批量删除</el-button>
-            <el-button @click="handleExport" type="success" icon="el-icon-download" class="search-button-small">导出</el-button>
             <el-button @click="handleImport" type="warning" icon="el-icon-upload2" class="search-button-small">导入</el-button>
+            <el-button @click="handleExport" type="success" icon="el-icon-download" class="search-button-small">导出</el-button>
+            <el-button @click="handleDownloadTemplate" type="info" icon="el-icon-document" class="search-button-small">下载导入模板</el-button>
           </el-col>
           <el-col :span="12" style="text-align: right;">
-            <el-button @click="handleRefresh" type="info" icon="el-icon-refresh" class="search-button-small">刷新</el-button>
+            <el-button 
+              @click="handleCopySelected" 
+              type="info" 
+              icon="el-icon-document-copy" 
+              class="search-button-small"
+              :disabled="selectedRows.length !== 1"
+              :title="selectedRows.length !== 1 ? '请选择一条用例进行复制' : '复制选中的用例'">
+            </el-button>
+            <el-button 
+              @click="handleDeleteSelected" 
+              type="danger" 
+              icon="el-icon-delete" 
+              class="search-button-small"
+              :disabled="selectedRows.length !== 1"
+              :title="selectedRows.length !== 1 ? '请选择一条用例进行删除' : '删除选中的用例'">
+            </el-button>
+            <el-button @click="handleRefresh" type="info" icon="el-icon-refresh" class="search-button-small" title="刷新"></el-button>
           </el-col>
         </el-row>
       </el-card>
@@ -152,17 +169,9 @@
             </template>
           </el-table-column>
           <el-table-column prop="creator" label="创建人" width="100" />
-          <el-table-column prop="createTime" label="创建时间" width="160">
+          <el-table-column prop="createTime" label="创建时间" width="180">
             <template slot-scope="scope">
-              {{ formatTime(scope.row.createTime) }}
-            </template>
-          </el-table-column>
-          <el-table-column label="操作" width="200" fixed="right">
-            <template slot-scope="scope">
-              <el-button @click="handleView(scope.row)" type="text" size="small" icon="el-icon-view">查看</el-button>
-              <el-button @click="handleEdit(scope.row)" type="text" size="small" icon="el-icon-edit">编辑</el-button>
-              <el-button @click="handleCopy(scope.row)" type="text" size="small" icon="el-icon-document-copy">复制</el-button>
-              <el-button @click="handleDelete(scope.row)" type="text" size="small" icon="el-icon-delete" style="color: #f56c6c;">删除</el-button>
+              {{ formatDateTime(scope.row.createTime) }}
             </template>
           </el-table-column>
         </el-table>
@@ -188,6 +197,7 @@
       :visible.sync="importDialogVisible"
       width="500px"
       :close-on-click-modal="false"
+      @close="handleImportDialogClose"
     >
       <el-upload
         ref="upload"
@@ -198,6 +208,7 @@
         :auto-upload="false"
         :on-success="handleUploadSuccess"
         :on-error="handleUploadError"
+        :on-change="handleFileChange"
         :before-upload="beforeUpload"
         accept=".xlsx,.xls"
         drag
@@ -219,7 +230,7 @@
 import DirectoryTreeSelect from '@/views/test/baseManage/components/DirectoryTreeSelect'
 import usecaseApi from '@/api/test/usecaseManage/usecaseRepository'
 import dictionaryApi from '@/api/framework/dictionary'
-import { formatTime } from '@/utils/index'
+import { formatTime, parseTime } from '@/utils/index'
 
 export default {
   name: 'usecaseRepository',
@@ -244,7 +255,8 @@ export default {
         prority: '',
         isSmokeTest: '',
         creator: '',
-        directoryId: ''
+        directoryId: '',
+        systemId: ''
       },
 
       // 是否显示更多搜索条件
@@ -325,8 +337,24 @@ export default {
 
     // 目录选择处理
     handleNodeSelect(node) {
+      if (!node) {
+        this.$message.warning('请选择一个有效的目录节点')
+        return
+      }
+      
       this.selectedDirectory = node
-      this.searchForm.directoryId = node ? node.id : ''
+      // 确保获取正确的 directoryId
+      const directoryId = node.directoryId || node.id
+      if (!directoryId) {
+        this.$message.warning('目录节点ID无效')
+        return
+      }
+      
+      // 获取 systemId
+      const systemId = node.systemId || ''
+      
+      this.searchForm.directoryId = directoryId
+      this.searchForm.systemId = systemId
       this.pagination.currentPage = 1
       this.loadUsecaseList()
     },
@@ -352,7 +380,8 @@ export default {
         prority: '',
         isSmokeTest: '',
         creator: '',
-        directoryId: this.searchForm.directoryId
+        directoryId: this.searchForm.directoryId,
+        systemId: this.searchForm.systemId
       }
       this.pagination.currentPage = 1
       this.loadUsecaseList()
@@ -360,6 +389,13 @@ export default {
 
     // 加载用例列表
     async loadUsecaseList() {
+      // 如果没有选择目录，不加载列表
+      if (!this.searchForm.directoryId) {
+        this.tableData = []
+        this.pagination.total = 0
+        return
+      }
+      
       this.loading = true
       try {
         const params = {
@@ -369,10 +405,27 @@ export default {
         }
 
         const response = await usecaseApi.getUsecaseList(params)
-        this.tableData = response.data.records || []
-        this.pagination.total = response.data.total || 0
+        
+        // 处理不同的响应格式
+        if (response.code === 20000 || response.code === 200) {
+          // 标准格式：{code: 20000, data: {records: [], total: 0}}
+          this.tableData = response.data?.records || response.data?.rows || []
+          this.pagination.total = response.data?.total || 0
+        } else if (response.data) {
+          // 直接格式：{data: {records: [], total: 0}}
+          this.tableData = response.data.records || response.data.rows || []
+          this.pagination.total = response.data.total || 0
+        } else {
+          this.tableData = []
+          this.pagination.total = 0
+          if (response.message) {
+            this.$message.warning(response.message)
+          }
+        }
       } catch (error) {
-        this.$message.error('加载用例列表失败')
+        this.$message.error('加载用例列表失败: ' + (error.response?.data?.message || error.message))
+        this.tableData = []
+        this.pagination.total = 0
       } finally {
         this.loading = false
       }
@@ -387,7 +440,11 @@ export default {
     handleAdd() {
       this.$router.push({
         path: '/test/usecaseManage/usecaseDetail',
-        query: { mode: 'create', directoryId: this.searchForm.directoryId }
+        query: { 
+          mode: 'create', 
+          directoryId: this.searchForm.directoryId,
+          systemId: this.searchForm.systemId
+        }
       })
     },
 
@@ -475,6 +532,24 @@ export default {
       }
     },
 
+    // 复制选中的用例
+    async handleCopySelected() {
+      if (this.selectedRows.length !== 1) {
+        this.$message.warning('请选择一条用例进行复制')
+        return
+      }
+      await this.handleCopy(this.selectedRows[0])
+    },
+
+    // 删除选中的用例
+    async handleDeleteSelected() {
+      if (this.selectedRows.length !== 1) {
+        this.$message.warning('请选择一条用例进行删除')
+        return
+      }
+      await this.handleDelete(this.selectedRows[0])
+    },
+
     // 导出
     async handleExport() {
       try {
@@ -498,8 +573,42 @@ export default {
 
     // 导入
     handleImport() {
+      // 检查是否选择了目录
+      if (!this.selectedDirectory || !this.selectedDirectory.systemId) {
+        this.$message.warning('请先在左侧目录树中选择一个目录节点，以确定导入到哪个系统')
+        return
+      }
+      
       this.importDialogVisible = true
       this.fileList = []
+      
+      // 更新上传数据，包含系统ID和目录ID
+      this.uploadData = {
+        systemId: this.selectedDirectory.systemId,
+        directoryId: this.selectedDirectory.directoryId || this.selectedDirectory.id
+      }
+      
+      // 清空 el-upload 组件的文件列表
+      this.$nextTick(() => {
+        if (this.$refs.upload) {
+          this.$refs.upload.clearFiles()
+        }
+      })
+    },
+
+    // 导入对话框关闭处理
+    handleImportDialogClose() {
+      this.fileList = []
+      this.uploading = false
+      // 清空 el-upload 组件的文件列表
+      if (this.$refs.upload) {
+        this.$refs.upload.clearFiles()
+      }
+    },
+
+    // 下载模板（操作栏按钮调用）
+    async handleDownloadTemplate() {
+      await this.downloadTemplate()
     },
 
     // 下载模板
@@ -507,24 +616,41 @@ export default {
       try {
         const response = await usecaseApi.downloadImportTemplate()
 
-        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        // 检查响应数据
+        if (!response.data) {
+          throw new Error('服务器返回空数据')
+        }
+
+        // 直接使用后端返回的 blob 数据，不做任何修改
+        // response.data 已经是 Blob 对象（因为 responseType: 'blob'）
+        const blob = response.data
+        
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
         link.download = '用例导入模板.xlsx'
+        link.style.display = 'none'
+        document.body.appendChild(link)
         link.click()
-        window.URL.revokeObjectURL(url)
+        document.body.removeChild(link)
+        
+        // 延迟清理URL对象
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url)
+        }, 100)
 
         this.$message.success('模板下载成功')
       } catch (error) {
-        this.$message.error('模板下载失败')
+        this.$message.error('模板下载失败: ' + (error.message || '未知错误'))
       }
     },
 
     // 上传前检查
     beforeUpload(file) {
       const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-                     file.type === 'application/vnd.ms-excel'
+                     file.type === 'application/vnd.ms-excel' ||
+                     file.name.endsWith('.xlsx') ||
+                     file.name.endsWith('.xls')
       const isLt10M = file.size / 1024 / 1024 < 10
 
       if (!isExcel) {
@@ -535,16 +661,75 @@ export default {
         this.$message.error('文件大小不能超过10MB!')
         return false
       }
+      // 当 auto-upload="false" 时，返回 true 让文件被添加到 fileList，但不会自动上传
+      // 返回 false 会阻止文件被添加到 fileList
       return true
+    },
+
+    // 文件变化处理
+    handleFileChange(file, fileList) {
+      // 如果用户重新选择文件，清空之前的文件列表
+      // 当 fileList 长度大于1时，说明用户选择了新文件，需要清空旧文件
+      if (fileList.length > 1) {
+        // 只保留最新选择的文件
+        const latestFile = fileList[fileList.length - 1]
+        this.fileList = [latestFile]
+        // 清空 el-upload 组件的文件列表，只保留最新文件
+        this.$nextTick(() => {
+          if (this.$refs.upload) {
+            this.$refs.upload.fileList = [latestFile]
+          }
+        })
+      } else if (fileList.length === 1) {
+        // 同步文件列表到 data 中的 fileList
+        this.fileList = fileList
+        // 确保文件对象有 raw 属性（原始文件对象）
+        if (fileList[0] && !fileList[0].raw && file.raw) {
+          fileList[0].raw = file.raw
+        }
+      } else {
+        // 文件列表为空
+        this.fileList = []
+      }
     },
 
     // 提交上传
     submitUpload() {
-      if (this.fileList.length === 0) {
+      // 检查是否选择了目录
+      if (!this.selectedDirectory || !this.selectedDirectory.systemId) {
+        this.$message.warning('请先在左侧目录树中选择一个目录节点，以确定导入到哪个系统')
+        return
+      }
+
+      // 检查文件是否已选择
+      if (!this.$refs.upload) {
         this.$message.warning('请选择要上传的文件')
         return
       }
 
+      // 获取 el-upload 组件内部的 fileList
+      const uploadFileList = this.$refs.upload.fileList || []
+      
+      // 检查文件列表是否为空
+      if (uploadFileList.length === 0) {
+        this.$message.warning('请选择要上传的文件')
+        return
+      }
+
+      // 检查是否有有效的文件对象（必须有 raw 属性）
+      const validFiles = uploadFileList.filter(file => file && file.raw)
+      if (validFiles.length === 0) {
+        this.$message.warning('请选择要上传的文件')
+        return
+      }
+
+      // 更新上传数据，确保包含最新的系统ID和目录ID
+      this.uploadData = {
+        systemId: this.selectedDirectory.systemId,
+        directoryId: this.selectedDirectory.directoryId || this.selectedDirectory.id
+      }
+
+      // 提交上传
       this.uploading = true
       this.$refs.upload.submit()
     },
@@ -553,14 +738,34 @@ export default {
     handleUploadSuccess(response) {
       this.uploading = false
       this.importDialogVisible = false
+      this.fileList = []
+      // 清空 el-upload 组件的文件列表
+      if (this.$refs.upload) {
+        this.$refs.upload.clearFiles()
+      }
+      
+      // 确保使用正确的目录ID（从选中的目录节点获取）
+      if (this.selectedDirectory) {
+        this.searchForm.directoryId = this.selectedDirectory.directoryId || this.selectedDirectory.id
+      }
+      
+      // 重置分页到第一页，因为新导入的数据通常会在第一页显示
+      this.pagination.currentPage = 1
+      
       this.$message.success('导入成功')
-      this.loadUsecaseList()
+      
+      // 延迟一下再刷新列表，确保后端数据已经保存完成
+      this.$nextTick(() => {
+        this.loadUsecaseList()
+      })
     },
 
     // 上传失败
     handleUploadError(error) {
       this.uploading = false
       this.$message.error('导入失败')
+      // 导入失败时不清空文件列表，方便用户重试
+      // 但用户重新选择文件时，handleFileChange 会清空旧文件
     },
 
     // 刷新
@@ -589,6 +794,52 @@ export default {
     // 格式化日期时间
     formatTime(dateTime) {
       return formatTime(dateTime)
+    },
+
+    // 格式化日期时间为完整的年月日时分秒
+    formatDateTime(dateTime) {
+      if (!dateTime) {
+        return ''
+      }
+      
+      let d
+      // 如果是 Date 对象，直接使用
+      if (dateTime instanceof Date) {
+        d = dateTime
+      } else if (typeof dateTime === 'string') {
+        // 如果是字符串，检查是否是 ISO 8601 格式或其他日期字符串格式
+        if (dateTime.includes('T') || dateTime.includes('-') || dateTime.includes('/')) {
+          // ISO 8601 格式或其他日期字符串格式，直接传给 Date 构造函数
+          d = new Date(dateTime)
+        } else if (/^[0-9]+$/.test(dateTime)) {
+          // 纯数字字符串，可能是时间戳
+          const numTime = parseInt(dateTime)
+          if (('' + numTime).length === 10) {
+            d = new Date(numTime * 1000)
+          } else {
+            d = new Date(numTime)
+          }
+        } else {
+          d = new Date(dateTime)
+        }
+      } else if (typeof dateTime === 'number') {
+        // 如果是数字，检查是否是10位时间戳
+        if (('' + dateTime).length === 10) {
+          d = new Date(dateTime * 1000)
+        } else {
+          d = new Date(dateTime)
+        }
+      } else {
+        d = new Date(dateTime)
+      }
+      
+      // 检查日期是否有效
+      if (isNaN(d.getTime())) {
+        return ''
+      }
+      
+      // 使用 parseTime 格式化日期时间为 yyyy-MM-dd HH:mm:ss
+      return parseTime(d, '{y}-{m}-{d} {h}:{i}:{s}')
     },
 
     // 保存页面状态

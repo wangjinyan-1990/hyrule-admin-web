@@ -13,8 +13,7 @@
         </el-button>
         <div class="page-title">
           <i class="el-icon-document"></i>
-          <span v-if="mode === 'view'">查看需求点</span>
-          <span v-else-if="mode === 'edit'">编辑需求点</span>
+          <span v-if="mode === 'edit'">编辑需求点</span>
           <span v-else-if="mode === 'create'">新建需求点</span>
         </div>
       </div>
@@ -654,7 +653,7 @@ export default {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
-  padding: 16px 20px;
+  padding: 8px 10px;
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -707,6 +706,11 @@ export default {
   &:last-child {
     margin-bottom: 0;
   }
+
+  // 卡片头部 padding 调整
+  ::v-deep .el-card__header {
+    padding: 8px 10px;
+  }
 }
 
 .card-header {
@@ -734,12 +738,12 @@ export default {
 // 查看模式文本样式
 .view-text {
   display: inline-block;
-  padding: 8px 12px;
+  padding: 6px 10px;
   background-color: #f5f7fa;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
   color: #606266;
-  font-size: 14px;
+  font-size: 12px;
   min-height: 40px;
   line-height: 24px;
   width: 100%;
@@ -747,10 +751,11 @@ export default {
 }
 
 // 输入框样式
-.el-input__inner,
-.el-textarea__inner {
+::v-deep .el-input__inner,
+::v-deep .el-textarea__inner {
   border-radius: 4px;
   border: 1px solid #dcdfe6;
+  font-size: 12px;
 
   &:focus {
     border-color: #409eff;
@@ -797,6 +802,32 @@ export default {
   padding: 40px 0;
   color: #909399;
   font-size: 14px;
+}
+
+// 关联用例和关联缺陷表格字体大小
+.relation-content ::v-deep .el-table {
+  font-size: 12px;
+  
+  th {
+    font-size: 12px;
+  }
+  
+  td {
+    font-size: 12px;
+  }
+  
+  .cell {
+    font-size: 12px;
+  }
+  
+  .el-button {
+    font-size: 12px;
+  }
+}
+
+// 按钮 padding 调整
+::v-deep .el-button {
+  padding: 8px 10px;
 }
 
 // 响应式设计

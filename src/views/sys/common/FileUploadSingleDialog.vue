@@ -16,12 +16,14 @@
         ref="upload"
         action="#"
         :auto-upload="false"
-        :limit="limit"
+        :limit="1"
         :on-change="handleFileChange"
+        :on-remove="handleFileRemove"
+        :on-exceed="handleExceed"
         :before-upload="beforeUpload"
         :accept="accept"
         :drag="drag"
-        :multiple="multiple"
+        :multiple="false"
         class="upload-demo"
       >
         <i v-if="drag" class="el-icon-upload"></i>
@@ -34,40 +36,14 @@
         </el-button>
         <div class="el-upload__tip" slot="tip">
           {{ uploadTip || `支持${acceptText}文件，且不超过${maxSize}MB` }}
-          <br v-if="multiple">
-          <span v-if="multiple">当前已选择 {{ selectedFiles.length }} 个文件</span>
         </div>
       </el-upload>
 
-      <!-- 文件列表预览 -->
-      <div v-if="selectedFiles.length > 0" class="file-preview">
-        <h4>已选择的文件：</h4>
-        <div class="file-list">
-          <div 
-            v-for="(file, index) in selectedFiles" 
-            :key="index"
-            class="file-item"
-          >
-            <i class="el-icon-document"></i>
-            <span class="file-name">{{ file.name }}</span>
-            <span class="file-size">{{ formatFileSize(file.size) }}</span>
-            <el-button 
-              type="text" 
-              size="mini" 
-              @click="removeFile(index)"
-              class="remove-btn"
-            >
-              <i class="el-icon-close"></i>
-            </el-button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 单文件显示（兼容原有功能） -->
-      <div v-if="!multiple && selectedFile" class="selected-file">
+      <!-- 单文件显示 -->
+      <div v-if="selectedFile" class="selected-file">
         <i class="el-icon-document"></i>
         <span>{{ selectedFile.name }}</span>
-        <span class="file-size">({{ formatFileSize(selectedFile.size) }})</span>
+        <span class="file-size">({{ formatFileSize(selectedFile.size || (selectedFile.raw && selectedFile.raw.size) || 0) }})</span>
         <el-button type="text" size="mini" @click="removeFile">
           <i class="el-icon-close"></i>
         </el-button>
@@ -80,9 +56,9 @@
         type="primary" 
         @click="handleConfirm" 
         :loading="loading" 
-        :disabled="!hasSelectedFiles"
+        :disabled="!selectedFile"
       >
-        {{ getConfirmButtonText }}
+        {{ confirmText || '确定' }}
       </el-button>
     </div>
   </el-dialog>
@@ -92,7 +68,7 @@
 import request from '@/utils/request'
 
 export default {
-  name: 'FileUploadDialog',
+  name: 'FileUploadSingleDialog',
   props: {
     // 对话框标题
     title: {
@@ -129,20 +105,10 @@ export default {
       type: Number,
       default: 10
     },
-    // 文件数量限制
-    limit: {
-      type: Number,
-      default: 1
-    },
     // 是否支持拖拽上传
     drag: {
       type: Boolean,
       default: true
-    },
-    // 是否支持多文件上传
-    multiple: {
-      type: Boolean,
-      default: false
     },
     // 上传区域文本
     uploadText: {
@@ -174,12 +140,12 @@ export default {
       type: Boolean,
       default: false
     },
-    // 批量上传API配置
+    // 上传API配置
     uploadConfig: {
       type: Object,
       default: () => ({
-        url: '/framework/attachment/upload/batch',
-        module: 'notebook',
+        url: '/framework/attachment/upload',
+        module: 'default',
         relateId: ''
       })
     },
@@ -192,30 +158,7 @@ export default {
   data() {
     return {
       dialogVisible: false,
-      selectedFile: null,
-      selectedFiles: [] // 多文件列表
-    }
-  },
-  computed: {
-    // 是否有选择的文件
-    hasSelectedFiles() {
-      if (this.multiple) {
-        return this.selectedFiles.length > 0
-      }
-      return !!this.selectedFile
-    },
-    // 确认按钮文本
-    getConfirmButtonText() {
-      if (this.loading) {
-        return this.multiple ? '上传中...' : '处理中...'
-      }
-      if (this.confirmText) {
-        return this.confirmText
-      }
-      if (this.multiple && this.selectedFiles.length > 0) {
-        return `上传 ${this.selectedFiles.length} 个文件`
-      }
-      return '确定'
+      selectedFile: null
     }
   },
   watch: {
@@ -233,7 +176,6 @@ export default {
     // 重置文件
     resetFile() {
       this.selectedFile = null
-      this.selectedFiles = []
       this.$nextTick(() => {
         if (this.$refs.upload) {
           this.$refs.upload.clearFiles()
@@ -243,18 +185,57 @@ export default {
 
     // 文件变化处理
     handleFileChange(file, fileList) {
-      if (this.multiple) {
-        // 多文件模式
-        if (file.raw && !this.selectedFiles.some(f => f.name === file.name && f.size === file.raw.size)) {
-          this.selectedFiles.push(file.raw)
-        }
+      // 单文件模式：如果用户重新选择文件，清空之前的文件
+      if (fileList.length > 1) {
+        // 只保留最新选择的文件，清空旧文件
+        const latestFile = fileList[fileList.length - 1]
+        this.selectedFile = latestFile
+        
+        // 立即清空 el-upload 组件的文件列表，只保留最新文件
+        this.$nextTick(() => {
+          if (this.$refs.upload) {
+            // 先清空所有文件
+            this.$refs.upload.clearFiles()
+            // 然后手动添加最新文件到文件列表
+            this.$refs.upload.fileList = [latestFile]
+          }
+        })
+      } else if (fileList.length === 1) {
+        // 第一次选择文件或文件列表只有一个文件
+        this.selectedFile = file
       } else {
-        // 单文件模式
-        if (fileList.length > 0) {
-          this.selectedFile = file
-        } else {
-          this.selectedFile = null
-        }
+        // 文件列表为空
+        this.selectedFile = null
+      }
+    },
+
+    // 文件移除处理
+    handleFileRemove(file, fileList) {
+      this.selectedFile = null
+    },
+
+    // 文件超出限制处理（当用户选择第二个文件时）
+    handleExceed(files, fileList) {
+      // 当用户选择第二个文件时，清空旧文件，只保留新选择的文件
+      if (files.length > 0 && this.$refs.upload) {
+        const newFile = files[0]
+        // 先清空所有文件
+        this.$refs.upload.clearFiles()
+        // 然后添加新文件
+        this.$nextTick(() => {
+          // 创建文件对象
+          const fileObj = {
+            name: newFile.name,
+            size: newFile.size,
+            raw: newFile,
+            uid: newFile.uid || Date.now()
+          }
+          this.selectedFile = fileObj
+          // 手动添加到文件列表
+          if (this.$refs.upload) {
+            this.$refs.upload.fileList = [fileObj]
+          }
+        })
       }
     },
 
@@ -289,16 +270,10 @@ export default {
     },
 
     // 移除文件
-    removeFile(index) {
-      if (this.multiple) {
-        // 多文件模式：移除指定索引的文件
-        this.selectedFiles.splice(index, 1)
-      } else {
-        // 单文件模式
-        this.selectedFile = null
-        if (this.$refs.upload) {
-          this.$refs.upload.clearFiles()
-        }
+    removeFile() {
+      this.selectedFile = null
+      if (this.$refs.upload) {
+        this.$refs.upload.clearFiles()
       }
     },
 
@@ -325,7 +300,7 @@ export default {
 
     // 确认上传
     async handleConfirm() {
-      if (!this.hasSelectedFiles) {
+      if (!this.selectedFile) {
         this.$message.warning('请先选择要上传的文件')
         return
       }
@@ -335,11 +310,7 @@ export default {
         await this.performUpload()
       } else {
         // 手动上传模式，触发confirm事件
-        if (this.multiple) {
-          this.$emit('confirm', this.selectedFiles)
-        } else {
-          this.$emit('confirm', this.selectedFile)
-        }
+        this.$emit('confirm', this.selectedFile)
       }
     },
 
@@ -352,16 +323,7 @@ export default {
 
       try {
         const formData = new FormData()
-        
-        if (this.multiple) {
-          // 批量上传
-          this.selectedFiles.forEach(file => {
-            formData.append('files', file)
-          })
-        } else {
-          // 单文件上传
-          formData.append('file', this.selectedFile.raw || this.selectedFile)
-        }
+        formData.append('file', this.selectedFile.raw || this.selectedFile)
         
         // 添加其他参数
         formData.append('module', this.uploadConfig.module || 'default')
@@ -378,8 +340,7 @@ export default {
         })
 
         if (response.code === 200 || response.code === 20000) {
-          const fileCount = this.multiple ? this.selectedFiles.length : 1
-          this.$message.success(`成功上传 ${fileCount} 个文件`)
+          this.$message.success('文件上传成功')
           this.dialogVisible = false
           this.$emit('success', response.data)
         } else {
@@ -421,82 +382,7 @@ export default {
   margin-bottom: 20px;
 }
 
-/* 文件预览区域 */
-.file-preview {
-  margin-top: 20px;
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 6px;
-  border: 1px solid #e4e7ed;
-}
-
-.file-preview h4 {
-  margin: 0 0 15px 0;
-  color: #303133;
-  font-size: 14px;
-}
-
-.file-list {
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  padding: 8px 12px;
-  margin-bottom: 8px;
-  background: #fff;
-  border-radius: 4px;
-  border: 1px solid #e4e7ed;
-  transition: all 0.3s;
-}
-
-.file-item:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 4px rgba(64, 158, 255, 0.1);
-}
-
-.file-item:last-child {
-  margin-bottom: 0;
-}
-
-.file-item .el-icon-document {
-  color: #409eff;
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-.file-item .file-name {
-  flex: 1;
-  font-size: 13px;
-  color: #303133;
-  margin-right: 10px;
-  word-break: break-all;
-}
-
-.file-item .file-size {
-  font-size: 12px;
-  color: #909399;
-  margin-right: 10px;
-  white-space: nowrap;
-}
-
-.file-item .remove-btn {
-  color: #f56c6c;
-  padding: 0 !important;
-  margin: 0 !important;
-  min-width: 20px;
-  height: 20px;
-  line-height: 20px;
-}
-
-.file-item .remove-btn:hover {
-  color: #f78989;
-  background-color: transparent !important;
-}
-
-/* 单文件显示（兼容原有功能） */
+/* 单文件显示 */
 .selected-file {
   display: flex;
   align-items: center;

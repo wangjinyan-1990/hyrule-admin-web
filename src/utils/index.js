@@ -52,19 +52,52 @@ export function parseTime(time, cFormat) {
 }
 
 /**
- * @param {number} time
+ * @param {number|string|Date} time
  * @param {string} option
  * @returns {string}
  */
 export function formatTime(time, option) {
-  if (('' + time).length === 10) {
-    time = parseInt(time) * 1000
-  } else {
-    time = +time
+  if (!time) {
+    return ''
   }
-  const d = new Date(time)
+  
+  let d
+  // 如果是 Date 对象，直接使用
+  if (time instanceof Date) {
+    d = time
+  } else if (typeof time === 'string') {
+    // 如果是字符串，检查是否是 ISO 8601 格式或其他日期字符串格式
+    if (time.includes('T') || time.includes('-') || time.includes('/')) {
+      // ISO 8601 格式或其他日期字符串格式，直接传给 Date 构造函数
+      d = new Date(time)
+    } else if (/^[0-9]+$/.test(time)) {
+      // 纯数字字符串，可能是时间戳
+      const numTime = parseInt(time)
+      if (('' + numTime).length === 10) {
+        d = new Date(numTime * 1000)
+      } else {
+        d = new Date(numTime)
+      }
+    } else {
+      d = new Date(time)
+    }
+  } else if (typeof time === 'number') {
+    // 如果是数字，检查是否是10位时间戳
+    if (('' + time).length === 10) {
+      d = new Date(time * 1000)
+    } else {
+      d = new Date(time)
+    }
+  } else {
+    d = new Date(time)
+  }
+  
+  // 检查日期是否有效
+  if (isNaN(d.getTime())) {
+    return ''
+  }
+  
   const now = Date.now()
-
   const diff = (now - d) / 1000
 
   if (diff < 30) {
@@ -78,7 +111,7 @@ export function formatTime(time, option) {
     return '1天前'
   }
   if (option) {
-    return parseTime(time, option)
+    return parseTime(d, option)
   } else {
     return (
       d.getMonth() +

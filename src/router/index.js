@@ -382,6 +382,13 @@ export const asyncRoutes = [
             name: 'useCaseExecution',
             component: () => import('@/views/test/usecaseManage/usecaseExecution'),
             meta: { title: '执行库', icon: 'usecaseExecution' }
+          },
+          {
+            path: 'executionDetail',
+            name: 'executionDetail',
+            component: () => import('@/views/test/usecaseManage/executionDetail'),
+            meta: { title: '执行用例详情', icon: 'document', noCache: true },
+            hidden: true
           }
         ]
       },

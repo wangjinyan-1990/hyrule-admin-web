@@ -419,7 +419,7 @@
     </el-dialog>
 
     <!-- 导入对话框 -->
-    <FileUploadDialog
+    <FileUploadSingleDialog
       title="导入需求点"
       :visible.sync="importDialogVisible"
       tips="请先下载导入模板，按照模板格式填写数据后上传"
@@ -436,7 +436,7 @@
 
 <script>
 import DirectoryTreeSelect from '../baseManage/components/DirectoryTreeSelect.vue'
-import FileUploadDialog from '@/views/sys/common/FileUploadDialog.vue'
+import FileUploadSingleDialog from '@/views/sys/common/FileUploadSingleDialog.vue'
 import dictionaryApi from '@/api/framework/dictionary'
 import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 
@@ -444,7 +444,7 @@ export default {
   name: 'requireRepository', // 组件名与路由名一致，以便keep-alive缓存
   components: {
     DirectoryTreeSelect,
-    FileUploadDialog
+    FileUploadSingleDialog
   },
   data() {
     return {
@@ -1097,6 +1097,11 @@ export default {
         return
       }
       this.importDialogVisible = true
+      // 清空之前的文件选择状态
+      this.$nextTick(() => {
+        // FileUploadSingleDialog 组件会在对话框打开时自动重置文件
+        // 这里确保对话框打开时清空状态
+      })
     },
 
     async handleImportConfirm(file) {
@@ -1159,10 +1164,17 @@ export default {
           }
         }
 
-        this.importDialogVisible = false
+        // 只有全部成功时才关闭对话框
+        if (result.failCount === 0 || result.failCount === '0') {
+          this.importDialogVisible = false
+        }
+        // 部分成功或全部失败时，不清空文件列表，方便用户修改后重新导入
+        // 但用户重新选择文件时，FileUploadSingleDialog 会自动清空旧文件
         this.loadData() // 重新加载数据
       } catch (error) {
         this.$message.error('导入失败: ' + (error.message || '未知错误'))
+        // 导入失败时不清空文件列表，方便用户重试
+        // 但用户重新选择文件时，FileUploadSingleDialog 会自动清空旧文件
       } finally {
         this.importLoading = false
       }

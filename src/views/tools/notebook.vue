@@ -218,10 +218,9 @@
     </el-dialog>
 
     <!-- 文件上传对话框 -->
-    <FileUploadDialog
+    <FileUploadMultipleDialog
       :visible="uploadDialogVisible"
       title="上传文件"
-      :multiple="true"
       :auto-upload="true"
       :upload-config="uploadConfig"
       @success="handleUploadSuccess"
@@ -235,13 +234,13 @@
 
 <script>
 import notebookApi from '@/api/tools/notebook'
-import FileUploadDialog from '@/views/sys/common/FileUploadDialog'
+import FileUploadMultipleDialog from '@/views/sys/common/FileUploadMultipleDialog'
 import fileUploadService from '@/api/sys/common/fileUploadService'
 
 export default {
   name: "notebook",
   components: {
-    FileUploadDialog
+    FileUploadMultipleDialog
   },
   data() {
     return {
