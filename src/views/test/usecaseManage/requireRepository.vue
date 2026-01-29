@@ -143,10 +143,11 @@
           stripe
           border
             height="500"
-            style="width: 1400px; min-width: 1400px;"
+            style="width: 100%"
             :key="tableKey"
         >
-          <el-table-column type="selection" width="55" />
+          <el-table-column type="selection" width="35" />
+          <el-table-column prop="requirePointId" label="需求点ID" width="110" show-overflow-tooltip />
           <el-table-column prop="requirePointDesc" label="需求点概述" min-width="200" show-overflow-tooltip />
           <el-table-column prop="requirePointType" label="需求点类型" width="120">
             <template slot-scope="scope">
@@ -399,7 +400,7 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item 
+        <el-form-item
           :label="isReviewRejected ? '评审意见' : '评审意见'"
           :required="isReviewRejected"
         >
@@ -585,12 +586,12 @@ export default {
         // 获取目录树的展开状态
         let treeExpandedKeys = []
         const treeSelect = this.$refs.directoryTreeSelect
-        
+
         if (treeSelect) {
           if (treeSelect.getExpandedKeys) {
             treeExpandedKeys = treeSelect.getExpandedKeys()
           }
-          
+
           // 如果获取失败，尝试直接访问组件的 expandedKeys 属性
           if (treeExpandedKeys.length === 0 && treeSelect.expandedKeys) {
             treeExpandedKeys = [...treeSelect.expandedKeys]
@@ -621,7 +622,7 @@ export default {
 
         const state = JSON.parse(savedState)
         const timeDiff = Date.now() - state.timestamp
-        
+
         // 如果状态保存时间超过30分钟，则不恢复（避免过期数据）
         if (timeDiff > 30 * 60 * 1000) {
           sessionStorage.removeItem('requireRepository_state')
@@ -632,7 +633,7 @@ export default {
         if (state.selectedDirectory) {
           this.selectedDirectory = state.selectedDirectory
           this.searchForm.directoryId = state.selectedDirectory.directoryId
-          
+
           // DirectoryTreeSelect 会在 created/activated 钩子中自动恢复展开状态
           // 这里只需要设置选中节点即可
           this.$nextTick(() => {
@@ -668,6 +669,7 @@ export default {
     // 强制设置表格行高
     forceTableRowHeight() {
       // 延迟执行，确保表格已渲染
+      // 注意：字体大小已通过 CSS 设置，这里只设置高度，避免闪烁
       setTimeout(() => {
         // 设置所有表格行高度
         const allRows = document.querySelectorAll('.el-table__row')
@@ -677,12 +679,13 @@ export default {
           row.style.maxHeight = '24px'
         })
 
-        // 设置所有表格单元格高度
+        // 设置所有表格单元格高度（不设置字体大小，避免闪烁）
         const allCells = document.querySelectorAll('.el-table th, .el-table td')
         allCells.forEach(cell => {
           cell.style.height = '24px'
           cell.style.lineHeight = '24px'
-          cell.style.fontSize = '10px'
+          // 移除字体大小设置，使用 CSS 中的设置
+          // cell.style.fontSize = '10px'
           cell.style.padding = '0'
         })
 
@@ -1275,52 +1278,40 @@ export default {
 .require-repository-container {
   display: flex;
   height: calc(100vh - 84px);
-  background: #f5f5f5;
-  min-width: 1230px;
-  overflow-x: auto;
+  background-color: #f5f5f5;
 }
 
 .left-panel {
-  width: 280px;
-  min-width: 280px;
-  max-width: 280px;
-  background: white;
-  border-right: 1px solid #e6e6e6;
+  width: 300px;
+  background-color: #fff;
+  border-right: 1px solid #e4e7ed;
   display: flex;
   flex-direction: column;
-  flex-shrink: 0;
 }
 
 .panel-header {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e6e6e6;
-  background: #fafafa;
-}
+  padding: 15px;
+  border-bottom: 1px solid #e4e7ed;
+  background-color: #fafafa;
 
-.panel-header h3 {
-  margin: 0;
-  font-size: 16px;
-  color: #333;
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #303133;
+  }
 }
 
 .tree-container {
   flex: 1;
-  padding: 8px;
-  overflow: auto;
+  padding: 10px;
+  overflow-y: auto;
 }
 
 .right-panel {
-  width: 950px;
-  min-width: 950px;
-  max-width: 950px;
+  flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
-  margin: 16px;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   overflow: hidden;
-  flex-shrink: 0;
 }
 
 /* 搜索表单样式 - 参考testSystem.vue */
@@ -1455,27 +1446,43 @@ export default {
   font-weight: 600;
 }
 
-.table-wrapper .el-table th {
+/* 表格样式 - 使用 ::v-deep 确保样式优先级 */
+::v-deep .el-table th {
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+}
+
+::v-deep .el-table td {
+  height: 24px !important;
+  line-height: 24px !important;
+  padding: 0 !important;
+  font-size: 12px !important;
+}
+
+.table-wrapper ::v-deep .el-table th {
   padding: 0px 0 !important;
-  font-size: 10px;
+  font-size: 12px !important;
   font-weight: 500;
   height: 24px !important;
   line-height: 24px !important;
 }
 
-.table-wrapper .el-table td {
+.table-wrapper ::v-deep .el-table td {
   padding: 0px 0 !important;
-  font-size: 10px;
+  font-size: 12px !important;
   height: 24px !important;
   line-height: 24px !important;
 }
 
 /* 使用更强的选择器覆盖Element UI默认样式 */
-.el-table th,
-.el-table td {
+::v-deep .el-table th,
+::v-deep .el-table td {
   height: 24px !important;
   line-height: 24px !important;
   padding: 0 !important;
+  font-size: 12px !important;
 }
 
 /* 针对表格行 */
@@ -1484,20 +1491,22 @@ export default {
 }
 
 /* 强制覆盖Element UI的列高度 */
-.el-table__header-wrapper .el-table th,
-.el-table__body-wrapper .el-table td,
-.el-table__footer-wrapper .el-table td {
+::v-deep .el-table__header-wrapper .el-table th,
+::v-deep .el-table__body-wrapper .el-table td,
+::v-deep .el-table__footer-wrapper .el-table td {
   height: 24px !important;
   line-height: 24px !important;
   padding: 0 !important;
+  font-size: 12px !important;
 }
 
 /* 针对具体的列 */
-.el-table .el-table__header th,
-.el-table .el-table__body td {
+::v-deep .el-table .el-table__header th,
+::v-deep .el-table .el-table__body td {
   height: 24px !important;
   line-height: 24px !important;
   padding: 0 !important;
+  font-size: 12px !important;
 }
 
 /* 覆盖所有可能的表格列样式 */
@@ -1506,45 +1515,68 @@ export default {
 }
 
 /* 强制设置表格行高 */
-.el-table tbody tr,
-.el-table thead tr {
+::v-deep .el-table tbody tr,
+::v-deep .el-table thead tr {
   height: 24px !important;
 }
 
-.table-wrapper .el-table .cell {
+::v-deep .el-table__row {
+  height: 24px !important;
+}
+
+::v-deep .el-table .cell {
+  padding: 0 8px !important;
+  line-height: 24px !important;
+  font-size: 12px !important;
+}
+
+.table-wrapper ::v-deep .el-table .cell {
   padding: 0 3px;
   line-height: 1.1;
   height: 24px;
   display: flex;
   align-items: center;
-  font-size: 10px;
+  font-size: 12px !important;
 }
 
-/* 调整按钮大小 */
-.table-wrapper .el-button--mini {
+/* 调整按钮大小 - 使用 ::v-deep 确保样式优先级 */
+::v-deep .el-button--mini {
+  height: 20px !important;
+  padding: 0 5px !important;
+  font-size: 10px !important;
+  line-height: 20px !important;
+}
+
+.table-wrapper ::v-deep .el-button--mini {
   padding: 1px 4px;
-  font-size: 8px;
+  font-size: 10px !important;
   margin: 1px 2px;
-  height: 18px;
+  height: 20px !important;
 }
 
 /* 调整操作按钮区域的大小 */
-.action-section .el-button {
+.action-section ::v-deep .el-button {
   font-size: 12px;
   padding: 6px 12px;
   height: 28px;
 }
 
-.action-section .el-button i {
+.action-section ::v-deep .el-button i {
   font-size: 12px;
 }
 
-/* 调整标签大小 */
-.table-wrapper .el-tag {
-  font-size: 8px;
+/* 调整标签大小 - 使用 ::v-deep 确保样式优先级 */
+::v-deep .el-tag--mini {
+  height: 16px !important;
+  line-height: 16px !important;
+  font-size: 10px !important;
+}
+
+.table-wrapper ::v-deep .el-tag {
+  font-size: 10px !important;
   padding: 1px 3px;
-  height: 16px;
-  line-height: 12px;
+  height: 16px !important;
+  line-height: 16px !important;
 }
 
 .pagination-container {
@@ -1594,15 +1626,16 @@ export default {
 @media (max-width: 768px) {
   .require-repository-container {
     flex-direction: column;
+    height: auto;
   }
 
   .left-panel {
     width: 100%;
-    height: 200px;
+    height: 300px;
   }
 
   .right-panel {
-    margin: 8px;
+    height: auto;
   }
 
   .search-section {

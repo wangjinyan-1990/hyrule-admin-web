@@ -421,29 +421,29 @@ export const asyncRoutes = [
       },
 
       {
-        path: 'deploy',
-        component: () => import('@/views/configuration/deploy/index'),
-        name: 'deploy',
+        path: 'merge',
+        component: () => import('@/views/configuration/merge/index'),
+        name: 'merge',
         redirect: '/configuration/deploy/record',
-        meta: { title: '发版登记', icon: 'deploy' },
+        meta: { title: '合并登记', icon: 'merge' },
         children: [
           {
-            path: 'record',
-            name: 'deployRecord',
-            component: () => import('@/views/configuration/deploy/deployRecord'),
-            meta: { title: '发版记录', icon: 'deployRecord' }
+            path: 'mergeRecord',
+            name: 'mergeRecord',
+            component: () => import('@/views/configuration/merge/mergeRecord'),
+            meta: { title: '合并记录', icon: 'mergeRecord' }
           },
           {
-            path: 'sitDeploy',
-            name: 'sitDeploy',
-            component: () => import('@/views/configuration/deploy/sitDeploy'),
-            meta: { title: 'SIT发版', icon: 'sitDeploy' }
+            path: 'MRMerge',
+            name: 'MRMerge',
+            component: () => import('@/views/configuration/merge/MRMerge'),
+            meta: { title: 'MR合并', icon: 'MRMerge' }
           },
           {
-            path: 'patDeploy',
-            name: 'patDeploy',
-            component: () => import('@/views/configuration/deploy/patDeploy'),
-            meta: { title: 'PAT发版', icon: 'patDeploy' }
+            path: 'listMerge',
+            name: 'listMerge',
+            component: () => import('@/views/configuration/merge/listMerge'),
+            meta: { title: '清单合并', icon: 'listMerge' }
           }
         ]
       }

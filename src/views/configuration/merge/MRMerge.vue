@@ -8,7 +8,7 @@
           </el-input>
           <el-button type="primary" @click="handleParseMR" :loading="parsing" :disabled="isMergeRequestOne" style="vertical-align: top;">解析</el-button>
           <div style="margin-top: 5px; color: #f56c6c; font-size: 12px; margin-left: 0;">
-            *若无MR，只为登记版本请填'1'
+            *若无MR，只为登记SIT版本请填'1'
           </div>
         </el-form-item>
 
@@ -137,7 +137,7 @@
 </style>
 
 <script>
-import sitDeployApi from '@/api/configuration/deploy/sitDeploy'
+import MRMergeApi from '@/api/configuration/merge/MRMerge'
 import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelector'
 
 export default {
@@ -212,7 +212,7 @@ export default {
   methods: {
     // 加载发版登记数据（编辑模式）
     loadDeployData(deployId) {
-      sitDeployApi.getSITDeployRecordDetail(deployId).then(response => {
+      MRMergeApi.getSITDeployRecordDetail(deployId).then(response => {
         if (response.code === 20000 && response.data) {
           const data = response.data
           // 将后端返回的0/1转换为布尔值
@@ -253,7 +253,7 @@ export default {
           this.$refs.deployFormRef.validateField('codeList')
         }
       })
-      
+
       if (this.deployForm.mergeRequest === '1') {
         // 如果填的是'1'，清空代码清单
         this.deployForm.codeList = ''
@@ -268,7 +268,7 @@ export default {
           this.$refs.deployFormRef.validateField('codeList')
         }
       })
-      
+
       if (this.deployForm.mergeRequest === '1') {
         // 如果填的是'1'，清空代码清单
         this.deployForm.codeList = ''
@@ -294,7 +294,7 @@ export default {
       }
 
       this.parsing = true
-      sitDeployApi.parseMergeRequest(this.deployForm.mergeRequest, this.deployForm.systemId).then(response => {
+      MRMergeApi.parseMergeRequest(this.deployForm.mergeRequest, this.deployForm.systemId).then(response => {
         this.parsing = false
         if (response.code === 20000 && response.data) {
           const data = response.data
@@ -397,62 +397,34 @@ export default {
           deployTime: new Date().toISOString()
         }
 
-        // 如果有deployId，说明是编辑，否则是新增
-        if (this.deployForm.deployId) {
-          payload.deployId = this.deployForm.deployId
-          sitDeployApi.updateSITDeployRecord(payload).then(response => {
-            // 检查响应格式
-            if (response.code === 20000 || response.code === 200 || response.success === true) {
-              this.$message.success({
-                message: response.message || '更新成功',
-                duration: 2000
-              })
-              this.submitting = false
-              // 跳转回列表页
-              this.$router.push('/configuration/deploy/record')
-            } else {
-              this.$message.error({
-                message: response.message || '更新失败',
-                duration: 2000
-              })
-              this.submitting = false
-            }
-          }).catch(error => {
-            const errorMsg = error.response?.data?.message || error.message || '更新失败，请重试'
-            this.$message.error({
-              message: errorMsg,
+        // 调用创建接口
+        MRMergeApi.createSITDeployRecord(payload).then(response => {
+          // 检查响应格式
+          if (response.code === 20000 || response.code === 200 || response.success === true) {
+            this.$message.success({
+              message: response.message || '登记成功',
               duration: 2000
             })
             this.submitting = false
-          })
-        } else {
-          // 调用创建接口
-          sitDeployApi.createSITDeployRecord(payload).then(response => {
-            // 检查响应格式
-            if (response.code === 20000 || response.code === 200 || response.success === true) {
-              this.$message.success({
-                message: response.message || '登记成功',
-                duration: 2000
-              })
-              this.submitting = false
-              // 跳转回列表页
-              this.$router.push('/configuration/deploy/record')
-            } else {
-              this.$message.error({
-                message: response.message || '登记失败',
-                duration: 2000
-              })
-              this.submitting = false
-            }
-          }).catch(error => {
-            const errorMsg = error.response?.data?.message || error.message || '登记失败，请重试'
+            // 重置表单
+            this.resetForm()
+            // 跳转回列表页
+            this.$router.push('/configuration/deploy/record')
+          } else {
             this.$message.error({
-              message: errorMsg,
+              message: response.message || '登记失败',
               duration: 2000
             })
             this.submitting = false
+          }
+        }).catch(error => {
+          const errorMsg = error.response?.data?.message || error.message || '登记失败，请重试'
+          this.$message.error({
+            message: errorMsg,
+            duration: 2000
           })
-        }
+          this.submitting = false
+        })
       })
     },
 

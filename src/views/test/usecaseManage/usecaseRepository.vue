@@ -120,18 +120,18 @@
             <el-button @click="handleDownloadTemplate" type="info" icon="el-icon-document" class="search-button-small">下载导入模板</el-button>
           </el-col>
           <el-col :span="12" style="text-align: right;">
-            <el-button 
-              @click="handleCopySelected" 
-              type="info" 
-              icon="el-icon-document-copy" 
+            <el-button
+              @click="handleCopySelected"
+              type="info"
+              icon="el-icon-document-copy"
               class="search-button-small"
               :disabled="selectedRows.length !== 1"
               :title="selectedRows.length !== 1 ? '请选择一条用例进行复制' : '复制选中的用例'">
             </el-button>
-            <el-button 
-              @click="handleDeleteSelected" 
-              type="danger" 
-              icon="el-icon-delete" 
+            <el-button
+              @click="handleDeleteSelected"
+              type="danger"
+              icon="el-icon-delete"
               class="search-button-small"
               :disabled="selectedRows.length !== 1"
               :title="selectedRows.length !== 1 ? '请选择一条用例进行删除' : '删除选中的用例'">
@@ -153,9 +153,9 @@
           @row-dblclick="handleRowDblClick"
           v-loading="loading"
         >
-          <el-table-column type="selection" width="55" />
-          <el-table-column prop="usecaseId" label="用例ID" width="180" show-overflow-tooltip />
-          <el-table-column prop="usecaseName" label="用例名称" min-width="200" show-overflow-tooltip />
+          <el-table-column type="selection" width="35" />
+          <el-table-column prop="usecaseId" label="用例ID" width="120" show-overflow-tooltip />
+          <el-table-column prop="usecaseName" label="用例名称" min-width="240" show-overflow-tooltip />
           <el-table-column prop="usecaseTypeName" label="用例类型" width="120" />
           <el-table-column prop="testPointName" label="测试要点" width="120" />
           <el-table-column prop="usecaseNatureName" label="用例性质" width="120" />
@@ -341,7 +341,7 @@ export default {
         this.$message.warning('请选择一个有效的目录节点')
         return
       }
-      
+
       this.selectedDirectory = node
       // 确保获取正确的 directoryId
       const directoryId = node.directoryId || node.id
@@ -349,10 +349,10 @@ export default {
         this.$message.warning('目录节点ID无效')
         return
       }
-      
+
       // 获取 systemId
       const systemId = node.systemId || ''
-      
+
       this.searchForm.directoryId = directoryId
       this.searchForm.systemId = systemId
       this.pagination.currentPage = 1
@@ -395,7 +395,7 @@ export default {
         this.pagination.total = 0
         return
       }
-      
+
       this.loading = true
       try {
         const params = {
@@ -405,7 +405,7 @@ export default {
         }
 
         const response = await usecaseApi.getUsecaseList(params)
-        
+
         // 处理不同的响应格式
         if (response.code === 20000 || response.code === 200) {
           // 标准格式：{code: 20000, data: {records: [], total: 0}}
@@ -440,8 +440,8 @@ export default {
     handleAdd() {
       this.$router.push({
         path: '/test/usecaseManage/usecaseDetail',
-        query: { 
-          mode: 'create', 
+        query: {
+          mode: 'create',
           directoryId: this.searchForm.directoryId,
           systemId: this.searchForm.systemId
         }
@@ -578,16 +578,16 @@ export default {
         this.$message.warning('请先在左侧目录树中选择一个目录节点，以确定导入到哪个系统')
         return
       }
-      
+
       this.importDialogVisible = true
       this.fileList = []
-      
+
       // 更新上传数据，包含系统ID和目录ID
       this.uploadData = {
         systemId: this.selectedDirectory.systemId,
         directoryId: this.selectedDirectory.directoryId || this.selectedDirectory.id
       }
-      
+
       // 清空 el-upload 组件的文件列表
       this.$nextTick(() => {
         if (this.$refs.upload) {
@@ -624,7 +624,7 @@ export default {
         // 直接使用后端返回的 blob 数据，不做任何修改
         // response.data 已经是 Blob 对象（因为 responseType: 'blob'）
         const blob = response.data
-        
+
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
@@ -633,7 +633,7 @@ export default {
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        
+
         // 延迟清理URL对象
         setTimeout(() => {
           window.URL.revokeObjectURL(url)
@@ -709,7 +709,7 @@ export default {
 
       // 获取 el-upload 组件内部的 fileList
       const uploadFileList = this.$refs.upload.fileList || []
-      
+
       // 检查文件列表是否为空
       if (uploadFileList.length === 0) {
         this.$message.warning('请选择要上传的文件')
@@ -743,17 +743,17 @@ export default {
       if (this.$refs.upload) {
         this.$refs.upload.clearFiles()
       }
-      
+
       // 确保使用正确的目录ID（从选中的目录节点获取）
       if (this.selectedDirectory) {
         this.searchForm.directoryId = this.selectedDirectory.directoryId || this.selectedDirectory.id
       }
-      
+
       // 重置分页到第一页，因为新导入的数据通常会在第一页显示
       this.pagination.currentPage = 1
-      
+
       this.$message.success('导入成功')
-      
+
       // 延迟一下再刷新列表，确保后端数据已经保存完成
       this.$nextTick(() => {
         this.loadUsecaseList()
@@ -801,7 +801,7 @@ export default {
       if (!dateTime) {
         return ''
       }
-      
+
       let d
       // 如果是 Date 对象，直接使用
       if (dateTime instanceof Date) {
@@ -832,12 +832,12 @@ export default {
       } else {
         d = new Date(dateTime)
       }
-      
+
       // 检查日期是否有效
       if (isNaN(d.getTime())) {
         return ''
       }
-      
+
       // 使用 parseTime 格式化日期时间为 yyyy-MM-dd HH:mm:ss
       return parseTime(d, '{y}-{m}-{d} {h}:{i}:{s}')
     },

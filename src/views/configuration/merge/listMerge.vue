@@ -7,7 +7,7 @@
           <el-input v-model="deployForm.gitlabUrl" placeholder="填http地址" @input="handleGitlabUrlChange">
           </el-input>
           <div style="margin-top: 5px; color: #f56c6c; font-size: 12px; margin-left: 0;">
-            *若只为登记 PAT版本,则填写'1'
+            *若无代码，只为登记PAT版本,则填写'1'
           </div>
         </el-form-item>
 
@@ -56,8 +56,8 @@
         <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="源分支:" prop="sourceBranch">
-              <el-input 
-                v-model="deployForm.sourceBranch" 
+              <el-input
+                v-model="deployForm.sourceBranch"
                 placeholder="请输入源分支"
                 :disabled="isGitlabUrlOne"
                 :readonly="isGitlabUrlOne">
@@ -66,8 +66,8 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="目标分支:" prop="targetBranch">
-              <el-input 
-                v-model="deployForm.targetBranch" 
+              <el-input
+                v-model="deployForm.targetBranch"
                 placeholder="请输入目标分支"
                 :disabled="isGitlabUrlOne"
                 :readonly="isGitlabUrlOne">
@@ -157,7 +157,7 @@
 </style>
 
 <script>
-import patDeployApi from '@/api/configuration/deploy/patDeploy'
+import listMergeApi from '@/api/configuration/merge/listMerge'
 import TestSystemSingleSelector from '@/views/sys/common/TestSystemSingleSelector'
 
 export default {
@@ -292,7 +292,7 @@ export default {
           this.$refs.deployFormRef.validateField('targetBranch')
         }
       })
-      
+
       if (this.deployForm.gitlabUrl === '1') {
         // 如果填的是'1'，清空并禁用源分支和目标分支
         this.deployForm.sourceBranch = ''
@@ -372,7 +372,7 @@ export default {
         }
 
         // 调用创建接口
-        patDeployApi.createPATDeployRecord(payload).then(response => {
+        listMergeApi.createPATDeployRecord(payload).then(response => {
           this.submitting = false
           // 检查响应格式
           if (response.code === 20000 || response.code === 200 || response.success === true) {
@@ -383,6 +383,8 @@ export default {
               message: successMsg + dataInfo,
               duration: 2000
             })
+            // 重置表单
+            this.resetForm()
             // 跳转回列表页
             this.$router.push('/configuration/deploy/record')
           } else {

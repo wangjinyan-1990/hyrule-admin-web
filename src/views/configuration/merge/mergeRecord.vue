@@ -43,8 +43,8 @@
       <!-- 第二行：SIT发版和PAT发版按钮 -->
       <el-row style="margin-top: 10px;">
         <el-col :span="24" align="left">
-          <el-button @click="handleSitDeploy" type="primary" size="small" icon="el-icon-edit">SIT发版</el-button>
-          <el-button @click="handlePatDeploy" type="success" size="small" icon="el-icon-edit" style="margin-left: 10px;">PAT发版</el-button>
+          <el-button @click="handleSitDeploy" type="primary" size="small" icon="el-icon-edit">MR合并</el-button>
+          <el-button @click="handlePatDeploy" type="success" size="small" icon="el-icon-edit" style="margin-left: 10px;">清单合并</el-button>
         </el-col>
       </el-row>
     </el-card>
@@ -258,7 +258,7 @@
 </style>
 
 <script>
-import deployRecordApi from '@/api/configuration/deploy/deployRecord'
+import deployRecordApi from '@/api/configuration/merge/mergeRecord'
 import testSystemApi from '@/api/test/baseManage/testSystem'
 
 export default {
@@ -395,14 +395,14 @@ export default {
       this.getDeployRecordList()
     },
 
-    // 跳转到SIT发版页面
+    // 跳转到MR合并页面
     handleSitDeploy(){
-      this.$router.push('/configuration/deploy/sitDeploy')
+      this.$router.push('/configuration/merge/MRMerge')
     },
 
-    // 跳转到PAT发版页面
+    // 跳转到清单合并页面
     handlePatDeploy(){
-      this.$router.push('/configuration/deploy/patDeploy')
+      this.$router.push('/configuration/merge/listMerge')
     },
 
     // 双击代码清单

@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 获取发版登记列表
 export function getDeployRecordList(params) {
   return request({
-    url: '/configuration/deploy/record/list',
+    url: '/configuration/merge/record/list',
     method: 'get',
     params
   })
@@ -12,7 +12,7 @@ export function getDeployRecordList(params) {
 // 删除发版登记
 export function deleteDeployRecord(deployId) {
   return request({
-    url: `/configuration/deploy/record/${deployId}`,
+    url: `/configuration/merge/record/${deployId}`,
     method: 'delete'
   })
 }
@@ -20,7 +20,7 @@ export function deleteDeployRecord(deployId) {
 // 更新发版登记
 export function updateDeployRecord(data) {
   return request({
-    url: '/configuration/deploy/record',
+    url: '/configuration/merge/record',
     method: 'put',
     data
   })
@@ -29,7 +29,7 @@ export function updateDeployRecord(data) {
 // 获取发版登记详情
 export function getDeployRecordDetail(deployId) {
   return request({
-    url: `/configuration/deploy/record/${deployId}`,
+    url: `/configuration/merge/record/${deployId}`,
     method: 'get'
   })
 }

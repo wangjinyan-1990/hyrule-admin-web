@@ -3,7 +3,7 @@ import request from '@/utils/request'
 // 创建发版登记（PAT）
 export function createPATDeployRecord(data) {
   return request({
-    url: '/configuration/deploy/pat/record',
+    url: '/configuration/merge/listMerge/record',
     method: 'post',
     data
   })
@@ -12,4 +12,3 @@ export function createPATDeployRecord(data) {
 export default {
   createPATDeployRecord
 }
-
