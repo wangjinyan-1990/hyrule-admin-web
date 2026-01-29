@@ -557,17 +557,35 @@ export default {
         const response = await usecaseApi.exportUsecases(params)
 
         // 创建下载链接
-        const blob = new Blob([response], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+        // responseType 为 'blob' 时，response.data 是 Blob 对象
+        const blob = response.data || response
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
         link.download = `用例列表_${new Date().getTime()}.xlsx`
+        document.body.appendChild(link)
         link.click()
+        document.body.removeChild(link)
         window.URL.revokeObjectURL(url)
 
         this.$message.success('导出成功')
       } catch (error) {
-        this.$message.error('导出失败')
+        // 检查是否是错误响应（可能是JSON格式的错误信息）
+        if (error.response && error.response.data instanceof Blob) {
+          // 尝试读取错误信息
+          const reader = new FileReader()
+          reader.onload = () => {
+            try {
+              const errorData = JSON.parse(reader.result)
+              this.$message.error(errorData.message || '导出失败')
+            } catch (e) {
+              this.$message.error('导出失败')
+            }
+          }
+          reader.readAsText(error.response.data)
+        } else {
+          this.$message.error('导出失败: ' + (error.message || '未知错误'))
+        }
       }
     },
 
