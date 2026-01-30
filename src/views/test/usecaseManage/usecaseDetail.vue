@@ -199,6 +199,30 @@
               </el-form-item>
             </el-col>
           </el-row>
+
+          <el-row :gutter="16">
+            <el-col :span="24">
+              <el-form-item label="关联需求点">
+                <template slot="label">
+                  <span>关联需求点</span>
+                </template>
+                <div style="line-height: 32px;">
+                  <span v-if="relatedRequirePoints && relatedRequirePoints.length > 0">
+                    <el-link
+                      v-for="(item, index) in relatedRequirePoints"
+                      :key="item.requirePointId || index"
+                      type="primary"
+                      @click="handleRequirePointClick(item.requirePointId)"
+                      style="margin-right: 10px;"
+                    >
+                      {{ item.requirePointId }}
+                    </el-link>
+                  </span>
+                  <span v-else style="color: #909399;">-</span>
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
         </el-card>
 
         <!-- 测试内容 -->
@@ -338,6 +362,9 @@ export default {
 
       // 保存状态
       saving: false,
+
+      // 关联的需求点列表
+      relatedRequirePoints: [],
 
       // 表单数据
       usecaseForm: {
@@ -505,6 +532,8 @@ export default {
             ...this.usecaseForm,
             ...response.data
           }
+          // 加载关联的需求点
+          await this.loadRelatedRequirePoints()
         } else {
           this.$message.error(response.message || '加载用例详情失败')
         }
@@ -514,6 +543,45 @@ export default {
       } finally {
         this.loading = false
       }
+    },
+
+    // 加载关联的需求点
+    async loadRelatedRequirePoints() {
+      if (!this.usecaseId) {
+        return
+      }
+      try {
+        const response = await usecaseApi.getUsecaseRequirePoints(this.usecaseId)
+        if (response.code === 20000 && response.data) {
+          // 处理返回的数据，可能是数组或包含rows的对象
+          if (Array.isArray(response.data)) {
+            this.relatedRequirePoints = response.data
+          } else if (response.data.rows) {
+            this.relatedRequirePoints = response.data.rows
+          } else {
+            this.relatedRequirePoints = []
+          }
+        } else {
+          this.relatedRequirePoints = []
+        }
+      } catch (error) {
+        console.error('加载关联需求点失败:', error)
+        this.relatedRequirePoints = []
+      }
+    },
+
+    // 点击需求点ID跳转到需求点详情页
+    handleRequirePointClick(requirePointId) {
+      if (!requirePointId) {
+        return
+      }
+      this.$router.push({
+        name: 'requireDetail',
+        query: {
+          id: requirePointId,
+          mode: 'view'
+        }
+      })
     },
 
     // 切换到编辑模式

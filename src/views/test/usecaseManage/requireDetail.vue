@@ -186,110 +186,34 @@
             </el-col>
           </el-row>
         </el-card>
+      </el-form>
 
-        <!-- 关联信息 -->
-        <el-card class="info-card" shadow="never">
-          <div slot="header" class="card-header">
-            <i class="el-icon-connection"></i>
-            <span>关联信息</span>
-          </div>
+      <!-- 关联信息 -->
+      <el-card class="info-card" shadow="never">
+        <div slot="header" class="card-header">
+          <i class="el-icon-connection"></i>
+          <span>关联信息</span>
+        </div>
 
-          <el-tabs v-model="activeRelationTab" type="card">
+        <el-tabs v-model="activeRelationTab" type="card">
             <!-- 关联用例标签页 -->
             <el-tab-pane label="关联用例" name="testCases">
-              <div class="relation-content">
-                <div class="relation-header">
-                  <el-button
-                    v-if="mode !== 'view'"
-                    type="primary"
-                    size="small"
-                    icon="el-icon-plus"
-                    @click="handleAddTestCase"
-                  >
-                    添加用例
-                  </el-button>
-                </div>
-
-                <el-table
-                  :data="relatedTestCasesList"
-                  border
-                  stripe
-                  style="width: 100%; margin-top: 10px;"
-                  max-height="300"
-                >
-                  <el-table-column prop="testCaseId" label="用例ID" width="180" />
-                  <el-table-column prop="testCaseName" label="用例名称" min-width="200" show-overflow-tooltip />
-                  <el-table-column prop="testCaseType" label="用例类型" width="120" />
-                  <el-table-column prop="priority" label="优先级" width="100" />
-                  <el-table-column label="操作" width="100" v-if="mode !== 'view'">
-                    <template slot-scope="scope">
-                      <el-button
-                        type="danger"
-                        size="mini"
-                        icon="el-icon-delete"
-                        @click="handleRemoveTestCase(scope.row, scope.$index)"
-                      >
-                        移除
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-
-                <div v-if="relatedTestCasesList.length === 0" class="empty-tip">
-                  暂无关联用例
-                </div>
-              </div>
+              <require-related-use-cases
+                :require-point-id="requirePointId"
+                :mode="mode"
+                @removed="handleTestCasesRemoved"
+              />
             </el-tab-pane>
 
             <!-- 关联缺陷标签页 -->
             <el-tab-pane label="关联缺陷" name="bugs">
-              <div class="relation-content">
-                <div class="relation-header">
-                  <el-button
-                    v-if="mode !== 'view'"
-                    type="primary"
-                    size="small"
-                    icon="el-icon-plus"
-                    @click="handleAddBug"
-                  >
-                    添加缺陷
-                  </el-button>
-                </div>
-
-                <el-table
-                  :data="relatedBugsList"
-                  border
-                  stripe
-                  style="width: 100%; margin-top: 10px;"
-                  max-height="300"
-                >
-                  <el-table-column prop="bugId" label="缺陷ID" width="180" />
-                  <el-table-column prop="bugTitle" label="缺陷标题" min-width="200" show-overflow-tooltip />
-                  <el-table-column prop="bugStatus" label="状态" width="100" />
-                  <el-table-column prop="severity" label="严重程度" width="100" />
-                  <el-table-column label="操作" width="100" v-if="mode !== 'view'">
-                    <template slot-scope="scope">
-                      <el-button
-                        type="danger"
-                        size="mini"
-                        icon="el-icon-delete"
-                        @click="handleRemoveBug(scope.row, scope.$index)"
-                      >
-                        移除
-                      </el-button>
-                    </template>
-                  </el-table-column>
-                </el-table>
-
-                <div v-if="relatedBugsList.length === 0" class="empty-tip">
-                  暂无关联缺陷
-                </div>
-              </div>
+              <require-related-bugs
+                :require-point-id="requirePointId"
+                :mode="mode"
+              />
             </el-tab-pane>
           </el-tabs>
         </el-card>
-
-      </el-form>
     </div>
   </div>
 </template>
@@ -297,9 +221,16 @@
 <script>
 import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
 import dictionaryApi from '@/api/framework/dictionary'
+import RequireRelatedUseCases from './components/RequireRelatedUseCases.vue'
+import RequireRelatedBugs from './components/RequireRelatedBugs.vue'
 
 export default {
   name: 'RequireDetail',
+
+  components: {
+    RequireRelatedUseCases,
+    RequireRelatedBugs
+  },
 
   data() {
     return {
@@ -317,12 +248,6 @@ export default {
 
       // 关联信息标签页
       activeRelationTab: 'testCases',
-
-      // 关联用例列表
-      relatedTestCasesList: [],
-
-      // 关联缺陷列表
-      relatedBugsList: [],
 
       // 表单数据
       requireForm: {
@@ -405,7 +330,8 @@ export default {
     analysisMethodText() {
       const item = this.analysisMethodOptions.find(option => option.dataValue === this.requireForm.analysisMethod)
       return item ? item.dataName : this.requireForm.analysisMethod
-    }
+    },
+
   },
 
   async created() {
@@ -491,6 +417,12 @@ export default {
       }
     },
 
+    // 处理关联用例移除后的事件
+    handleTestCasesRemoved() {
+      // 用例移除后，可以在这里执行一些操作，比如刷新数据
+      // 由于组件内部已经处理了数据更新，这里暂时不需要额外操作
+    },
+
     // 切换到编辑模式
     switchToEdit() {
       this.mode = 'edit'
@@ -564,6 +496,8 @@ export default {
           this.$router.replace({
             query: { ...this.$route.query, mode: 'view', id: this.requirePointId }
           })
+          // 重新加载数据
+          await this.loadRequirePointDetail()
         } else {
           this.$message.error(response.message || '创建失败')
         }
@@ -600,19 +534,117 @@ export default {
 
     // 添加关联用例
     handleAddTestCase() {
+      if (this.mode === 'view') {
+        this.$message.warning('查看模式下不能添加用例，请先切换到编辑模式')
+        return
+      }
       this.$message.info('添加关联用例功能开发中')
       // TODO: 实现添加关联用例的对话框
     },
 
-    // 移除关联用例
-    handleRemoveTestCase(row, index) {
+    // 处理用例选择变化
+    // 获取用例行的唯一key
+    getTestCaseRowKey(row) {
+      return row.usecaseId || row.id || Math.random()
+    },
+
+    // 处理用例选择变化
+    handleTestCasesSelectionChange(selection) {
+      console.log('用例选择变化:', selection)
+      this.selectedTestCases = selection || []
+      console.log('selectedTestCases 已更新:', this.selectedTestCases.length)
+    },
+
+    // 全选/取消全选用例
+    handleSelectAllTestCases() {
+      if (this.mode === 'view') {
+        this.$message.warning('查看模式下不能操作，请先切换到编辑模式')
+        return
+      }
+      if (this.isAllTestCasesSelected) {
+        // 取消全选
+        this.$refs.testCasesTable.clearSelection()
+      } else {
+        // 全选
+        this.$refs.testCasesTable.toggleAllSelection()
+      }
+    },
+
+    // 批量移除关联用例
+    async handleBatchRemoveTestCases() {
+      if (this.mode === 'view') {
+        this.$message.warning('查看模式下不能移除用例，请先切换到编辑模式')
+        return
+      }
+      if (!this.selectedTestCases || this.selectedTestCases.length === 0) {
+        this.$message.warning('请先选择要移除的用例')
+        return
+      }
+
+      this.$confirm(`确定要移除选中的 ${this.selectedTestCases.length} 个关联用例吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        if (!this.requirePointId) {
+          this.$message.error('缺少必要参数')
+          return
+        }
+        try {
+          const usecaseIds = this.selectedTestCases.map(item => item.usecaseId)
+          const response = await usecaseRequireLinkApi.unlinkTestCasesFromRequirePoint(
+            this.requirePointId,
+            usecaseIds
+          )
+          if (response.code === 20000) {
+            // 从列表中移除已删除的用例
+            this.relatedTestCasesList = this.relatedTestCasesList.filter(
+              item => !usecaseIds.includes(item.usecaseId)
+            )
+            this.selectedTestCases = []
+            this.$message.success('移除成功')
+          } else {
+            this.$message.error(response.message || '移除失败')
+          }
+        } catch (error) {
+          console.error('移除关联用例失败:', error)
+          this.$message.error('移除失败')
+        }
+      }).catch(() => {
+        // 用户取消
+      })
+    },
+
+    // 移除关联用例（单个）
+    async handleRemoveTestCase(row, index) {
       this.$confirm('确定要移除此关联用例吗？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      }).then(() => {
-        this.relatedTestCasesList.splice(index, 1)
-        this.$message.success('移除成功')
+      }).then(async () => {
+        if (!this.requirePointId || !row.usecaseId) {
+          this.$message.error('缺少必要参数')
+          return
+        }
+        try {
+          const response = await usecaseRequireLinkApi.unlinkTestCasesFromRequirePoint(
+            this.requirePointId,
+            [row.usecaseId]
+          )
+          if (response.code === 20000) {
+            this.relatedTestCasesList.splice(index, 1)
+            // 如果移除的用例在选中列表中，也要移除
+            this.selectedTestCases = this.selectedTestCases.filter(
+              item => item.usecaseId !== row.usecaseId
+            )
+            this.$message.success('移除成功')
+          } else {
+            this.$message.error(response.message || '移除失败')
+          }
+        } catch (error) {
+          console.error('移除关联用例失败:', error)
+          this.$message.error('移除失败')
+        }
       }).catch(() => {
         // 用户取消
       })
@@ -789,12 +821,19 @@ export default {
 // 关联信息样式
 .relation-content {
   padding: 10px 0;
+  pointer-events: auto !important;
 }
 
 .relation-header {
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
+  pointer-events: auto !important;
+
+  .el-button {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+  }
 }
 
 .empty-tip {
@@ -807,21 +846,133 @@ export default {
 // 关联用例和关联缺陷表格字体大小
 .relation-content ::v-deep .el-table {
   font-size: 12px;
-  
+
   th {
     font-size: 12px;
   }
-  
+
   td {
     font-size: 12px;
   }
-  
+
   .cell {
     font-size: 12px;
   }
-  
+
   .el-button {
     font-size: 12px;
+  }
+}
+
+// 关联用例表格行高和间距调整
+.related-test-cases-table {
+  pointer-events: auto !important;
+
+  ::v-deep {
+    pointer-events: auto !important;
+
+    .el-table__body-wrapper {
+      pointer-events: auto !important;
+
+      .el-table__body {
+        pointer-events: auto !important;
+
+        tr {
+          height: 32px !important;
+          min-height: 32px !important;
+          max-height: 32px !important;
+          pointer-events: auto !important;
+
+          td {
+            padding: 4px 0 !important;
+            height: 32px !important;
+            line-height: 24px !important;
+            pointer-events: auto !important;
+
+            .cell {
+              padding: 0 8px !important;
+              line-height: 24px !important;
+              pointer-events: auto !important;
+            }
+
+            // 确保操作列的按钮可以正常点击
+            .el-button {
+              padding: 4px 8px !important;
+              pointer-events: auto !important;
+              cursor: pointer !important;
+              min-height: 24px !important;
+              line-height: 1 !important;
+            }
+
+            // 确保选择列的复选框可以正常点击
+            .el-checkbox {
+              pointer-events: auto !important;
+              cursor: pointer !important;
+              user-select: none !important;
+
+              .el-checkbox__input {
+                pointer-events: auto !important;
+                cursor: pointer !important;
+
+                &.is-disabled {
+                  pointer-events: none !important;
+                  cursor: not-allowed !important;
+                }
+
+                .el-checkbox__inner {
+                  pointer-events: auto !important;
+                  cursor: pointer !important;
+                  width: 14px !important;
+                  height: 14px !important;
+                }
+              }
+
+              &.is-disabled {
+                pointer-events: none !important;
+                cursor: not-allowed !important;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  ::v-deep .el-table__header-wrapper {
+    pointer-events: auto !important;
+
+    .el-table__header {
+      pointer-events: auto !important;
+
+      th {
+        padding: 4px 0 !important;
+        height: 32px !important;
+        line-height: 24px !important;
+        pointer-events: auto !important;
+
+        .cell {
+          padding: 0 8px !important;
+          line-height: 24px !important;
+          pointer-events: auto !important;
+        }
+
+        // 确保表头的全选复选框可以正常点击
+        .el-checkbox {
+          pointer-events: auto !important;
+          cursor: pointer !important;
+
+          .el-checkbox__input {
+            pointer-events: auto !important;
+            cursor: pointer !important;
+
+            .el-checkbox__inner {
+              pointer-events: auto !important;
+              cursor: pointer !important;
+            }
+          }
+        }
+      }
+    }
   }
 }
 
