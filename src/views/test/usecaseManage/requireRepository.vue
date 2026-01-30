@@ -9,6 +9,7 @@
         <DirectoryTreeSelect
           ref="directoryTreeSelect"
           :show-actions="false"
+          module="isUseTestcase"
           @node-select="handleNodeSelect"
         />
       </div>

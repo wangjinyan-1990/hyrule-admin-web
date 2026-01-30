@@ -39,14 +39,18 @@ export default {
   },
 
   // 根据父目录ID和系统ID查询子目录
-  getChildrenByParentId(directoryParentId, systemId) {
+  getChildrenByParentId(directoryParentId, systemId, module) {
+    const params = {
+      directoryParentId: directoryParentId,
+      systemId: systemId
+    }
+    if (module) {
+      params.module = module
+    }
     return request({
       url: `/test/directory/getChildrenByParentId`,
       method: 'get',
-      params: {
-        directoryParentId: directoryParentId,
-        systemId: systemId
-      }
+      params
     })
   }
 }

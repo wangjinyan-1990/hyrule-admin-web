@@ -64,13 +64,13 @@
             </div>
             <div class="info-item" v-if="currentNode.isUseTestcase !== null">
               <span class="info-label">用例库是否使用：</span>
-              <el-tag :type="currentNode.isUseTestcase === '1' ? 'success' : 'info'">
+              <el-tag :type="currentNode.isUseTestcase === '1' ? 'success' : 'info'" size="small">
                 {{ currentNode.isUseTestcase === '1' ? '是' : '否' }}
               </el-tag>
             </div>
             <div class="info-item" v-if="currentNode.isUseTestset !== null">
               <span class="info-label">测试集是否使用：</span>
-              <el-tag :type="currentNode.isUseTestset === '1' ? 'success' : 'info'">
+              <el-tag :type="currentNode.isUseTestset === '1' ? 'success' : 'info'" size="small">
                 {{ currentNode.isUseTestset === '1' ? '是' : '否' }}
               </el-tag>
             </div>
@@ -764,6 +764,7 @@ export default {
 /* 节点信息样式 */
 .node-info {
   padding: 16px;
+  font-size: 12px;
 }
 
 .info-item {
@@ -772,6 +773,7 @@ export default {
   margin-bottom: 12px;
   padding: 8px 0;
   border-bottom: 1px solid #f0f0f0;
+  font-size: 12px;
 }
 
 .info-item:last-child {
@@ -784,11 +786,18 @@ export default {
   color: #606266;
   min-width: 120px;
   margin-right: 12px;
+  font-size: 12px;
 }
 
 .info-value {
   color: #303133;
   flex: 1;
+  font-size: 12px;
+}
+
+/* 目录详情中的标签字体 */
+.node-info ::v-deep .el-tag {
+  font-size: 12px;
 }
 
 /* 空状态样式 */

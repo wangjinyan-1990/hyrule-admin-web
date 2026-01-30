@@ -61,6 +61,11 @@ export default {
     showActions: {
       type: Boolean,
       default: true
+    },
+    // 模块类型参数，用于过滤目录
+    module: {
+      type: String,
+      default: null
     }
   },
   data() {
@@ -299,7 +304,8 @@ export default {
       try {
         const response = await testDirectoryApi.getChildrenByParentId(
           parentData.directoryId,
-          parentData.systemId
+          parentData.systemId,
+          this.module
         )
 
 

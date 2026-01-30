@@ -24,7 +24,8 @@
       <div class="tree-container">
         <DirectoryTreeSelect
           ref="directoryTreeSelect"
-          :show-actions="true"
+          :show-actions="false"
+          module="isUseTestset"
           @node-select="handleNodeSelect"
         />
       </div>
@@ -40,76 +41,76 @@
         <el-row :gutter="20">
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">用例总数:</div>
-              <div class="stat-value">{{ statistics.totalCount || 0 }}</div>
+              <span class="stat-label">用例总数:</span>
+              <span class="stat-value">{{ statistics.totalCount || 0 }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">通过率:</div>
-              <div class="stat-value">{{ statistics.passRate || '0%' }}</div>
+              <span class="stat-label">通过率:</span>
+              <span class="stat-value">{{ statistics.passRate || '0%' }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">未执行:</div>
-              <div class="stat-value">{{ statistics.notExecuted || 0 }}</div>
+              <span class="stat-label">未执行:</span>
+              <span class="stat-value">{{ statistics.notExecuted || 0 }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">偏差率:</div>
-              <div class="stat-value">{{ statistics.deviationRate || '0%' }}</div>
+              <span class="stat-label">偏差率:</span>
+              <span class="stat-value">{{ statistics.deviationRate || '0%' }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">通过:</div>
-              <div class="stat-value">{{ statistics.passed || 0 }}</div>
+              <span class="stat-label">通过:</span>
+              <span class="stat-value">{{ statistics.passed || 0 }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">可执行率:</div>
-              <div class="stat-value">{{ statistics.executableRate || '0%' }}</div>
+              <span class="stat-label">可执行率:</span>
+              <span class="stat-value">{{ statistics.executableRate || '0%' }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">失败:</div>
-              <div class="stat-value">{{ statistics.failed || 0 }}</div>
+              <span class="stat-label">失败:</span>
+              <span class="stat-value">{{ statistics.failed || 0 }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">完成率:</div>
-              <div class="stat-value">{{ statistics.completionRate || '0%' }}</div>
+              <span class="stat-label">完成率:</span>
+              <span class="stat-value">{{ statistics.completionRate || '0%' }}</span>
             </div>
           </el-col>
         </el-row>
-        <el-row :gutter="20" style="margin-top: 10px;">
+        <el-row :gutter="20" style="margin-top: 5px;">
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">不适用:</div>
-              <div class="stat-value">{{ statistics.notApplicable || 0 }}</div>
+              <span class="stat-label">不适用:</span>
+              <span class="stat-value">{{ statistics.notApplicable || 0 }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">缺陷率:</div>
-              <div class="stat-value">{{ statistics.defectRate || '0%' }}</div>
+              <span class="stat-label">缺陷率:</span>
+              <span class="stat-value">{{ statistics.defectRate || '0%' }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">阻塞:</div>
-              <div class="stat-value">{{ statistics.blocked || 0 }}</div>
+              <span class="stat-label">阻塞:</span>
+              <span class="stat-value">{{ statistics.blocked || 0 }}</span>
             </div>
           </el-col>
           <el-col :span="3">
             <div class="stat-item">
-              <div class="stat-label">缺陷数:</div>
-              <div class="stat-value">{{ statistics.defectCount || 0 }}</div>
+              <span class="stat-label">缺陷数:</span>
+              <span class="stat-value">{{ statistics.defectCount || 0 }}</span>
             </div>
           </el-col>
         </el-row>
@@ -122,15 +123,12 @@
             <!-- 第一排查询条件 -->
             <el-row style="margin-bottom: 0px;">
               <el-col :span="6">
-                <el-input v-model="searchForm.usecaseId" placeholder="用例编号" class="search-input-small"></el-input>
+                <el-input v-model="searchForm.usecaseId" placeholder="用例ID" class="search-input-small"></el-input>
               </el-col>
               <el-col :span="6">
                 <el-input v-model="searchForm.usecaseName" placeholder="用例名称" class="search-input-small"></el-input>
               </el-col>
-              <el-col :span="6">
-                <el-input v-model="searchForm.usecaseOverview" placeholder="用例概述" class="search-input-small"></el-input>
-              </el-col>
-              <el-col :span="6">
+              <el-col :span="12">
                 <el-checkbox v-model="searchForm.includeSubdirectories" style="margin-right: 10px;">包含子目录:</el-checkbox>
                 <el-button @click="handleSearch" type="primary" round icon="el-icon-search" class="search-button-small">查询</el-button>
                 <el-button @click="handleReset" type="info" round icon="el-icon-refresh" class="search-button-small">重置</el-button>
@@ -140,7 +138,7 @@
         </el-row>
 
         <!-- 第二排查询条件 -->
-        <el-row style="margin-top: 10px;">
+        <el-row style="margin-top: 5px;">
           <el-col :span="6">
             <el-date-picker
               v-model="searchForm.actExecutionTimeStart"
@@ -181,7 +179,8 @@
       <el-card id="operation">
         <el-row>
           <el-col :span="12">
-            <el-button @click="handleExport" type="success" icon="el-icon-download" class="search-button-small">导出</el-button>
+            <el-button @click="handleAdd" type="primary" icon="el-icon-plus" class="search-button-small">添加</el-button>
+            <el-button @click="handleExport" type="success" icon="el-icon-download" class="search-button-small" style="margin-left: 10px;">导出</el-button>
           </el-col>
           <el-col :span="12" style="text-align: right;">
             <el-button @click="handleRefresh" type="info" icon="el-icon-refresh" class="search-button-small">刷新</el-button>
@@ -202,9 +201,8 @@
           v-loading="loading"
         >
           <el-table-column type="selection" width="55" />
-          <el-table-column prop="usecaseId" label="用例编号" width="180" show-overflow-tooltip />
+          <el-table-column prop="usecaseId" label="用例ID" width="180" show-overflow-tooltip />
           <el-table-column prop="usecaseName" label="用例名称" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="usecaseOverview" label="用例概述" min-width="200" show-overflow-tooltip />
           <el-table-column prop="creator" label="用例设计者" width="120" />
           <el-table-column prop="planExecutorName" label="计划执行人" width="120" />
           <el-table-column prop="planExecutionDate" label="计划执行日期" width="120">
@@ -225,7 +223,6 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="functionModuleName" label="功能模块名称" width="150" show-overflow-tooltip />
           <el-table-column prop="remark" label="执行备注" min-width="150" show-overflow-tooltip />
         </el-table>
 
@@ -243,11 +240,19 @@
         </div>
       </el-card>
     </div>
+
+    <!-- 用例选择器 -->
+    <usecase-selector
+      :visible.sync="selectorVisible"
+      :selected-usecase-ids="existingUsecaseIds"
+      @confirm="handleUsecaseConfirm"
+    />
   </div>
 </template>
 
 <script>
 import DirectoryTreeSelect from '@/views/test/baseManage/components/DirectoryTreeSelect'
+import UsecaseSelector from '@/views/test/usecaseManage/components/UsecaseSelector.vue'
 import usecaseExecutionApi from '@/api/test/usecaseManage/usecaseExecution'
 import dictionaryApi from '@/api/framework/dictionary'
 import testSystemApi from '@/api/test/baseManage/testSystem'
@@ -255,7 +260,8 @@ import testSystemApi from '@/api/test/baseManage/testSystem'
 export default {
   name: 'usecaseExecution',
   components: {
-    DirectoryTreeSelect
+    DirectoryTreeSelect,
+    UsecaseSelector
   },
 
   data() {
@@ -315,7 +321,17 @@ export default {
       },
 
       // 执行结果选项
-      runStatusOptions: []
+      runStatusOptions: [],
+
+      // 用例选择器显示状态
+      selectorVisible: false
+    }
+  },
+
+  computed: {
+    // 获取已存在的用例ID列表（用于选择器中排除已添加的用例）
+    existingUsecaseIds() {
+      return this.tableData.map(item => item.usecaseId)
     }
   },
 
@@ -469,6 +485,65 @@ export default {
       this.selectedRows = selection
     },
 
+    // 添加用例
+    handleAdd() {
+      if (!this.selectedDirectory) {
+        this.$message.warning('请先选择目录')
+        return
+      }
+      this.selectorVisible = true
+    },
+
+    // 处理用例选择确认
+    async handleUsecaseConfirm(selectedUsecases) {
+      if (!selectedUsecases || selectedUsecases.length === 0) {
+        return
+      }
+      if (!this.selectedDirectory) {
+        this.$message.error('缺少必要参数')
+        return
+      }
+
+      try {
+        // 批量创建执行记录
+        const executionDataList = selectedUsecases.map(usecase => ({
+          usecaseId: usecase.usecaseId,
+          directoryId: this.selectedDirectory.directoryId,
+          systemId: this.selectedDirectory.systemId || this.selectedSystemId
+        }))
+
+        // 调用API批量保存
+        let successCount = 0
+        let failCount = 0
+
+        for (const executionData of executionDataList) {
+          try {
+            const response = await usecaseExecutionApi.saveExecution(executionData)
+            if (response.code === 20000) {
+              successCount++
+            } else {
+              failCount++
+            }
+          } catch (error) {
+            failCount++
+          }
+        }
+
+        if (successCount > 0) {
+          this.$message.success(`成功添加 ${successCount} 个用例到执行列表`)
+          // 重新加载执行列表和统计信息
+          await this.loadExecutionList()
+          await this.loadStatistics()
+        }
+        if (failCount > 0) {
+          this.$message.warning(`${failCount} 个用例添加失败`)
+        }
+      } catch (error) {
+        console.error('添加用例到执行列表失败:', error)
+        this.$message.error('添加失败')
+      }
+    },
+
     // 导出
     async handleExport() {
       try {
@@ -607,7 +682,7 @@ export default {
 }
 
 .panel-header {
-  padding: 15px;
+  padding: 5px;
   border-bottom: 1px solid #e4e7ed;
   background-color: #fafafa;
 
@@ -637,20 +712,30 @@ export default {
 }
 
 // 统计样式
+#summary {
+  ::v-deep .el-card__body {
+    padding: 10px 15px !important;
+  }
+}
+
 .stat-item {
-  text-align: center;
-  padding: 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
 
   .stat-label {
     font-size: 12px;
     color: #909399;
-    margin-bottom: 5px;
+    line-height: 16px;
+    margin-right: 8px;
   }
 
   .stat-value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: bold;
     color: #303133;
+    line-height: 20px;
   }
 }
 
@@ -676,6 +761,20 @@ export default {
     height: 24px !important;
     line-height: 24px !important;
     font-size: 10px !important;
+  }
+
+  ::v-deep .el-input__suffix {
+    line-height: 24px !important;
+    top: 0 !important;
+  }
+
+  ::v-deep .el-input__suffix-inner {
+    line-height: 24px !important;
+  }
+
+  ::v-deep .el-input__icon {
+    line-height: 24px !important;
+    height: 24px !important;
   }
 }
 
@@ -722,6 +821,10 @@ export default {
 // 卡片样式
 .el-card {
   margin-bottom: 10px;
+
+  ::v-deep .el-card__header {
+    padding: 3px 5px;
+  }
 
   ::v-deep .el-card__body {
     padding: 15px;
