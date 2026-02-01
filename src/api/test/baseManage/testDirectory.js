@@ -52,5 +52,13 @@ export default {
       method: 'get',
       params
     })
+  },
+
+  // 根据目录ID获取目录详情（包含完整路径）
+  getDirectoryById(directoryId) {
+    return request({
+      url: `/test/directory/${directoryId}`,
+      method: 'get'
+    })
   }
 }

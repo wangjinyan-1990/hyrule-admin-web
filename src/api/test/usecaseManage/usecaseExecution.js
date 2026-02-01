@@ -107,4 +107,5 @@ export default {
       method: 'delete'
     })
   }
+
 }

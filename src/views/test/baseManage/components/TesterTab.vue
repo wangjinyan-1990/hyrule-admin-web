@@ -11,8 +11,18 @@
           <el-button @click="resetSearch" type="info" round icon="el-icon-refresh">重置</el-button>
         </el-col>
         <el-col :span="4" align="right">
+          <el-tooltip content="保存测试组长" placement="top">
+            <el-button 
+              @click="batchSaveTestLeader" 
+              type="success" 
+              icon="el-icon-check" 
+              circle
+              :disabled="!hasTestLeaderChanges"
+              :loading="savingTestLeader"
+            ></el-button>
+          </el-tooltip>
           <el-tooltip content="用户系统分配" placement="top">
-            <el-button @click="handleEdit" type="warning" icon="el-icon-edit" circle :disabled="!selectedRow"></el-button>
+            <el-button @click="handleEdit" type="warning" icon="el-icon-edit" circle :disabled="!selectedRow" style="margin-left: 10px;"></el-button>
           </el-tooltip>
         </el-col>
       </el-row>
@@ -37,6 +47,15 @@
           <template slot-scope="scope">
             <span v-if="scope.row.orgName">{{ scope.row.orgName }}</span>
             <span v-else style="color: #999;">未分配</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="testLeader" label="测试组长" width="100" align="center">
+          <template slot-scope="scope">
+            <el-checkbox
+              v-model="scope.row.testLeader"
+              :true-label="1"
+              :false-label="0"
+            ></el-checkbox>
           </template>
         </el-table-column>
         <el-table-column prop="systemIds" label="所属系统ID" width="100" v-if="false"></el-table-column>
@@ -124,6 +143,8 @@ export default {
         phone: ''
       },
       testerList: [],
+      originalTesterList: [], // 保存原始数据，用于对比变化
+      savingTestLeader: false, // 保存中状态
       dialogVisible: false,
       selectedRow: null,
       systemSelectorVisible: false,
@@ -162,6 +183,16 @@ export default {
   computed: {
     dialogTitle() {
       return '用户系统分配';
+    },
+    // 检查是否有测试组长变更
+    hasTestLeaderChanges() {
+      if (!this.originalTesterList || this.originalTesterList.length === 0) {
+        return false;
+      }
+      return this.testerList.some((item, index) => {
+        const original = this.originalTesterList[index];
+        return original && original.userId === item.userId && original.testLeader !== item.testLeader;
+      });
     }
   },
   created() {
@@ -182,7 +213,17 @@ export default {
 
         if (response.code === 20000) {
           // 适配新的数据格式：data.rows 和 data.total
-          this.testerList = response.data?.rows || [];
+          const list = response.data?.rows || [];
+          // 确保 testLeader 字段存在，后端返回的是字符串 "0" 或 "1"，需要转换为数字
+          this.testerList = list.map(item => ({
+            ...item,
+            testLeader: item.testLeader !== undefined ? parseInt(item.testLeader) || 0 : 0
+          }));
+          // 保存原始数据副本，用于对比变化
+          this.originalTesterList = this.testerList.map(item => ({
+            ...item,
+            testLeader: item.testLeader
+          }));
           this.total = response.data?.total || this.testerList.length;
         } else {
           this.$message.error(response.message || '获取测试人员列表失败');
@@ -200,6 +241,7 @@ export default {
       this.searchModel.loginName = '';
       this.searchModel.phone = '';
       this.searchModel.pageNo = 1;
+      this.originalTesterList = [];
       this.getTesterList();
     },
     handleEdit(row) {
@@ -282,6 +324,65 @@ export default {
         this.systemDisplayText = this.testerForm.systemNames;
       } else {
         this.systemDisplayText = '';
+      }
+    },
+    // 批量保存测试组长变更
+    async batchSaveTestLeader() {
+      if (!this.hasTestLeaderChanges) {
+        this.$message.warning('没有需要保存的变更');
+        return;
+      }
+
+      // 找出所有变更的数据
+      const changes = [];
+      this.testerList.forEach((item, index) => {
+        const original = this.originalTesterList[index];
+        if (original && original.userId === item.userId && original.testLeader !== item.testLeader) {
+          changes.push({
+            userId: item.userId,
+            testLeader: item.testLeader // 0 或 1
+          });
+        }
+      });
+
+      if (changes.length === 0) {
+        this.$message.warning('没有需要保存的变更');
+        return;
+      }
+
+      this.savingTestLeader = true;
+      try {
+        // 批量更新：循环调用单个更新接口
+        const updatePromises = changes.map(change => 
+          systemUserApi.updateUserBugRolePermission({
+            userId: change.userId,
+            testLeader: change.testLeader
+          })
+        );
+
+        const results = await Promise.all(updatePromises);
+        
+        // 检查是否有失败的
+        const failedResults = results.filter(result => result.code !== 20000);
+        if (failedResults.length > 0) {
+          this.$message.error(`部分更新失败，共${failedResults.length}条`);
+          // 重新加载数据以恢复状态
+          await this.getTesterList();
+        } else {
+          this.$message.success(`成功保存${changes.length}条测试组长设置`);
+          // 更新原始数据
+          this.originalTesterList = this.testerList.map(item => ({
+            ...item,
+            testLeader: item.testLeader
+          }));
+        }
+      } catch (error) {
+        console.error('批量保存测试组长失败:', error);
+        this.$message.error('批量保存失败，请检查网络连接');
+        // 重新加载数据以恢复状态
+        await this.getTesterList();
+      } finally {
+        this.savingTestLeader = false;
       }
     }
   }

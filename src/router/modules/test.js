@@ -72,7 +72,7 @@ const testRoute = {
         {
           path: 'bugManage',
           name: 'bugManage',
-          component: () => import('@/views/test/bugManage/bugManage'),
+          component: () => import('@/views/test/bugManage/bugList'),
           meta: { title: '缺陷列表', icon: 'bugManage' }
         },
         {

@@ -24,5 +24,14 @@ export default {
       method: 'put',
       data: userData
     });
+  },
+
+  // 更新用户缺陷角色权限（测试组长/开发组长）
+  updateUserBugRolePermission(userData) {
+    return request({
+      url: '/test/systemUser/updateUserBugRolePermission',
+      method: 'put',
+      data: userData
+    });
   }
 }

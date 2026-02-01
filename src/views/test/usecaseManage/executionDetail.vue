@@ -186,6 +186,8 @@
         </template>
         <execution-related-bugs
           :usecase-execution-id="executionForm.usecaseExecutionId"
+          :usecase-id="executionForm.usecaseId"
+          :directory-id="executionForm.directoryId"
         />
       </el-tab-pane>
 
