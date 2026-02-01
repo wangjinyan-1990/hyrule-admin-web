@@ -180,6 +180,7 @@
         <el-row>
           <el-col :span="12">
             <el-button @click="handleAdd" type="primary" icon="el-icon-plus" class="search-button-small">添加</el-button>
+            <el-button @click="handleDelete" type="danger" icon="el-icon-delete" class="search-button-small" style="margin-left: 10px;" :disabled="selectedRows.length === 0">删除</el-button>
             <el-button @click="handleExport" type="success" icon="el-icon-download" class="search-button-small" style="margin-left: 10px;">导出</el-button>
           </el-col>
           <el-col :span="12" style="text-align: right;">
@@ -219,7 +220,7 @@
           <el-table-column prop="runStatusName" label="执行结果" width="100">
             <template slot-scope="scope">
               <el-tag :type="getRunStatusType(scope.row.runStatus)" size="mini">
-                {{ scope.row.runStatusName || '-' }}
+                {{ getRunStatusName(scope.row.runStatus, scope.row.runStatusName) }}
               </el-tag>
             </template>
           </el-table-column>
@@ -390,8 +391,21 @@ export default {
 
     // 目录选择处理
     handleNodeSelect(node) {
+      if (!node) {
+        this.$message.warning('请选择一个有效的目录节点')
+        return
+      }
       this.selectedDirectory = node
-      this.searchForm.directoryId = node ? node.directoryId : ''
+      // 确保获取正确的 directoryId
+      const directoryId = node.directoryId || node.id
+      if (!directoryId) {
+        this.$message.warning('目录节点ID无效')
+        return
+      }
+      // 获取 systemId
+      const systemId = node.systemId || this.selectedSystemId || ''
+      this.searchForm.directoryId = directoryId
+      this.searchForm.systemId = systemId
       this.pagination.currentPage = 1
       this.loadExecutionList()
       this.loadStatistics()
@@ -488,7 +502,13 @@ export default {
     // 添加用例
     handleAdd() {
       if (!this.selectedDirectory) {
-        this.$message.warning('请先选择目录')
+        this.$message.warning('请先在左侧目录树中选择一个目录节点')
+        return
+      }
+      // 确保 directoryId 存在
+      const directoryId = this.selectedDirectory.directoryId || this.selectedDirectory.id || this.searchForm.directoryId
+      if (!directoryId) {
+        this.$message.warning('请先在左侧目录树中选择一个目录节点，以获取目录ID')
         return
       }
       this.selectorVisible = true
@@ -500,7 +520,13 @@ export default {
         return
       }
       if (!this.selectedDirectory) {
-        this.$message.error('缺少必要参数')
+        this.$message.error('缺少必要参数：请先选择目录')
+        return
+      }
+      // 确保 directoryId 存在
+      const directoryId = this.selectedDirectory.directoryId || this.selectedDirectory.id || this.searchForm.directoryId
+      if (!directoryId) {
+        this.$message.error('缺少必要参数：目录ID无效')
         return
       }
 
@@ -508,8 +534,8 @@ export default {
         // 批量创建执行记录
         const executionDataList = selectedUsecases.map(usecase => ({
           usecaseId: usecase.usecaseId,
-          directoryId: this.selectedDirectory.directoryId,
-          systemId: this.selectedDirectory.systemId || this.selectedSystemId
+          directoryId: directoryId,
+          systemId: this.selectedDirectory.systemId || this.selectedSystemId || this.searchForm.systemId
         }))
 
         // 调用API批量保存
@@ -518,7 +544,7 @@ export default {
 
         for (const executionData of executionDataList) {
           try {
-            const response = await usecaseExecutionApi.saveExecution(executionData)
+            const response = await usecaseExecutionApi.addToExecution(executionData)
             if (response.code === 20000) {
               successCount++
             } else {
@@ -542,6 +568,79 @@ export default {
         console.error('添加用例到执行列表失败:', error)
         this.$message.error('添加失败')
       }
+    },
+
+    // 删除用例
+    async handleDelete() {
+      if (!this.selectedRows || this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要删除的用例')
+        return
+      }
+
+      // 检查选中的用例是否都是未执行状态
+      // 未执行状态：runStatus 为空、null、undefined 或 '0'
+      const nonExecutableRows = this.selectedRows.filter(row => {
+        const runStatus = row.runStatus
+        return runStatus && runStatus !== '' && runStatus !== '0' && runStatus !== null && runStatus !== undefined
+      })
+
+      if (nonExecutableRows.length > 0) {
+        const statusNames = nonExecutableRows.map(row => {
+          return this.getRunStatusName(row.runStatus, row.runStatusName)
+        }).join('、')
+        this.$message.warning(`只能删除未执行状态的用例，选中的用例中包含：${statusNames}`)
+        return
+      }
+
+      // 确认删除
+      this.$confirm(`确定要删除选中的 ${this.selectedRows.length} 个用例吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          const usecaseExecutionIds = this.selectedRows.map(row => row.usecaseExecutionId).filter(id => id)
+          
+          if (usecaseExecutionIds.length === 0) {
+            this.$message.warning('选中的用例没有有效的执行ID')
+            return
+          }
+
+          // 批量删除
+          let successCount = 0
+          let failCount = 0
+
+          for (const usecaseExecutionId of usecaseExecutionIds) {
+            try {
+              const response = await usecaseExecutionApi.deleteExecution(usecaseExecutionId)
+              if (response.code === 20000 || response.code === 200) {
+                successCount++
+              } else {
+                failCount++
+              }
+            } catch (error) {
+              failCount++
+            }
+          }
+
+          if (successCount > 0) {
+            this.$message.success(`成功删除 ${successCount} 个用例`)
+            // 清空选中
+            this.selectedRows = []
+            // 重新加载列表和统计
+            await this.loadExecutionList()
+            await this.loadStatistics()
+          }
+          if (failCount > 0) {
+            this.$message.warning(`${failCount} 个用例删除失败`)
+          }
+        } catch (error) {
+          console.error('删除用例失败:', error)
+          this.$message.error('删除失败')
+        }
+      }).catch(() => {
+        // 用户取消
+      })
     },
 
     // 导出
@@ -576,9 +675,9 @@ export default {
       // 跳转到执行用例详情页
       this.$router.push({
         path: '/test/usecaseManage/executionDetail',
-        query: { 
+        query: {
           usecaseExecutionId: row.usecaseExecutionId,
-          usecaseId: row.usecaseId 
+          usecaseId: row.usecaseId
         }
       })
     },
@@ -603,6 +702,20 @@ export default {
         return dateStr.split(' ')[0]
       }
       return dateStr
+    },
+
+    // 获取执行结果名称（通过字典查找）
+    getRunStatusName(runStatus, runStatusName) {
+      // 如果后端返回了名称，直接使用
+      if (runStatusName) {
+        return runStatusName
+      }
+      // 否则通过字典查找
+      if (!runStatus) {
+        return '-'
+      }
+      const item = this.runStatusOptions.find(option => option.dataValue === runStatus)
+      return item ? item.dataName : '-'
     },
 
     // 获取执行结果标签类型

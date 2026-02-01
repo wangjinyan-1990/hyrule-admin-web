@@ -378,10 +378,10 @@ export const asyncRoutes = [
             hidden: true
           },
           {
-            path: 'useCaseExecution',
-            name: 'useCaseExecution',
-            component: () => import('@/views/test/usecaseManage/usecaseExecution'),
-            meta: { title: '执行库', icon: 'usecaseExecution' }
+            path: 'executionRepository',
+            name: 'executionRepository',
+            component: () => import('@/views/test/usecaseManage/executionRepository'),
+            meta: { title: '执行库', icon: 'executionRepository' }
           },
           {
             path: 'executionDetail',

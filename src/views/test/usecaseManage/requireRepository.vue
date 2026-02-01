@@ -441,6 +441,7 @@ import DirectoryTreeSelect from '../baseManage/components/DirectoryTreeSelect.vu
 import FileUploadSingleDialog from '@/views/sys/common/FileUploadSingleDialog.vue'
 import dictionaryApi from '@/api/framework/dictionary'
 import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
+import usecaseRequireLinkApi from '@/api/test/usecaseManage/usecaseRequireLink'
 
 export default {
   name: 'requireRepository', // 组件名与路由名一致，以便keep-alive缓存
@@ -767,8 +768,32 @@ export default {
           this.tableData = []
           this.tableKey += 1
           // 延迟设置新数据
-          this.$nextTick(() => {
-            this.tableData = responseData.rows || []
+          this.$nextTick(async () => {
+            const rows = responseData.rows || []
+            // 查询每个需求点的覆盖状态
+            const rowsWithCoverage = await Promise.all(rows.map(async (row) => {
+              try {
+                const linkResponse = await usecaseRequireLinkApi.getRequirePointTestCases(row.requirePointId)
+                // 如果有关联的用例，则设置为已覆盖(1)，否则为未覆盖(0)
+                const hasCoverage = linkResponse && linkResponse.data && 
+                  ((Array.isArray(linkResponse.data) && linkResponse.data.length > 0) ||
+                   (linkResponse.data.rows && linkResponse.data.rows.length > 0) ||
+                   (linkResponse.data.records && linkResponse.data.records.length > 0))
+                return {
+                  ...row,
+                  requireStatus: hasCoverage ? '1' : '0'
+                }
+              } catch (error) {
+                console.error(`查询需求点 ${row.requirePointId} 的覆盖状态失败:`, error)
+                // 查询失败时默认为未覆盖
+                return {
+                  ...row,
+                  requireStatus: '0'
+                }
+              }
+            }))
+            
+            this.tableData = rowsWithCoverage
             this.pagination.total = responseData.total || 0
             this.tableKey += 1
             // 再次强制更新

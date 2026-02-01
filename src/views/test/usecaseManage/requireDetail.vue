@@ -220,6 +220,7 @@
 
 <script>
 import requireRepositoryApi from '@/api/test/usecaseManage/requireRepository'
+import usecaseRequireLinkApi from '@/api/test/usecaseManage/usecaseRequireLink'
 import dictionaryApi from '@/api/framework/dictionary'
 import RequireRelatedUseCases from './components/RequireRelatedUseCases.vue'
 import RequireRelatedBugs from './components/RequireRelatedBugs.vue'
@@ -405,6 +406,21 @@ export default {
           this.requireForm = {
             ...this.requireForm,
             ...response.data
+          }
+          
+          // 查询覆盖状态
+          try {
+            const linkResponse = await usecaseRequireLinkApi.getRequirePointTestCases(this.requirePointId)
+            // 如果有关联的用例，则设置为已覆盖(1)，否则为未覆盖(0)
+            const hasCoverage = linkResponse && linkResponse.data && 
+              ((Array.isArray(linkResponse.data) && linkResponse.data.length > 0) ||
+               (linkResponse.data.rows && linkResponse.data.rows.length > 0) ||
+               (linkResponse.data.records && linkResponse.data.records.length > 0))
+            this.requireForm.requireStatus = hasCoverage ? '1' : '0'
+          } catch (error) {
+            console.error('查询需求点覆盖状态失败:', error)
+            // 查询失败时默认为未覆盖
+            this.requireForm.requireStatus = '0'
           }
         } else {
           this.$message.error(response.message || '加载需求点详情失败')

@@ -32,7 +32,7 @@ export default {
 
   /**
    * 获取执行详情
-   * @param {Object} params 查询参数（usecaseExecutionId 或 usecaseId）
+   * @param {Object} params 查询参数usecaseExecutionId
    * @returns {Promise} 执行详情
    */
   getExecutionDetail(params) {
@@ -44,13 +44,13 @@ export default {
   },
 
   /**
-   * 保存执行用例
-   * @param {Object} data 执行用例数据
-   * @returns {Promise} 保存结果
+   * 添加用例到执行库
+   * @param {Object} data 用例数据
+   * @returns {Promise} 添加结果
    */
-  saveExecution(data) {
+  addToExecution(data) {
     return request({
-      url: '/test/usecase/execution/save',
+      url: '/test/usecase/execution/add',
       method: 'post',
       data
     })
@@ -58,8 +58,8 @@ export default {
 
   /**
    * 更新执行状态
-   * @param {Object} data 更新数据（usecaseExecutionId, runStatus）
-   * @returns {Promise} 更新结果
+   * @param {Object} data 更新数据（usecaseExecutionId, runStatus, remark）
+   * @returns {Promise} 更新结果，包含 usecaseExecutionHistoryId
    */
   updateRunStatus(data) {
     return request({
@@ -80,6 +80,31 @@ export default {
       method: 'get',
       params,
       responseType: 'blob'
+    })
+  },
+
+  /**
+   * 获取历史执行记录列表
+   * @param {Object} params 查询参数（directoryId, usecaseId）
+   * @returns {Promise} 历史执行记录列表
+   */
+  getExecutionHistory(params) {
+    return request({
+      url: '/test/usecase/execution/history',
+      method: 'get',
+      params
+    })
+  },
+
+  /**
+   * 删除执行用例
+   * @param {string} usecaseExecutionId 用例执行ID
+   * @returns {Promise} 删除结果
+   */
+  deleteExecution(usecaseExecutionId) {
+    return request({
+      url: `/test/usecase/execution/${usecaseExecutionId}`,
+      method: 'delete'
     })
   }
 }

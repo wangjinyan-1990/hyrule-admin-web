@@ -953,7 +953,7 @@ export default {
 .test-content-table {
   width: 100%;
   border-collapse: collapse;
-  border: 1px solid #000;
+  border: 1px solid #dcdfe6;
   background: white;
 
   thead {
@@ -965,7 +965,7 @@ export default {
       font-weight: 500;
       color: #303133;
       background-color: #fff;
-      border: 1px solid #000;
+      border: 1px solid #dcdfe6;
       font-size: 12px;
       white-space: nowrap;
       line-height: 1.2;
@@ -976,7 +976,7 @@ export default {
   tbody {
     td {
       padding: 0;
-      border: 1px solid #000;
+      border: 1px solid #dcdfe6;
       vertical-align: top;
       position: relative;
 
