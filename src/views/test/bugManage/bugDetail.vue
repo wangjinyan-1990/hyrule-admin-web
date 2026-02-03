@@ -35,9 +35,9 @@
           >
             <el-option
               v-for="item in bugStateOptions"
-              :key="item.dataValue"
-              :label="item.dataName"
-              :value="item.dataValue"
+              :key="item.bugStateCode"
+              :label="item.bugStateName"
+              :value="item.bugStateCode"
             />
           </el-select>
           <el-tag v-else :type="getBugStateTagType(bugForm.bugState)" size="small" style="margin-left: 8px;">
@@ -47,6 +47,7 @@
         <el-button
           v-if="mode === 'view'"
           type="primary"
+          size="small"
           icon="el-icon-edit"
           @click="switchToEdit"
         >
@@ -55,6 +56,7 @@
         <el-button
           v-if="mode === 'edit' || mode === 'create'"
           type="primary"
+          size="small"
           icon="el-icon-check"
           @click="handleSave"
           :loading="saving"
@@ -63,6 +65,7 @@
         </el-button>
         <el-button
           v-if="mode === 'edit' || mode === 'create'"
+          size="small"
           icon="el-icon-close"
           @click="handleCancel"
         >
@@ -84,7 +87,7 @@
           <!-- 左侧列 -->
           <el-col :span="12">
             <!-- 缺陷编号 -->
-            <el-form-item label="缺陷编号">
+            <el-form-item label="缺陷Id" v-if="mode !== 'create'">
               <el-input v-model="bugForm.bugId" readonly />
             </el-form-item>
 
@@ -99,7 +102,7 @@
             </el-form-item>
 
             <!-- 缺陷类型 -->
-            <el-form-item label="缺陷类型">
+            <el-form-item label="缺陷类型" prop="bugType">
               <el-select v-model="bugForm.bugType" placeholder="请选择缺陷类型" style="width: 100%">
                 <el-option
                   v-for="item in bugTypeOptions"
@@ -317,7 +320,7 @@ export default {
   data() {
     return {
       mode: 'view', // view, edit, create
-      bugId: null,
+      bugId: '',
       loading: false,
       saving: false,
       historyLoading: false,
@@ -350,10 +353,6 @@ export default {
         bugTypeName: '',
         directoryId: '',
         directoryPath: '',
-        bugModule: '',
-        lineResponsiblePerson: '',
-        testOrderId: '',
-        testManagementPost: '',
         remark: '',
         commitTime: null
       },
@@ -363,6 +362,9 @@ export default {
         ],
         systemId: [
           { required: true, message: '请选择所属系统', trigger: 'change' }
+        ],
+        bugType: [
+          { required: true, message: '请选择缺陷类型', trigger: 'change' }
         ],
         bugSeverityLevel: [
           { required: true, message: '请选择严重级别', trigger: 'change' }
@@ -414,7 +416,7 @@ export default {
     parseRouteParams() {
       const { mode, id, usecaseId, directoryId, fromExecution } = this.$route.query
       this.mode = mode || 'view'
-      this.bugId = id || null
+      this.bugId = id ? String(id) : ''
       this.fromExecution = fromExecution === 'true'
       // 如果是新建模式，从路由参数中获取 usecaseId 和 directoryId
       if (mode === 'create') {
@@ -431,13 +433,18 @@ export default {
     async loadDictionaryData() {
       try {
         const [bugStateRes, bugTypeRes, bugSeverityLevelRes, bugSourceRes, prorityRes] = await Promise.all([
-          dictionaryApi.getDictionaryList('bugState'),
+          bugManageApi.getAllBugState(),
           dictionaryApi.getDictionaryList('bugType'),
           dictionaryApi.getDictionaryList('bugSeverityLevel'),
           dictionaryApi.getDictionaryList('bugSource'),
           dictionaryApi.getDictionaryList('prority')
         ])
-        this.bugStateOptions = bugStateRes.data || []
+        // 新接口返回的数据格式：{ bugStateCode, bugStateName }
+        if (bugStateRes.code === 20000 || bugStateRes.code === 200) {
+          this.bugStateOptions = bugStateRes.data || []
+        } else {
+          this.bugStateOptions = []
+        }
         this.bugTypeOptions = bugTypeRes.data || []
         this.bugSeverityLevelOptions = bugSeverityLevelRes.data || []
         this.bugSourceOptions = bugSourceRes.data || []
@@ -450,11 +457,22 @@ export default {
 
     // 初始化新建表单
     async initCreateForm() {
+      // 获取当前用户信息
+      const currentUserId = this.$store.getters.userId || ''
+      const currentUserName = this.$store.getters.userName || ''
+
+      // 查找"新建"状态（bugStateCode为"Submitted"）
+      const newState = this.bugStateOptions.find(opt => opt.bugStateCode === 'Submitted' || opt.bugStateName === '新建')
+      
       // 设置默认值
       this.bugForm = {
         ...this.bugForm,
-        bugState: '新建', // 默认状态
+        bugState: newState ? newState.bugStateCode : 'Submitted', // 默认状态使用bugStateCode
+        bugStateName: newState ? newState.bugStateName : '新建', // 默认状态名称
         commitTime: new Date(),
+        // 设置提交人和提交人ID为当前用户
+        submitterId: currentUserId,
+        submitterName: currentUserName,
         // 保留从路由参数中获取的 usecaseId 和 directoryId
         usecaseId: this.bugForm.usecaseId || '',
         directoryId: this.bugForm.directoryId || ''
@@ -465,63 +483,41 @@ export default {
     async loadUsecaseInfo() {
       if (!this.bugForm.usecaseId) return
       try {
-        const response = await usecaseRepositoryApi.getUsecaseById(this.bugForm.usecaseId)
-        if (response.code === 20000 && response.data) {
-          const usecaseData = response.data
-          const stepList = usecaseData.stepList || []
-          
-          // 构建缺陷描述内容
-          let description = ''
-          
-          // 前置条件
-          const preconditions = stepList
-            .filter(step => step.precondition && step.precondition.trim())
-            .map(step => step.precondition.trim())
-            .join('\n')
-          if (preconditions) {
-            description += `[前置条件:]\n${preconditions}\n\n`
+        // 获取用例详情
+        const usecaseResponse = await usecaseRepositoryApi.getUsecaseById(this.bugForm.usecaseId)
+
+        // 构建缺陷描述内容
+        let description = ''
+
+        // 从用例详情获取信息
+        if (usecaseResponse.code === 20000 && usecaseResponse.data) {
+          const usecaseData = usecaseResponse.data
+
+          // 测试数据（从用例详情获取）
+          const testData = usecaseData.testData
+          if (testData && testData.trim()) {
+            description += `[测试数据:]\n${testData.trim()}\n\n`
           }
-          
-          // 测试数据
-          const testData = stepList
-            .filter(step => step.testData && step.testData.trim())
-            .map(step => step.testData.trim())
-            .join('\n')
-          if (testData) {
-            description += `[测试数据:]\n${testData}\n\n`
+
+          // 用例执行步骤（从用例详情获取）
+          const testStep = usecaseData.testStep
+          if (testStep && testStep.trim()) {
+            description += `[用例执行步骤:]\n${testStep.trim()}\n\n`
           }
-          
-          // 执行步骤
-          const testSteps = stepList
-            .filter(step => step.testStep && step.testStep.trim())
-            .map((step, index) => `${index + 1}、${step.testStep.trim()}`)
-            .join('\n')
-          if (testSteps) {
-            description += `[用例步骤:]\n${testSteps}\n\n`
+
+          // 预期结果（从用例详情获取）
+          const expectedResult = usecaseData.expectedResult
+          if (expectedResult && expectedResult.trim()) {
+            description += `[预期结果:]\n${expectedResult.trim()}\n\n`
           }
-          
-          // 预期结果
-          const expectedResults = stepList
-            .filter(step => step.expectedResult && step.expectedResult.trim())
-            .map((step, index) => `${index + 1}、${step.expectedResult.trim()}`)
-            .join('\n')
-          if (expectedResults) {
-            description += `[期望结果:]\n${expectedResults}\n\n`
-          }
-          
-          // 实际结果（如果有）
-          const actualResults = stepList
-            .filter(step => step.actualResult && step.actualResult.trim())
-            .map((step, index) => `${index + 1}、${step.actualResult.trim()}`)
-            .join('\n')
-          if (actualResults) {
-            description += `[实际结果:]\n${actualResults}`
-          }
-          
-          // 设置缺陷描述
-          if (description) {
-            this.bugForm.bugDescription = description.trim()
-          }
+        }
+
+        // 添加 [实际结果:] 标题（不获取执行详情数据）
+        description += `[实际结果:]`
+
+        // 设置缺陷描述
+        if (description) {
+          this.bugForm.bugDescription = description.trim()
         }
       } catch (error) {
         console.error('加载用例信息失败:', error)
@@ -665,7 +661,9 @@ export default {
         if (response.code === 20000) {
           this.$message.success(this.mode === 'create' ? '创建成功' : '保存成功')
           if (this.mode === 'create' && response.data?.bugId) {
-            this.bugId = response.data.bugId
+            // 确保bugId是String类型
+            this.bugId = String(response.data.bugId)
+            this.bugForm.bugId = this.bugId
             this.$router.replace({
               query: { ...this.$route.query, id: this.bugId, mode: 'view' }
             })
@@ -714,9 +712,9 @@ export default {
 
     // 状态变更
     handleStateChange(value) {
-      const item = this.bugStateOptions.find(opt => opt.dataValue === value)
+      const item = this.bugStateOptions.find(opt => opt.bugStateCode === value)
       if (item) {
-        this.bugForm.bugStateName = item.dataName
+        this.bugForm.bugStateName = item.bugStateName
       }
     },
 
@@ -843,12 +841,20 @@ export default {
 
     // 获取缺陷状态标签类型
     getBugStateTagType(bugState) {
+      // 根据bugStateCode映射标签类型
       const statusMap = {
-        '新建': 'info',
-        '已分配': 'warning',
-        '已解决': 'success',
-        '已关闭': '',
-        '重新提交': 'danger'
+        'Submitted': 'info',      // 新建
+        'Confirmed': 'info',     // 已确认
+        'Assigned': 'warning',   // 已分配
+        'Open': 'warning',       // 已打开
+        'Resolved': 'success',   // 已解决
+        'Closed': '',            // 已关闭
+        'Rejected': 'danger',    // 已拒绝
+        'ReSubmitted': 'danger', // 重新提交
+        'Postponed': 'info',     // 已挂起
+        'Invalid': 'info',       // 无效缺陷
+        'WaitCheck': 'warning',  // 待验证
+        'BackClosed': ''         // 后台关闭
       }
       return statusMap[bugState] || 'info'
     },
@@ -988,14 +994,22 @@ export default {
 
 ::v-deep .el-form-item {
   margin-bottom: 12px !important;
+
+  .el-form-item__content {
+    line-height: 28px !important;
+  }
 }
 
 ::v-deep .el-form-item__label {
   font-weight: 500;
   color: #606266;
   font-size: 12px !important;
-  line-height: 1.5 !important;
+  line-height: 28px !important;
   padding-bottom: 0 !important;
+  padding-top: 0 !important;
+  height: 28px !important;
+  display: flex !important;
+  align-items: center !important;
 }
 
 ::v-deep .el-input__inner {

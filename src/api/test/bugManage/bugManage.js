@@ -36,7 +36,7 @@ export default {
    */
   createBug(data) {
     return request({
-      url: '/test/bug',
+      url: '/test/bug/save',
       method: 'post',
       data
     })
@@ -119,6 +119,17 @@ export default {
       url: '/test/bug/relatedBugs',
       method: 'get',
       params
+    })
+  },
+
+  /**
+   * 获取所有缺陷状态
+   * @returns {Promise} 缺陷状态列表（包含 bugStateCode, bugStateName）
+   */
+  getAllBugState() {
+    return request({
+      url: '/test/bug/getAllBugState',
+      method: 'get'
     })
   }
 

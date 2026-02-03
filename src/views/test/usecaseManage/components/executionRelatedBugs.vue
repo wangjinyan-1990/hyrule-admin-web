@@ -17,6 +17,7 @@
         stripe
         style="width: 100%"
         :empty-text="emptyText"
+        @row-dblclick="handleRowDblClick"
       >
         <el-table-column prop="bugId" label="缺陷编号" width="150" show-overflow-tooltip />
         <el-table-column prop="bugName" label="标题" min-width="300" show-overflow-tooltip />
@@ -253,6 +254,20 @@ export default {
       this.$router.push({
         name: 'bugDetail',
         query
+      })
+    },
+
+    // 双击行跳转到缺陷详情页
+    handleRowDblClick(row) {
+      if (!row || !row.bugId) {
+        return
+      }
+      this.$router.push({
+        name: 'bugDetail',
+        query: {
+          id: row.bugId,
+          mode: 'view'
+        }
       })
     }
   }

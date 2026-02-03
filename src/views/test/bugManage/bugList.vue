@@ -15,11 +15,6 @@
             </el-select>
           </el-form-item>
 
-          <!-- 所属条线 -->
-          <el-form-item label="所属条线">
-            <el-input v-model="searchForm.line" placeholder="请输入所属条线" clearable />
-          </el-form-item>
-
           <!-- 所属系统 -->
           <el-form-item label="所属系统">
             <el-select v-model="searchForm.systemId" placeholder="请选择所属系统" clearable filterable style="width: 100%">
@@ -273,7 +268,6 @@ export default {
       tableData: [],
       searchForm: {
         queryType: 'myActiveBugs', // 默认查询条件
-        line: '',
         systemId: '',
         workPackageId: '',
         testTask: '',
@@ -358,7 +352,6 @@ export default {
     handleReset() {
       this.searchForm = {
         queryType: 'myActiveBugs',
-        line: '',
         systemId: '',
         workPackageId: '',
         testTask: '',
@@ -418,10 +411,14 @@ export default {
 
     // 双击行
     handleRowDblClick(row) {
+      if (!row || !row.bugId) {
+        return
+      }
+      const bugId = String(row.bugId)
       this.$router.push({
         path: '/test/bugManage/bugDetail',
         query: {
-          id: row.bugId,
+          id: bugId,
           mode: 'view'
         }
       })
@@ -525,6 +522,21 @@ export default {
     font-size: 12px;
   }
 
+  // 输入框内部文本字体大小
+  ::v-deep .el-input__inner {
+    font-size: 12px !important;
+  }
+
+  // 下拉框内部文本字体大小
+  ::v-deep .el-select .el-input__inner {
+    font-size: 12px !important;
+  }
+
+  // 日期选择器内部文本字体大小
+  ::v-deep .el-date-editor .el-input__inner {
+    font-size: 12px !important;
+  }
+
   // 查询和重置按钮样式
   .query-button {
     font-size: 10px !important;
@@ -589,6 +601,15 @@ export default {
   .el-table__body {
     td {
       padding: 8px 0;
+      cursor: pointer;
+    }
+    
+    tr {
+      cursor: pointer;
+      
+      &:hover {
+        background-color: #f5f7fa;
+      }
     }
   }
 }

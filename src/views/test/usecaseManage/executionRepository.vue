@@ -204,7 +204,7 @@
           <el-table-column type="selection" width="55" />
           <el-table-column prop="usecaseId" label="用例ID" width="180" show-overflow-tooltip />
           <el-table-column prop="usecaseName" label="用例名称" min-width="200" show-overflow-tooltip />
-          <el-table-column prop="creator" label="用例设计者" width="120" />
+          <el-table-column prop="usecaseDesigner" label="用例设计者" width="120" />
           <el-table-column prop="planExecutorName" label="计划执行人" width="120" />
           <el-table-column prop="planExecutionDate" label="计划执行日期" width="120">
             <template slot-scope="scope">
