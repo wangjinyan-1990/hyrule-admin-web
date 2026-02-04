@@ -84,7 +84,7 @@
         label-width="120px"
         :disabled="mode === 'view'"
       >
-        <el-row :gutter="20">
+          <el-row :gutter="20">
           <!-- 左侧列 -->
           <el-col :span="12">
             <!-- 缺陷编号 -->
@@ -112,48 +112,48 @@
                   :value="item.dataValue"
                 />
               </el-select>
-            </el-form-item>
+              </el-form-item>
 
             <!-- 开发组长 -->
             <el-form-item label="开发组长" prop="devLeaderId">
-              <el-select
+                <el-select
                 v-model="bugForm.devLeaderId"
                 placeholder="请选择开发组长"
                 filterable
                 clearable
-                style="width: 100%"
+                  style="width: 100%"
                 @change="handleDevLeaderChange"
-              >
-                <el-option
+                >
+                  <el-option
                   v-for="item in devLeaderOptions"
                   :key="item.userId || item.id"
                   :label="item.userName || item.name"
                   :value="item.userId || item.id"
-                />
-              </el-select>
-            </el-form-item>
+                  />
+                </el-select>
+              </el-form-item>
 
             <!-- 缺陷来源 -->
             <el-form-item label="缺陷来源" prop="bugSource">
-              <el-select
+                <el-select
                 v-model="bugForm.bugSource"
                 placeholder="请选择缺陷来源"
                 clearable
-                style="width: 100%"
+                  style="width: 100%"
                 @change="handleBugSourceChange"
-              >
-                <el-option
+                >
+                  <el-option
                   v-for="item in bugSourceOptions"
-                  :key="item.dataValue"
-                  :label="item.dataName"
-                  :value="item.dataValue"
-                />
-              </el-select>
-            </el-form-item>
-          </el-col>
+                    :key="item.dataValue"
+                    :label="item.dataName"
+                    :value="item.dataValue"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
 
           <!-- 右侧列 -->
-          <el-col :span="12">
+            <el-col :span="12">
             <!-- 标题 -->
             <el-form-item label="标题" prop="bugName">
               <el-input v-model="bugForm.bugName" placeholder="请输入标题" />
@@ -166,15 +166,15 @@
 
             <!-- 所属系统 -->
             <el-form-item label="所属系统" prop="systemId">
-              <el-select
+                <el-select
                 v-model="bugForm.systemId"
                 placeholder="请选择所属系统"
                 filterable
                 clearable
-                style="width: 100%"
+                  style="width: 100%"
                 @change="handleSystemChange"
-              >
-                <el-option
+                >
+                  <el-option
                   v-for="item in systemOptions"
                   :key="item.systemId"
                   :label="item.systemName"
@@ -195,12 +195,12 @@
               <el-select v-model="bugForm.bugSeverityLevel" placeholder="请选择严重级别" style="width: 100%">
                 <el-option
                   v-for="item in bugSeverityLevelOptions"
-                  :key="item.dataValue"
-                  :label="item.dataName"
-                  :value="item.dataValue"
-                />
-              </el-select>
-            </el-form-item>
+                    :key="item.dataValue"
+                    :label="item.dataName"
+                    :value="item.dataValue"
+                  />
+                </el-select>
+              </el-form-item>
 
             <!-- 优先级 -->
             <el-form-item label="优先级" prop="prority">
@@ -216,15 +216,15 @@
 
             <!-- 开发责任人 -->
             <el-form-item label="开发责任人" prop="developerId">
-              <el-select
+                <el-select
                 v-model="bugForm.developerId"
                 placeholder="请选择开发责任人"
                 filterable
                 clearable
-                style="width: 100%"
+                  style="width: 100%"
                 @change="handleDeveloperChange"
-              >
-                <el-option
+                >
+                  <el-option
                   v-for="item in developerOptions"
                   :key="item.userId || item.id"
                   :label="item.userName || item.name"
@@ -235,27 +235,34 @@
 
             <!-- 验证人 -->
             <el-form-item label="验证人">
-              <el-input v-model="bugForm.checkerName" placeholder="请输入验证人">
+              <el-input v-model="bugForm.checkerName" placeholder="请选择验证人" readonly>
                 <el-button slot="append" icon="el-icon-more" @click="handleSelectChecker"></el-button>
               </el-input>
             </el-form-item>
 
             <!-- 关闭原因 -->
             <el-form-item label="关闭原因" prop="closeReason">
-              <el-input v-model="bugForm.closeReason" type="textarea" :rows="2" placeholder="请输入关闭原因" />
-            </el-form-item>
-          </el-col>
-        </el-row>
+              <el-select v-model="bugForm.closeReason" placeholder="请选择关闭原因" clearable style="width: 100%">
+                <el-option
+                  v-for="item in closeReasonOptions"
+                    :key="item.dataValue"
+                    :label="item.dataName"
+                    :value="item.dataValue"
+                  />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
 
         <!-- 缺陷描述 -->
         <el-form-item label="缺陷描述">
-          <el-input
+                <el-input
             v-model="bugForm.bugDescription"
-            type="textarea"
+                  type="textarea"
             :rows="8"
             placeholder="请输入缺陷描述"
-          />
-        </el-form-item>
+                />
+              </el-form-item>
 
         <!-- 注释 -->
         <el-form-item label="注释" prop="remark">
@@ -270,9 +277,9 @@
 
       <!-- 附件和历史记录 -->
       <el-card class="attachment-history-card" shadow="never">
-        <div slot="header" class="card-header">
+          <div slot="header" class="card-header">
           <span>附件和历史记录</span>
-        </div>
+          </div>
 
         <!-- 附件列表 -->
         <div class="attachment-section">
@@ -283,19 +290,26 @@
               class="attachment-item"
             >
               <el-link
-                type="primary"
+                    type="primary"
                 :underline="false"
                 @click="handleDownloadAttachment(attachment)"
               >
                 <i class="el-icon-document"></i>
-                {{ attachment.originalFileName }}
+                {{ attachment.originalFileName }} {{ attachment.uploadUserName || attachment.uploaderName || '' }}上传于{{ formatDateTime(attachment.uploadDate || attachment.uploadTime) }}
               </el-link>
-              <span class="attachment-info">
-                {{ attachment.uploaderName }} 上传于 {{ formatDateTime(attachment.uploadTime) }}
-              </span>
-            </div>
+                      <el-button
+                v-if="canDeleteAttachment(attachment)"
+                type="text"
+                        icon="el-icon-delete"
+                size="mini"
+                @click="handleDeleteAttachment(attachment)"
+                class="delete-attachment-btn"
+                      >
+                删除
+                      </el-button>
+                </div>
             <div v-if="attachmentList.length === 0" class="empty-tip">暂无附件</div>
-          </div>
+              </div>
           <div class="attachment-actions" v-if="mode !== 'view'">
             <el-upload
               ref="upload"
@@ -316,7 +330,7 @@
           <!-- 历史记录 -->
           <el-tab-pane label="历史记录" name="history">
             <bug-history :bug-id="bugId" />
-          </el-tab-pane>
+            </el-tab-pane>
 
           <!-- 关联系统协同处理缺陷 -->
           <el-tab-pane label="关联系统协同处理缺陷" name="related">
@@ -324,7 +338,35 @@
           </el-tab-pane>
         </el-tabs>
       </el-card>
-    </div>
+                </div>
+
+    <!-- 验证人选择对话框 -->
+    <el-dialog
+      title="选择验证人"
+      :visible.sync="checkerSelectorVisible"
+      width="600px"
+      @close="checkerSelectorVisible = false"
+    >
+                <el-table
+        :data="checkerOptions"
+                  stripe
+        style="width: 100%"
+        @current-change="handleCheckerChange"
+        highlight-current-row
+        ref="checkerTable"
+        v-loading="loading"
+      >
+        <el-table-column type="index" width="55" label="序号"></el-table-column>
+        <el-table-column prop="userId" label="用户ID" width="80" v-if="false"></el-table-column>
+        <el-table-column prop="userName" label="用户名" width="150"></el-table-column>
+        <el-table-column prop="loginName" label="登录名" width="150"></el-table-column>
+        <el-table-column prop="phone" label="电话" width="150"></el-table-column>
+                </el-table>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="checkerSelectorVisible = false">取 消</el-button>
+        <el-button type="primary" @click="handleCheckerConfirm(selectedChecker)" :disabled="!selectedChecker">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -406,6 +448,7 @@ export default {
       bugSeverityLevelOptions: [],
       bugSourceOptions: [],
       prorityOptions: [],
+      closeReasonOptions: [],
       // 下一步可变更的状态列表（根据当前状态和用户角色过滤）
       nextAvailableStates: [],
       // 系统选项列表
@@ -419,8 +462,14 @@ export default {
       fileList: [],
       pendingFiles: [],
       uploadAction: '',
+      // 初始附件数量（用于判断是否上传了验证附件）
+      initialAttachmentCount: 0,
       // 是否来自执行库
-      fromExecution: false
+      fromExecution: false,
+      // 验证人选择对话框
+      checkerSelectorVisible: false,
+      checkerOptions: [],
+      selectedChecker: null
     }
   },
   computed: {
@@ -458,9 +507,17 @@ export default {
         await this.loadUsecaseInfo()
         await this.loadDirectoryPath()
       }
+      // 创建模式不加载附件
     } else if (this.bugId) {
       await this.loadBugDetail()
       await this.loadAttachmentList()
+    } else {
+      // 如果有 bugId 但不是创建模式，也加载附件
+      const bugIdFromForm = this.bugForm.bugId
+      if (bugIdFromForm) {
+        this.bugId = bugIdFromForm
+        await this.loadAttachmentList()
+      }
     }
   },
   methods: {
@@ -484,12 +541,13 @@ export default {
     // 加载数据字典
     async loadDictionaryData() {
       try {
-        const [bugStateRes, bugTypeRes, bugSeverityLevelRes, bugSourceRes, prorityRes] = await Promise.all([
+        const [bugStateRes, bugTypeRes, bugSeverityLevelRes, bugSourceRes, prorityRes, closeReasonRes] = await Promise.all([
           bugManageApi.getAllBugState(),
           dictionaryApi.getDictionaryList('bugType'),
           dictionaryApi.getDictionaryList('bugSeverityLevel'),
           dictionaryApi.getDictionaryList('bugSource'),
-          dictionaryApi.getDictionaryList('prority')
+          dictionaryApi.getDictionaryList('prority'),
+          dictionaryApi.getDictionaryList('closeReason')
         ])
         // 新接口返回的数据格式：{ bugStateCode, bugStateName }
         if (bugStateRes.code === 20000 || bugStateRes.code === 200) {
@@ -501,6 +559,7 @@ export default {
         this.bugSeverityLevelOptions = bugSeverityLevelRes.data || []
         this.bugSourceOptions = bugSourceRes.data || []
         this.prorityOptions = prorityRes.data || []
+        this.closeReasonOptions = closeReasonRes.data || []
       } catch (error) {
         console.error('加载数据字典失败:', error)
         this.$message.error('加载数据字典失败')
@@ -525,6 +584,9 @@ export default {
         // 设置提交人和提交人ID为当前用户
         submitterId: currentUserId,
         submitterName: currentUserName,
+        // 设置验证人和验证人ID为当前用户
+        checkerId: currentUserId,
+        checkerName: currentUserName,
         // 保留从路由参数中获取的 usecaseId 和 directoryId
         usecaseId: this.bugForm.usecaseId || '',
         directoryId: this.bugForm.directoryId || ''
@@ -628,7 +690,7 @@ export default {
     // 加载缺陷详情
     async loadBugDetail() {
       if (!this.bugId) return
-      this.loading = true
+        this.loading = true
       try {
         const response = await bugManageApi.getBugDetail(this.bugId)
         if (response.code === 20000 && response.data) {
@@ -639,6 +701,8 @@ export default {
           // 加载缺陷详情后，获取下一步可变更的状态
           if (this.mode === 'edit') {
             await this.getNextAvailableStates()
+            // 加载附件列表并记录初始附件数量
+            await this.loadAttachmentList()
             // 根据当前状态设置表单编辑权限
             if (this.bugForm.bugState) {
               await this.setBugEditPermission(this.bugForm.bugState)
@@ -687,7 +751,12 @@ export default {
           relateId: this.bugId
         })
         if (response.code === 20000 && response.data) {
-          this.attachmentList = Array.isArray(response.data) ? response.data : []
+          const newAttachmentList = Array.isArray(response.data) ? response.data : []
+          // 如果是首次加载或编辑模式下首次加载，记录初始附件数量
+          if (this.initialAttachmentCount === 0 && (this.mode === 'edit' || this.mode === 'view')) {
+            this.initialAttachmentCount = newAttachmentList.length
+          }
+          this.attachmentList = newAttachmentList
         }
       } catch (error) {
         console.error('加载附件列表失败:', error)
@@ -703,6 +772,8 @@ export default {
       // 切换到编辑模式后，获取下一步可变更的状态
       if (this.bugId) {
         await this.getNextAvailableStates()
+        // 加载附件列表并记录初始附件数量
+        await this.loadAttachmentList()
         // 根据当前状态设置表单编辑权限
         if (this.bugForm.bugState) {
           await this.setBugEditPermission(this.bugForm.bugState)
@@ -720,33 +791,50 @@ export default {
       try {
         await this.$refs.bugFormRef.validate()
 
-        // 上传附件
-        if (this.pendingFiles.length > 0) {
-          await this.uploadAttachments()
-        }
-
         this.saving = true
         let response
-        if (this.mode === 'create') {
-          response = await bugManageApi.createBug(this.bugForm)
+        // 如果 bugId 已存在，则执行更新操作
+        const bugIdToUse = this.bugForm.bugId || this.bugId
+        const isUpdate = bugIdToUse && bugIdToUse.trim() !== ''
+        
+        if (isUpdate) {
+          // bugId 存在，执行更新
+          response = await bugManageApi.updateBug(bugIdToUse, this.bugForm)
         } else {
-          response = await bugManageApi.updateBug(this.bugId, this.bugForm)
+          // bugId 不存在，执行创建
+          response = await bugManageApi.createBug(this.bugForm)
         }
 
         if (response.code === 20000) {
-          this.$message.success(this.mode === 'create' ? '创建成功' : '保存成功')
-          if (this.mode === 'create' && response.data?.bugId) {
-            // 确保bugId是String类型
-            this.bugId = String(response.data.bugId)
-            this.bugForm.bugId = this.bugId
+          let finalBugId = bugIdToUse
+          
+          if (!isUpdate && response.data?.bugId) {
+            // 创建成功，设置 bugId
+            finalBugId = String(response.data.bugId)
+            this.bugId = finalBugId
+            this.bugForm.bugId = finalBugId
+          }
+          
+          // 保存成功后，如果有待上传的附件，先上传附件
+          if (this.pendingFiles.length > 0 && finalBugId) {
+            // 确保 bugId 已设置，用于上传附件
+            this.bugId = finalBugId
+            await this.uploadAttachments()
+          }
+          
+          this.$message.success(isUpdate ? '保存成功' : '创建成功')
+          
+          if (!isUpdate) {
+            // 创建成功，更新路由
             this.$router.replace({
-              query: { ...this.$route.query, id: this.bugId, mode: 'view' }
+              query: { ...this.$route.query, id: finalBugId, mode: 'view' }
             })
           } else {
-            this.mode = 'view'
-            this.$router.replace({
-              query: { ...this.$route.query, mode: 'view' }
-            })
+            // 更新成功，切换到查看模式
+          this.mode = 'view'
+          this.$router.replace({
+            query: { ...this.$route.query, mode: 'view' }
+          })
           }
           await this.loadBugDetail()
           await this.loadAttachmentList()
@@ -775,10 +863,10 @@ export default {
         if (this.mode === 'create') {
           this.goBack()
         } else {
-          this.mode = 'view'
-          this.$router.replace({
-            query: { ...this.$route.query, mode: 'view' }
-          })
+        this.mode = 'view'
+        this.$router.replace({
+          query: { ...this.$route.query, mode: 'view' }
+        })
           this.loadBugDetail()
         }
       }).catch(() => {})
@@ -843,6 +931,20 @@ export default {
       }
     },
 
+    // 判断是否上传了验证缺陷的附件
+    checkVerificationAttachment() {
+      // 检查是否有待上传的附件
+      if (this.pendingFiles && this.pendingFiles.length > 0) {
+        return true
+      }
+      // 检查当前附件数量是否大于初始附件数量
+      const currentAttachmentCount = this.attachmentList ? this.attachmentList.length : 0
+      if (currentAttachmentCount > this.initialAttachmentCount) {
+        return true
+      }
+      return false
+    },
+
     // 根据选择的状态设置表单编辑权限
     async setBugEditPermission(bugStateCode) {
       // 先清除所有动态添加的验证规则
@@ -896,10 +998,20 @@ export default {
       }
       
       if (bugStateCode === 'Closed') {
-        // 已关闭：关闭原因必填
+        // 已关闭：关闭原因必选
         rules.closeReason = [
-          { required: true, message: '请填写关闭原因', trigger: 'blur' }
+          { required: true, message: '请选择关闭原因', trigger: 'change' }
         ]
+        // 判断是否在已有附件基础上上传了验证缺陷的附件
+        const hasNewVerificationAttachment = this.checkVerificationAttachment()
+        if (!hasNewVerificationAttachment) {
+          // 如果没有上传验证附件，可以添加提示或验证规则
+          // 这里可以根据业务需求决定是否需要强制要求上传验证附件
+          // 例如：可以添加一个验证规则要求上传验证附件
+          // rules.verificationAttachment = [
+          //   { required: true, message: '请上传验证缺陷的附件', trigger: 'change' }
+          // ]
+        }
       } else {
         delete rules.closeReason
       }
@@ -1014,8 +1126,54 @@ export default {
     },
 
     // 选择验证人
-    handleSelectChecker() {
-      this.$message.info('选择验证人功能开发中')
+    async handleSelectChecker() {
+      // 检查是否已选择系统
+      if (!this.bugForm.systemId) {
+        this.$message.warning('请先选择所属系统')
+        return
+      }
+      // 加载验证人列表
+      await this.loadCheckerOptions(this.bugForm.systemId)
+      // 显示选择对话框
+      this.checkerSelectorVisible = true
+    },
+
+    // 加载验证人列表
+    async loadCheckerOptions(systemId) {
+      if (!systemId) {
+        this.checkerOptions = []
+        return
+      }
+      try {
+        const response = await bugManageApi.getCheckersBySystemId(systemId)
+        if (response.code === 20000 || response.code === 200) {
+          this.checkerOptions = response.data || []
+        } else {
+          this.checkerOptions = []
+          this.$message.error(response.message || '加载验证人列表失败')
+        }
+      } catch (error) {
+        console.error('加载验证人列表失败:', error)
+        this.checkerOptions = []
+        this.$message.error('加载验证人列表失败')
+      }
+    },
+
+    // 处理验证人选择变化
+    handleCheckerChange(currentRow) {
+      this.selectedChecker = currentRow
+    },
+
+    // 处理验证人选择确认
+    handleCheckerConfirm() {
+      if (!this.selectedChecker) {
+        this.$message.warning('请先选择验证人')
+        return
+      }
+      this.bugForm.checkerId = this.selectedChecker.userId || this.selectedChecker.id
+      this.bugForm.checkerName = this.selectedChecker.userName || this.selectedChecker.name
+      this.checkerSelectorVisible = false
+      this.selectedChecker = null
     },
 
     // 文件变化
@@ -1089,6 +1247,50 @@ export default {
         console.error('下载附件失败:', error)
         this.$message.error('下载附件失败')
       }
+    },
+
+    // 判断是否可以删除附件（只有上传人可以删除）
+    canDeleteAttachment(attachment) {
+      // 创建模式不允许删除
+      if (this.mode === 'create') {
+        return false
+      }
+      // 获取当前用户ID
+      const currentUserId = this.$store.getters.userId || ''
+      // 获取上传人ID
+      const uploadUserId = attachment.uploadUserId || ''
+      // 只有当前用户是上传人时，才允许删除
+      return currentUserId && uploadUserId && currentUserId === uploadUserId
+    },
+
+    // 删除附件
+    async handleDeleteAttachment(attachment) {
+      if (!this.canDeleteAttachment(attachment)) {
+        this.$message.warning('您没有权限删除此附件')
+        return
+      }
+      
+      this.$confirm(`确定要删除附件"${attachment.originalFileName}"吗？`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(async () => {
+        try {
+          const response = await attachmentApi.deleteAttachment(attachment.attachmentId)
+          if (response.code === 20000 || response.code === 200) {
+            this.$message.success('删除成功')
+            // 重新加载附件列表
+            await this.loadAttachmentList()
+          } else {
+            this.$message.error(response.message || '删除失败')
+          }
+        } catch (error) {
+          console.error('删除附件失败:', error)
+          this.$message.error('删除附件失败')
+        }
+      }).catch(() => {
+        // 用户取消删除
+      })
     },
 
     // 获取缺陷状态标签类型
@@ -1214,6 +1416,7 @@ export default {
 
 .attachment-list {
   margin-bottom: 16px;
+  text-align: left;
 }
 
 .attachment-item {
@@ -1225,6 +1428,21 @@ export default {
   .attachment-info {
     font-size: 12px;
     color: #909399;
+  }
+
+  ::v-deep .el-link {
+    font-size: 11px !important;
+    flex: 1;
+  }
+
+  .delete-attachment-btn {
+    font-size: 11px !important;
+    padding: 0 5px !important;
+    color: #f56c6c;
+    
+    &:hover {
+      color: #f56c6c;
+    }
   }
 }
 

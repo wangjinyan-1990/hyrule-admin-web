@@ -48,7 +48,9 @@
           <el-col :span="3">
             <div class="stat-item">
               <span class="stat-label">通过率:</span>
-              <span class="stat-value">{{ statistics.passRate || '0%' }}</span>
+              <el-tooltip content="通过的用例数/(通过的用例数+失败的用例数)" placement="top">
+                <span class="stat-value stat-value-tooltip">{{ statistics.passRate || '0%' }}</span>
+              </el-tooltip>
             </div>
           </el-col>
           <el-col :span="3">
@@ -72,7 +74,9 @@
           <el-col :span="3">
             <div class="stat-item">
               <span class="stat-label">可执行率:</span>
-              <span class="stat-value">{{ statistics.executableRate || '0%' }}</span>
+              <el-tooltip content="(通过+失败)/(通过+失败+阻塞+不适用)" placement="top">
+                <span class="stat-value stat-value-tooltip">{{ statistics.executableRate || '0%' }}</span>
+              </el-tooltip>
             </div>
           </el-col>
           <el-col :span="3">
@@ -84,7 +88,9 @@
           <el-col :span="3">
             <div class="stat-item">
               <span class="stat-label">完成率:</span>
-              <span class="stat-value">{{ statistics.completionRate || '0%' }}</span>
+              <el-tooltip content="通过/(用例总数-不适用)" placement="top">
+                <span class="stat-value stat-value-tooltip">{{ statistics.completionRate || '0%' }}</span>
+              </el-tooltip>
             </div>
           </el-col>
         </el-row>
@@ -98,7 +104,9 @@
           <el-col :span="3">
             <div class="stat-item">
               <span class="stat-label">缺陷率:</span>
-              <span class="stat-value">{{ statistics.defectRate || '0%' }}</span>
+              <el-tooltip content="缺陷数/(用例总数-未执行-不适用)" placement="top">
+                <span class="stat-value stat-value-tooltip">{{ statistics.bugRate || '0%' }}</span>
+              </el-tooltip>
             </div>
           </el-col>
           <el-col :span="3">
@@ -110,7 +118,7 @@
           <el-col :span="3">
             <div class="stat-item">
               <span class="stat-label">缺陷数:</span>
-              <span class="stat-value">{{ statistics.defectCount || 0 }}</span>
+              <span class="stat-value">{{ statistics.bugCount || 0 }}</span>
             </div>
           </el-col>
         </el-row>
@@ -129,7 +137,7 @@
                 <el-input v-model="searchForm.usecaseName" placeholder="用例名称" class="search-input-small"></el-input>
               </el-col>
               <el-col :span="12">
-                <el-checkbox v-model="searchForm.includeSubdirectories" style="margin-right: 10px;">包含子目录:</el-checkbox>
+                <el-checkbox v-model="searchForm.includeSubdirectories" style="margin-right: 10px;" class="include-subdirectories-checkbox">包含子目录:</el-checkbox>
                 <el-button @click="handleSearch" type="primary" round icon="el-icon-search" class="search-button-small">查询</el-button>
                 <el-button @click="handleReset" type="info" round icon="el-icon-refresh" class="search-button-small">重置</el-button>
               </el-col>
@@ -316,9 +324,9 @@ export default {
         failed: 0,
         completionRate: '0%',
         notApplicable: 0,
-        defectRate: '0%',
+        bugRate: '0%',
         blocked: 0,
-        defectCount: 0
+        bugCount: 0
       },
 
       // 执行结果选项
@@ -474,19 +482,57 @@ export default {
         const response = await usecaseExecutionApi.getExecutionStatistics(params)
         if (response.code === 20000 || response.code === 200) {
           const data = response.data || {}
+          
+          // 获取基础数据
+          const totalCount = data.totalCount || 0
+          const notExecuted = data.notExecuted || 0
+          const passed = data.passed || 0
+          const failed = data.failed || 0
+          const notApplicable = data.notApplicable || 0
+          const blocked = data.blocked || 0
+          const bugCount = data.bugCount || 0
+          
+          // 计算通过率：通过的用例数/(通过的用例数+失败的用例数)
+          let passRate = '0%'
+          const passedPlusFailed = passed + failed
+          if (passedPlusFailed > 0) {
+            passRate = ((passed / passedPlusFailed) * 100).toFixed(2) + '%'
+          }
+          
+          // 计算可执行率：(通过+失败)/(通过+失败+阻塞+不适用)
+          let executableRate = '0%'
+          const executableDenominator = passed + failed + blocked + notApplicable
+          if (executableDenominator > 0) {
+            executableRate = ((passedPlusFailed / executableDenominator) * 100).toFixed(2) + '%'
+          }
+          
+          // 计算完成率：通过/(用例总数-不适用)
+          let completionRate = '0%'
+          const completionDenominator = totalCount - notApplicable
+          if (completionDenominator > 0) {
+            completionRate = ((passed / completionDenominator) * 100).toFixed(2) + '%'
+          }
+          
+          // 计算缺陷率：缺陷数/(用例总数-未执行-不适用)
+          let bugRate = '0%'
+          const bugDenominator = totalCount - notExecuted - notApplicable
+          if (bugDenominator > 0) {
+            bugRate = ((bugCount / bugDenominator) * 100).toFixed(2) + '%'
+          }
+          
           this.statistics = {
-            totalCount: data.totalCount || 0,
-            passRate: data.passRate || '0%',
-            notExecuted: data.notExecuted || 0,
-            deviationRate: data.deviationRate || '0%',
-            passed: data.passed || 0,
-            executableRate: data.executableRate || '0%',
-            failed: data.failed || 0,
-            completionRate: data.completionRate || '0%',
-            notApplicable: data.notApplicable || 0,
-            defectRate: data.defectRate || '0%',
-            blocked: data.blocked || 0,
-            defectCount: data.defectCount || 0
+            totalCount: totalCount,
+            passRate: passRate,
+            notExecuted: notExecuted,
+            deviationRate: data.deviationRate || '0%', // 保留原有字段，如果后端有返回
+            passed: passed,
+            executableRate: executableRate,
+            failed: failed,
+            completionRate: completionRate,
+            notApplicable: notApplicable,
+            bugRate: bugRate,
+            blocked: blocked,
+            bugCount: bugCount
           }
         }
       } catch (error) {
@@ -600,7 +646,7 @@ export default {
       }).then(async () => {
         try {
           const usecaseExecutionIds = this.selectedRows.map(row => row.usecaseExecutionId).filter(id => id)
-          
+
           if (usecaseExecutionIds.length === 0) {
             this.$message.warning('选中的用例没有有效的执行ID')
             return
@@ -845,10 +891,20 @@ export default {
   }
 
   .stat-value {
-    font-size: 16px;
+    font-size: 12px;
     font-weight: bold;
     color: #303133;
-    line-height: 20px;
+    line-height: 16px;
+  }
+  
+  .stat-value-tooltip {
+    cursor: help;
+  }
+}
+
+.include-subdirectories-checkbox {
+  ::v-deep .el-checkbox__label {
+    font-size: 10px !important;
   }
 }
 

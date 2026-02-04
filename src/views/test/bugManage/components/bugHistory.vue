@@ -9,9 +9,9 @@
     >
       <el-table-column type="index" label="序号" width="60" align="center" />
       <el-table-column prop="operatorName" label="操作人" width="120" />
-      <el-table-column prop="operateTime" label="操作时间" width="180">
+      <el-table-column prop="operatingTime" label="操作时间" width="180">
         <template slot-scope="scope">
-          {{ formatDateTime(scope.row.operateTime) }}
+          {{ formatDateTime(scope.row.operatingTime) }}
         </template>
       </el-table-column>
       <el-table-column prop="oldStateName" label="旧状态" width="100" align="center" />

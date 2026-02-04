@@ -179,6 +179,21 @@ export default {
         systemId
       }
     })
+  },
+
+  /**
+   * 根据系统ID获取验证人列表
+   * @param {string} systemId 系统ID
+   * @returns {Promise} 验证人列表
+   */
+  getCheckersBySystemId(systemId) {
+    return request({
+      url: `/test/bug/checkers`,
+      method: 'get',
+      params: {
+        systemId
+      }
+    })
   }
 
 }
