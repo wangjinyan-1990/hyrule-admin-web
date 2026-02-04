@@ -27,31 +27,6 @@
             </el-select>
           </el-form-item>
 
-          <!-- 工作包编号 -->
-          <el-form-item label="工作包编号">
-            <el-input v-model="searchForm.workPackageId" placeholder="请输入工作包编号" clearable />
-          </el-form-item>
-
-          <!-- 测试任务 -->
-          <el-form-item label="测试任务">
-            <el-input v-model="searchForm.testTask" placeholder="请输入测试任务" clearable />
-          </el-form-item>
-
-          <!-- 测试阶段 -->
-          <el-form-item label="测试阶段">
-            <el-input v-model="searchForm.testPhase" placeholder="请输入测试阶段" clearable />
-          </el-form-item>
-
-          <!-- 测试类型 -->
-          <el-form-item label="测试类型">
-            <el-input v-model="searchForm.testType" placeholder="请输入测试类型" clearable />
-          </el-form-item>
-
-          <!-- 轮次号 -->
-          <el-form-item label="轮次号">
-            <el-input v-model="searchForm.roundNumber" placeholder="请输入轮次号" clearable />
-          </el-form-item>
-
           <!-- 状态 -->
           <el-form-item label="状态">
             <el-select v-model="searchForm.bugState" placeholder="请选择状态" clearable style="width: 100%">
@@ -133,13 +108,6 @@
             />
           </el-form-item>
 
-          <!-- 缺陷所在模块 -->
-          <el-form-item label="缺陷所在模块">
-            <el-input v-model="searchForm.bugModule" placeholder="请输入缺陷所在模块" clearable>
-              <el-button slot="append" icon="el-icon-more" @click="handleSelectModule"></el-button>
-            </el-input>
-          </el-form-item>
-
           <!-- 缺陷类型 -->
           <el-form-item label="缺陷类型">
             <el-select v-model="searchForm.bugType" placeholder="请选择缺陷类型" clearable style="width: 100%">
@@ -210,13 +178,11 @@
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="systemName" label="所属系统" width="150" show-overflow-tooltip />
+          <el-table-column prop="systemName" label="系统名称" width="150" show-overflow-tooltip />
           <el-table-column prop="submitterName" label="提交人" width="100" />
           <el-table-column prop="devLeaderName" label="开发组长" width="100" />
           <el-table-column prop="developerName" label="责任人" width="100" />
           <el-table-column prop="checkerName" label="验证人" width="100" />
-          <el-table-column prop="usecaseModule" label="用例模块" width="150" show-overflow-tooltip />
-          <el-table-column prop="directoryName" label="测试集目录" width="150" show-overflow-tooltip />
           <el-table-column prop="bugSeverityLevelName" label="严重级别" width="100" align="center">
             <template slot-scope="scope">
               <el-tag :type="getSeverityLevelTagType(scope.row.bugSeverityLevel)" size="small">
@@ -269,11 +235,6 @@ export default {
       searchForm: {
         queryType: 'myActiveBugs', // 默认查询条件
         systemId: '',
-        workPackageId: '',
-        testTask: '',
-        testPhase: '',
-        testType: '',
-        roundNumber: '',
         bugState: '',
         bugId: '',
         bugName: '',
@@ -284,7 +245,6 @@ export default {
         developerName: '',
         closeTimeStart: '',
         closeTimeEnd: '',
-        bugModule: '',
         bugType: '',
         bugSeverityLevel: '',
         bugSource: '',
@@ -307,6 +267,8 @@ export default {
   async created() {
     await this.loadDictionaryData()
     await this.loadSystemOptions()
+    // 页面加载完成后自动执行查询
+    await this.handleSearch()
   },
   methods: {
     // 加载数据字典
@@ -353,11 +315,6 @@ export default {
       this.searchForm = {
         queryType: 'myActiveBugs',
         systemId: '',
-        workPackageId: '',
-        testTask: '',
-        testPhase: '',
-        testType: '',
-        roundNumber: '',
         bugState: '',
         bugId: '',
         bugName: '',
@@ -368,7 +325,6 @@ export default {
         developerName: '',
         closeTimeStart: '',
         closeTimeEnd: '',
-        bugModule: '',
         bugType: '',
         bugSeverityLevel: '',
         bugSource: '',
@@ -409,24 +365,18 @@ export default {
       }
     },
 
-    // 双击行
+    // 双击行跳转到缺陷详情页
     handleRowDblClick(row) {
       if (!row || !row.bugId) {
         return
       }
-      const bugId = String(row.bugId)
       this.$router.push({
-        path: '/test/bugManage/bugDetail',
+        name: 'bugDetail',
         query: {
-          id: bugId,
+          id: row.bugId,
           mode: 'view'
         }
       })
-    },
-
-    // 选择模块
-    handleSelectModule() {
-      this.$message.info('选择模块功能开发中')
     },
 
     // 分页大小变化

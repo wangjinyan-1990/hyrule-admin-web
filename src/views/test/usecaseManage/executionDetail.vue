@@ -120,7 +120,7 @@
                       :http-request="handleUploadRequest"
                       multiple
                     >
-                      <el-button size="small" type="primary" :disabled="isViewMode">选择文件</el-button>
+                      <el-button size="mini" type="primary" :disabled="isViewMode">选择文件</el-button>
                       <div slot="tip" class="el-upload__tip">支持上传多个文件，文件将在点击'通过'或'失败'时上传</div>
                     </el-upload>
                   </el-form-item>
@@ -972,7 +972,7 @@ export default {
 }
 
 ::v-deep .el-tabs--card > .el-tabs__header .el-tabs__item {
-  font-size: 11px !important;
+  font-size: 10px !important;
   height: 32px !important;
   line-height: 32px !important;
   padding: 0 15px !important;

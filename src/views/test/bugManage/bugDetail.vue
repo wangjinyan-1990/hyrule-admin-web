@@ -32,9 +32,10 @@
             size="small"
             style="width: 120px; margin-left: 8px;"
             @change="handleStateChange"
+            :disabled="mode === 'create' || (mode === 'edit' && nextAvailableStates.length === 0)"
           >
             <el-option
-              v-for="item in bugStateOptions"
+              v-for="item in filteredBugStateOptions"
               :key="item.bugStateCode"
               :label="item.bugStateName"
               :value="item.bugStateCode"
@@ -96,9 +97,9 @@
               <el-input v-model="bugForm.submitterName" readonly />
             </el-form-item>
 
-            <!-- 测试集路径 -->
-            <el-form-item label="测试集路径">
-              <el-input v-model="bugForm.directoryPath" readonly />
+            <!-- 测试执行路径 -->
+            <el-form-item label="测试执行路径">
+              <el-input v-model="bugForm.fullPath" readonly />
             </el-form-item>
 
             <!-- 缺陷类型 -->
@@ -114,15 +115,40 @@
             </el-form-item>
 
             <!-- 开发组长 -->
-            <el-form-item label="开发组长">
-              <el-input v-model="bugForm.devLeaderName" placeholder="请输入开发组长">
-                <el-button slot="append" icon="el-icon-more" @click="handleSelectDevLeader"></el-button>
-              </el-input>
+            <el-form-item label="开发组长" prop="devLeaderId">
+              <el-select
+                v-model="bugForm.devLeaderId"
+                placeholder="请选择开发组长"
+                filterable
+                clearable
+                style="width: 100%"
+                @change="handleDevLeaderChange"
+              >
+                <el-option
+                  v-for="item in devLeaderOptions"
+                  :key="item.userId || item.id"
+                  :label="item.userName || item.name"
+                  :value="item.userId || item.id"
+                />
+              </el-select>
             </el-form-item>
 
             <!-- 缺陷来源 -->
-            <el-form-item label="缺陷来源">
-              <el-input v-model="bugForm.bugSourceName" readonly />
+            <el-form-item label="缺陷来源" prop="bugSource">
+              <el-select
+                v-model="bugForm.bugSource"
+                placeholder="请选择缺陷来源"
+                clearable
+                style="width: 100%"
+                @change="handleBugSourceChange"
+              >
+                <el-option
+                  v-for="item in bugSourceOptions"
+                  :key="item.dataValue"
+                  :label="item.dataName"
+                  :value="item.dataValue"
+                />
+              </el-select>
             </el-form-item>
           </el-col>
 
@@ -140,9 +166,21 @@
 
             <!-- 所属系统 -->
             <el-form-item label="所属系统" prop="systemId">
-              <el-input v-model="bugForm.systemName" placeholder="请选择所属系统">
-                <el-button slot="append" icon="el-icon-more" @click="handleSelectSystem"></el-button>
-              </el-input>
+              <el-select
+                v-model="bugForm.systemId"
+                placeholder="请选择所属系统"
+                filterable
+                clearable
+                style="width: 100%"
+                @change="handleSystemChange"
+              >
+                <el-option
+                  v-for="item in systemOptions"
+                  :key="item.systemId"
+                  :label="item.systemName"
+                  :value="item.systemId"
+                />
+              </el-select>
             </el-form-item>
 
             <!-- 测试用例 -->
@@ -177,10 +215,22 @@
             </el-form-item>
 
             <!-- 开发责任人 -->
-            <el-form-item label="开发责任人">
-              <el-input v-model="bugForm.developerName" placeholder="请输入开发责任人">
-                <el-button slot="append" icon="el-icon-more" @click="handleSelectDeveloper"></el-button>
-              </el-input>
+            <el-form-item label="开发责任人" prop="developerId">
+              <el-select
+                v-model="bugForm.developerId"
+                placeholder="请选择开发责任人"
+                filterable
+                clearable
+                style="width: 100%"
+                @change="handleDeveloperChange"
+              >
+                <el-option
+                  v-for="item in developerOptions"
+                  :key="item.userId || item.id"
+                  :label="item.userName || item.name"
+                  :value="item.userId || item.id"
+                />
+              </el-select>
             </el-form-item>
 
             <!-- 验证人 -->
@@ -191,7 +241,7 @@
             </el-form-item>
 
             <!-- 关闭原因 -->
-            <el-form-item label="关闭原因">
+            <el-form-item label="关闭原因" prop="closeReason">
               <el-input v-model="bugForm.closeReason" type="textarea" :rows="2" placeholder="请输入关闭原因" />
             </el-form-item>
           </el-col>
@@ -208,7 +258,7 @@
         </el-form-item>
 
         <!-- 注释 -->
-        <el-form-item label="注释">
+        <el-form-item label="注释" prop="remark">
           <el-input
             v-model="bugForm.remark"
             type="textarea"
@@ -256,7 +306,7 @@
               :file-list="fileList"
               :limit="10"
             >
-              <el-button size="small" type="primary" icon="el-icon-upload">上传附件</el-button>
+              <el-button size="mini" type="primary" icon="el-icon-upload">上传附件</el-button>
             </el-upload>
           </div>
         </div>
@@ -265,40 +315,12 @@
         <el-tabs v-model="activeTab" type="card">
           <!-- 历史记录 -->
           <el-tab-pane label="历史记录" name="history">
-            <el-table
-              :data="historyList"
-              border
-              stripe
-              style="width: 100%"
-              v-loading="historyLoading"
-            >
-              <el-table-column type="index" label="序号" width="60" align="center" />
-              <el-table-column prop="operatorName" label="操作人" width="120" />
-              <el-table-column prop="operateTime" label="操作时间" width="180">
-                <template slot-scope="scope">
-                  {{ formatDateTime(scope.row.operateTime) }}
-                </template>
-              </el-table-column>
-              <el-table-column prop="operationDesc" label="操作描述" min-width="300" />
-            </el-table>
-
-            <!-- 分页 -->
-            <div class="pagination-container">
-              <el-pagination
-                @size-change="handleHistorySizeChange"
-                @current-change="handleHistoryCurrentChange"
-                :current-page="historyPagination.currentPage"
-                :page-sizes="[10, 20, 50, 100]"
-                :page-size="historyPagination.pageSize"
-                layout="total, sizes, prev, pager, next, jumper"
-                :total="historyPagination.total"
-              />
-            </div>
+            <bug-history :bug-id="bugId" />
           </el-tab-pane>
 
           <!-- 关联系统协同处理缺陷 -->
           <el-tab-pane label="关联系统协同处理缺陷" name="related">
-            <div class="empty-tip">暂无关联系统协同处理缺陷</div>
+            <related-system-bug :bug-id="bugId" />
           </el-tab-pane>
         </el-tabs>
       </el-card>
@@ -314,16 +336,21 @@ import testSystemApi from '@/api/test/baseManage/testSystem'
 import usecaseRepositoryApi from '@/api/test/usecaseManage/usecaseRepository'
 import testDirectoryApi from '@/api/test/baseManage/testDirectory'
 import { formatTime } from '@/utils/index'
+import BugHistory from './components/bugHistory.vue'
+import RelatedSystemBug from './components/relatedSystemBug.vue'
 
 export default {
   name: 'bugDetail',
+  components: {
+    BugHistory,
+    RelatedSystemBug
+  },
   data() {
     return {
       mode: 'view', // view, edit, create
       bugId: '',
       loading: false,
       saving: false,
-      historyLoading: false,
       activeTab: 'history',
       bugForm: {
         bugId: '',
@@ -352,7 +379,7 @@ export default {
         bugType: '',
         bugTypeName: '',
         directoryId: '',
-        directoryPath: '',
+        fullPath: '',
         remark: '',
         commitTime: null
       },
@@ -379,25 +406,51 @@ export default {
       bugSeverityLevelOptions: [],
       bugSourceOptions: [],
       prorityOptions: [],
+      // 下一步可变更的状态列表（根据当前状态和用户角色过滤）
+      nextAvailableStates: [],
+      // 系统选项列表
+      systemOptions: [],
+      // 开发组长选项列表
+      devLeaderOptions: [],
+      // 开发人员选项列表
+      developerOptions: [],
       // 附件相关
       attachmentList: [],
       fileList: [],
       pendingFiles: [],
       uploadAction: '',
-      // 历史记录
-      historyList: [],
-      historyPagination: {
-        currentPage: 1,
-        pageSize: 20,
-        total: 0
-      },
       // 是否来自执行库
       fromExecution: false
+    }
+  },
+  computed: {
+    // 过滤后的状态选项：创建模式下只显示"新建"状态，编辑模式下使用下一步可变更的状态
+    filteredBugStateOptions() {
+      if (this.mode === 'create') {
+        // 只返回"新建"状态（bugStateCode为"Submitted"或bugStateName为"新建"）
+        return this.bugStateOptions.filter(
+          opt => opt.bugStateCode === 'Submitted' || opt.bugStateName === '新建'
+        )
+      }
+      // 编辑模式下使用下一步可变更的状态列表（由后端根据当前状态和用户角色过滤）
+      // 如果 nextAvailableStates 为空，需要包含当前状态以便显示
+      const availableStates = this.nextAvailableStates || []
+      if (availableStates.length === 0 && this.bugForm.bugState) {
+        // 如果可选项为空，但当前有状态，则添加当前状态到选项中以便显示
+        const currentState = this.bugStateOptions.find(
+          opt => opt.bugStateCode === this.bugForm.bugState
+        )
+        if (currentState) {
+          return [currentState]
+        }
+      }
+      return availableStates
     }
   },
   async created() {
     this.parseRouteParams()
     await this.loadDictionaryData()
+    await this.loadSystemOptions()
     if (this.mode === 'create') {
       await this.initCreateForm()
       // 如果来自执行库，加载用例信息和目录路径
@@ -408,7 +461,6 @@ export default {
     } else if (this.bugId) {
       await this.loadBugDetail()
       await this.loadAttachmentList()
-      await this.loadBugHistory()
     }
   },
   methods: {
@@ -441,7 +493,7 @@ export default {
         ])
         // 新接口返回的数据格式：{ bugStateCode, bugStateName }
         if (bugStateRes.code === 20000 || bugStateRes.code === 200) {
-          this.bugStateOptions = bugStateRes.data || []
+        this.bugStateOptions = bugStateRes.data || []
         } else {
           this.bugStateOptions = []
         }
@@ -485,10 +537,10 @@ export default {
       try {
         // 获取用例详情
         const usecaseResponse = await usecaseRepositoryApi.getUsecaseById(this.bugForm.usecaseId)
-
-        // 构建缺陷描述内容
-        let description = ''
-
+          
+          // 构建缺陷描述内容
+          let description = ''
+          
         // 从用例详情获取信息
         if (usecaseResponse.code === 20000 && usecaseResponse.data) {
           const usecaseData = usecaseResponse.data
@@ -514,10 +566,10 @@ export default {
 
         // 添加 [实际结果:] 标题（不获取执行详情数据）
         description += `[实际结果:]`
-
-        // 设置缺陷描述
-        if (description) {
-          this.bugForm.bugDescription = description.trim()
+          
+          // 设置缺陷描述
+          if (description) {
+            this.bugForm.bugDescription = description.trim()
         }
       } catch (error) {
         console.error('加载用例信息失败:', error)
@@ -533,10 +585,10 @@ export default {
           const directoryData = response.data
           // 后端返回的完整路径
           if (directoryData.fullPath) {
-            this.bugForm.directoryPath = directoryData.fullPath
+            this.bugForm.fullPath = directoryData.fullPath
           } else if (directoryData.directoryName) {
             // 如果没有 fullPath，使用 directoryName 作为备用
-            this.bugForm.directoryPath = directoryData.directoryName
+            this.bugForm.fullPath = directoryData.directoryName
           }
           // 设置 systemId
           if (directoryData.systemId) {
@@ -584,6 +636,19 @@ export default {
             ...this.bugForm,
             ...response.data
           }
+          // 加载缺陷详情后，获取下一步可变更的状态
+          if (this.mode === 'edit') {
+            await this.getNextAvailableStates()
+            // 根据当前状态设置表单编辑权限
+            if (this.bugForm.bugState) {
+              await this.setBugEditPermission(this.bugForm.bugState)
+            }
+            // 如果已有 systemId，加载开发组长和开发人员列表
+            if (this.bugForm.systemId) {
+              await this.loadDevLeaders(this.bugForm.systemId)
+              await this.loadDevelopers(this.bugForm.systemId)
+            }
+          }
         } else {
           this.$message.error(response.message || '加载缺陷详情失败')
         }
@@ -592,6 +657,24 @@ export default {
         this.$message.error('加载缺陷详情失败')
       } finally {
         this.loading = false
+      }
+    },
+
+    // 获取下一步可变更的状态
+    async getNextAvailableStates() {
+      if (!this.bugId) return
+      try {
+        const response = await bugManageApi.getNextAvailableStates(this.bugId)
+        if (response.code === 20000 || response.code === 200) {
+          // 后端返回的状态列表，格式应该和 getAllBugState 类似，包含 bugStateCode 和 bugStateName
+          this.nextAvailableStates = response.data || []
+        } else {
+          console.warn('获取下一步可变更状态失败:', response.message)
+          this.nextAvailableStates = []
+        }
+      } catch (error) {
+        console.error('获取下一步可变更状态失败:', error)
+        this.nextAvailableStates = []
       }
     },
 
@@ -611,33 +694,25 @@ export default {
       }
     },
 
-    // 加载历史记录
-    async loadBugHistory() {
-      if (!this.bugId) return
-      this.historyLoading = true
-      try {
-        const response = await bugManageApi.getBugHistory(this.bugId, {
-          currentPage: this.historyPagination.currentPage,
-          pageSize: this.historyPagination.pageSize
-        })
-        if (response.code === 20000 && response.data) {
-          const data = response.data
-          this.historyList = data.records || data.rows || data.list || []
-          this.historyPagination.total = data.total || 0
-        }
-      } catch (error) {
-        console.error('加载历史记录失败:', error)
-      } finally {
-        this.historyLoading = false
-      }
-    },
-
     // 切换到编辑模式
-    switchToEdit() {
+    async switchToEdit() {
       this.mode = 'edit'
       this.$router.replace({
         query: { ...this.$route.query, mode: 'edit' }
       })
+      // 切换到编辑模式后，获取下一步可变更的状态
+      if (this.bugId) {
+        await this.getNextAvailableStates()
+        // 根据当前状态设置表单编辑权限
+        if (this.bugForm.bugState) {
+          await this.setBugEditPermission(this.bugForm.bugState)
+        }
+        // 如果已有 systemId，加载开发组长和开发人员列表
+        if (this.bugForm.systemId) {
+          await this.loadDevLeaders(this.bugForm.systemId)
+          await this.loadDevelopers(this.bugForm.systemId)
+        }
+      }
     },
 
     // 保存缺陷
@@ -675,7 +750,6 @@ export default {
           }
           await this.loadBugDetail()
           await this.loadAttachmentList()
-          await this.loadBugHistory()
         } else {
           this.$message.error(response.message || '保存失败')
         }
@@ -711,11 +785,13 @@ export default {
     },
 
     // 状态变更
-    handleStateChange(value) {
+    async handleStateChange(value) {
       const item = this.bugStateOptions.find(opt => opt.bugStateCode === value)
       if (item) {
         this.bugForm.bugStateName = item.bugStateName
       }
+      // 根据选择的状态设置表单编辑权限
+      await this.setBugEditPermission(value)
     },
 
     // 选择模块
@@ -723,10 +799,198 @@ export default {
       this.$message.info('选择模块功能开发中')
     },
 
-    // 选择系统
-    async handleSelectSystem() {
-      // TODO: 实现系统选择对话框
-      this.$message.info('选择系统功能开发中')
+    // 加载系统选项列表
+    async loadSystemOptions() {
+      try {
+        const response = await testSystemApi.getTestSystemList({ pageNo: 1, pageSize: 1000 })
+        if (response.code === 20000 && response.data) {
+          if (Array.isArray(response.data.rows)) {
+            this.systemOptions = response.data.rows
+          } else if (Array.isArray(response.data)) {
+            this.systemOptions = response.data
+          } else {
+            this.systemOptions = []
+          }
+        } else if (response.code === 200 && response.data) {
+          if (Array.isArray(response.data.rows)) {
+            this.systemOptions = response.data.rows
+          } else if (Array.isArray(response.data)) {
+            this.systemOptions = response.data
+          } else {
+            this.systemOptions = []
+          }
+        }
+      } catch (error) {
+        console.error('加载系统列表失败:', error)
+        this.systemOptions = []
+      }
+    },
+
+    // 处理系统选择变化
+    handleSystemChange(systemId) {
+      if (systemId) {
+        const selectedSystem = this.systemOptions.find(item => item.systemId === systemId)
+        if (selectedSystem) {
+          this.bugForm.systemName = selectedSystem.systemName
+        }
+        // 系统变化时，重新加载开发组长和开发人员列表
+        this.loadDevLeaders(systemId)
+        this.loadDevelopers(systemId)
+      } else {
+        this.bugForm.systemName = ''
+        this.devLeaderOptions = []
+        this.developerOptions = []
+      }
+    },
+
+    // 根据选择的状态设置表单编辑权限
+    async setBugEditPermission(bugStateCode) {
+      // 先清除所有动态添加的验证规则
+      this.$refs.bugFormRef && this.$refs.bugFormRef.clearValidate()
+      
+      // 根据不同的状态设置不同的必填项验证规则
+      const rules = { ...this.bugRules }
+      
+      if (bugStateCode === 'Confirmed') {
+        // 已确认：开发组长必选
+        rules.devLeaderId = [
+          { required: true, message: '请选择开发组长', trigger: 'change' }
+        ]
+        // 加载开发组长列表
+        if (this.bugForm.systemId) {
+          await this.loadDevLeaders(this.bugForm.systemId)
+        }
+      } else {
+        delete rules.devLeaderId
+      }
+      
+      if (bugStateCode === 'Rejected') {
+        // 已拒绝：注释必填
+        rules.remark = [
+          { required: true, message: '请填写拒绝原因', trigger: 'blur' }
+        ]
+      } else {
+        delete rules.remark
+      }
+      
+      if (bugStateCode === 'Assigned') {
+        // 已分配：开发责任人必选
+        rules.developerId = [
+          { required: true, message: '请选择开发责任人', trigger: 'change' }
+        ]
+        // 加载开发人员列表
+        if (this.bugForm.systemId) {
+          await this.loadDevelopers(this.bugForm.systemId)
+        }
+      } else {
+        delete rules.developerId
+      }
+      
+      if (bugStateCode === 'Resolved') {
+        // 已解决：缺陷来源必选
+        rules.bugSource = [
+          { required: true, message: '请选择缺陷来源', trigger: 'change' }
+        ]
+      } else {
+        delete rules.bugSource
+      }
+      
+      if (bugStateCode === 'Closed') {
+        // 已关闭：关闭原因必填
+        rules.closeReason = [
+          { required: true, message: '请填写关闭原因', trigger: 'blur' }
+        ]
+      } else {
+        delete rules.closeReason
+      }
+      
+      // 更新验证规则
+      this.bugRules = rules
+      
+      // 使用 nextTick 确保规则更新后再重新验证
+      this.$nextTick(() => {
+        if (this.$refs.bugFormRef) {
+          this.$refs.bugFormRef.clearValidate()
+        }
+      })
+    },
+
+    // 加载开发组长列表
+    async loadDevLeaders(systemId) {
+      if (!systemId) {
+        this.devLeaderOptions = []
+        return
+      }
+      try {
+        const response = await bugManageApi.getDevLeadersBySystemId(systemId)
+        if (response.code === 20000 || response.code === 200) {
+          this.devLeaderOptions = response.data || []
+        } else {
+          this.devLeaderOptions = []
+        }
+      } catch (error) {
+        console.error('加载开发组长列表失败:', error)
+        this.devLeaderOptions = []
+      }
+    },
+
+    // 加载开发人员列表
+    async loadDevelopers(systemId) {
+      if (!systemId) {
+        this.developerOptions = []
+        return
+      }
+      try {
+        const response = await bugManageApi.getDevelopersBySystemId(systemId)
+        if (response.code === 20000 || response.code === 200) {
+          this.developerOptions = response.data || []
+        } else {
+          this.developerOptions = []
+        }
+      } catch (error) {
+        console.error('加载开发人员列表失败:', error)
+        this.developerOptions = []
+      }
+    },
+
+    // 处理开发组长选择变化
+    handleDevLeaderChange(userId) {
+      if (userId) {
+        const selectedLeader = this.devLeaderOptions.find(item => (item.userId || item.id) === userId)
+        if (selectedLeader) {
+          this.bugForm.devLeaderName = selectedLeader.userName || selectedLeader.name
+          this.bugForm.devLeaderId = userId
+        }
+      } else {
+        this.bugForm.devLeaderName = ''
+        this.bugForm.devLeaderId = ''
+      }
+    },
+
+    // 处理开发责任人选择变化
+    handleDeveloperChange(userId) {
+      if (userId) {
+        const selectedDeveloper = this.developerOptions.find(item => (item.userId || item.id) === userId)
+        if (selectedDeveloper) {
+          this.bugForm.developerName = selectedDeveloper.userName || selectedDeveloper.name
+          this.bugForm.developerId = userId
+        }
+      } else {
+        this.bugForm.developerName = ''
+        this.bugForm.developerId = ''
+      }
+    },
+
+    // 处理缺陷来源选择变化
+    handleBugSourceChange(value) {
+      if (value) {
+        const selectedSource = this.bugSourceOptions.find(item => item.dataValue === value)
+        if (selectedSource) {
+          this.bugForm.bugSourceName = selectedSource.dataName
+        }
+      } else {
+        this.bugForm.bugSourceName = ''
+      }
     },
 
     // 选择测试用例
@@ -825,18 +1089,6 @@ export default {
         console.error('下载附件失败:', error)
         this.$message.error('下载附件失败')
       }
-    },
-
-    // 历史记录分页
-    handleHistorySizeChange(val) {
-      this.historyPagination.pageSize = val
-      this.historyPagination.currentPage = 1
-      this.loadBugHistory()
-    },
-
-    handleHistoryCurrentChange(val) {
-      this.historyPagination.currentPage = val
-      this.loadBugHistory()
     },
 
     // 获取缺陷状态标签类型

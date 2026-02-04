@@ -63,8 +63,11 @@ export default {
    */
   deleteBug(bugId) {
     return request({
-      url: `/test/bug/${bugId}`,
-      method: 'delete'
+      url: `/test/bug/delete`,
+      method: 'delete',
+      params: {
+        bugId
+      }
     })
   },
 
@@ -130,6 +133,51 @@ export default {
     return request({
       url: '/test/bug/getAllBugState',
       method: 'get'
+    })
+  },
+
+  /**
+   * 获取下一步可变更的状态
+   * @param {string} bugId 缺陷ID
+   * @returns {Promise} 可变更的状态列表（根据当前状态和用户角色过滤）
+   */
+  getNextAvailableStates(bugId) {
+    return request({
+      url: `/test/bug/nextStates`,
+      method: 'get',
+      params: {
+        bugId
+      }
+    })
+  },
+
+  /**
+   * 根据系统ID获取开发组长列表
+   * @param {string} systemId 系统ID
+   * @returns {Promise} 开发组长列表
+   */
+  getDevLeadersBySystemId(systemId) {
+    return request({
+      url: `/test/bug/devLeaders`,
+      method: 'get',
+      params: {
+        systemId
+      }
+    })
+  },
+
+  /**
+   * 根据系统ID获取开发人员列表
+   * @param {string} systemId 系统ID
+   * @returns {Promise} 开发人员列表
+   */
+  getDevelopersBySystemId(systemId) {
+    return request({
+      url: `/test/bug/developers`,
+      method: 'get',
+      params: {
+        systemId
+      }
     })
   }
 
