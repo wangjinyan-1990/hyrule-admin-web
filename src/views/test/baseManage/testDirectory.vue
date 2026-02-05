@@ -9,6 +9,11 @@
               <i class="el-icon-folder"></i>
               测试目录
             </span>
+            <div style="float: right;">
+              <el-button size="small" icon="el-icon-download" @click="handleDownloadTemplate">下载模板</el-button>
+              <el-button size="small" icon="el-icon-upload2" @click="handleImport" style="margin-left: 10px;">导入</el-button>
+              <el-button size="small" icon="el-icon-download" @click="handleExport" style="margin-left: 10px;">导出</el-button>
+            </div>
           </div>
 
           <!-- 目录树选择器 -->
@@ -121,6 +126,35 @@
         <el-button type="primary" @click="submitForm">确定</el-button>
       </div>
     </el-dialog>
+
+    <!-- 导入对话框 -->
+    <el-dialog
+      title="导入目录"
+      :visible.sync="importDialogVisible"
+      width="500px"
+      @close="handleImportDialogClose"
+    >
+      <el-upload
+        ref="upload"
+        :action="uploadAction"
+        :auto-upload="false"
+        :on-change="handleFileChange"
+        :on-remove="handleFileRemove"
+        :file-list="fileList"
+        :before-upload="beforeUpload"
+        :limit="1"
+        accept=".xlsx,.xls"
+      >
+        <el-button size="small" type="primary" icon="el-icon-upload">选择文件</el-button>
+        <div slot="tip" class="el-upload__tip" style="margin-top: 10px; color: #909399; font-size: 12px;">
+          只能上传Excel文件，且不超过10MB
+        </div>
+      </el-upload>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="handleImportDialogClose" size="small">取 消</el-button>
+        <el-button type="primary" @click="handleImportConfirm" size="small" :loading="uploading" :disabled="fileList.length === 0">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -160,7 +194,12 @@ export default {
         systemId: [
           { required: true, message: '请输入系统ID', trigger: 'blur' }
         ]
-      }
+      },
+      // 导入相关
+      importDialogVisible: false,
+      fileList: [],
+      uploading: false,
+      uploadAction: ''
     }
   },
   created() {
@@ -625,6 +664,209 @@ export default {
         // console.error('强制展开节点失败:', error)
         // 最后的降级方案
         this.setExpandedKeys(expandedKeys)
+      }
+    },
+
+    // 导出目录
+    async handleExport() {
+      // 检查是否选择了系统
+      if (!this.currentNode || !this.currentNode.systemId) {
+        this.$message.warning('请先在目录树中选择一个系统节点')
+        return
+      }
+
+      try {
+        const response = await testDirectoryApi.exportDirectory({
+          systemId: this.currentNode.systemId
+        })
+
+        // 检查响应数据
+        if (!response.data) {
+          throw new Error('服务器返回空数据')
+        }
+
+        // 直接使用后端返回的 blob 数据
+        const blob = response.data
+
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `测试目录_${new Date().getTime()}.xlsx`
+        link.style.display = 'none'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // 延迟清理URL对象
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url)
+        }, 100)
+
+        this.$message.success('导出成功')
+      } catch (error) {
+        // 检查是否是错误响应（可能是JSON格式的错误信息）
+        if (error.response && error.response.data instanceof Blob) {
+          // 尝试读取错误信息
+          const reader = new FileReader()
+          reader.onload = () => {
+            try {
+              const errorData = JSON.parse(reader.result)
+              this.$message.error(errorData.message || '导出失败')
+            } catch (e) {
+              this.$message.error('导出失败')
+            }
+          }
+          reader.readAsText(error.response.data)
+        } else {
+          this.$message.error('导出失败: ' + (error.message || '未知错误'))
+        }
+      }
+    },
+
+    // 导入
+    handleImport() {
+      // 检查是否选择了系统
+      if (!this.currentNode || !this.currentNode.systemId) {
+        this.$message.warning('请先在目录树中选择一个系统节点')
+        return
+      }
+
+      this.importDialogVisible = true
+      this.fileList = []
+
+      // 清空 el-upload 组件的文件列表
+      this.$nextTick(() => {
+        if (this.$refs.upload) {
+          this.$refs.upload.clearFiles()
+        }
+      })
+    },
+
+    // 导入对话框关闭处理
+    handleImportDialogClose() {
+      this.fileList = []
+      this.uploading = false
+      // 清空 el-upload 组件的文件列表
+      if (this.$refs.upload) {
+        this.$refs.upload.clearFiles()
+      }
+    },
+
+    // 下载模板
+    async handleDownloadTemplate() {
+      try {
+        const response = await testDirectoryApi.downloadImportTemplate()
+
+        // 检查响应数据
+        if (!response.data) {
+          throw new Error('服务器返回空数据')
+        }
+
+        // 直接使用后端返回的 blob 数据
+        const blob = response.data
+
+        const url = window.URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = '目录导入模板.xlsx'
+        link.style.display = 'none'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        // 延迟清理URL对象
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url)
+        }, 100)
+
+        this.$message.success('模板下载成功')
+      } catch (error) {
+        this.$message.error('模板下载失败: ' + (error.message || '未知错误'))
+      }
+    },
+
+    // 上传前检查
+    beforeUpload(file) {
+      const isExcel = file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+                     file.type === 'application/vnd.ms-excel' ||
+                     file.name.endsWith('.xlsx') ||
+                     file.name.endsWith('.xls')
+      const isLt10M = file.size / 1024 / 1024 < 10
+
+      if (!isExcel) {
+        this.$message.error('只能上传Excel文件!')
+        return false
+      }
+      if (!isLt10M) {
+        this.$message.error('文件大小不能超过10MB!')
+        return false
+      }
+      return true
+    },
+
+    // 文件变化处理
+    handleFileChange(file, fileList) {
+      // 如果用户重新选择文件，清空之前的文件列表
+      if (fileList.length > 1) {
+        this.$refs.upload.clearFiles()
+        this.$refs.upload.handleStart(file)
+        this.fileList = [file]
+      } else {
+        this.fileList = fileList
+      }
+    },
+
+    // 文件移除处理
+    handleFileRemove(file, fileList) {
+      this.fileList = fileList
+    },
+
+    // 确认导入
+    async handleImportConfirm() {
+      if (this.fileList.length === 0) {
+        this.$message.warning('请先选择要导入的文件')
+        return
+      }
+
+      const file = this.fileList[0].raw || this.fileList[0]
+      if (!file) {
+        this.$message.warning('文件无效')
+        return
+      }
+
+      try {
+        this.uploading = true
+
+        // 检查是否选择了系统
+        if (!this.currentNode || !this.currentNode.systemId) {
+          this.$message.warning('请先在目录树中选择一个系统节点')
+          this.uploading = false
+          return
+        }
+
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('systemId', this.currentNode.systemId)
+
+        const response = await testDirectoryApi.importDirectory(formData)
+
+        if (response.code === 20000 || response.code === 200) {
+          this.$message.success('导入成功')
+          // 关闭导入对话框
+          this.importDialogVisible = false
+          this.handleImportDialogClose()
+          // 刷新目录树
+          if (this.$refs.directoryTreeSelect) {
+            await this.$refs.directoryTreeSelect.refreshData()
+          }
+        } else {
+          this.$message.error(response.message || '导入失败')
+        }
+      } catch (error) {
+        console.error('导入失败:', error)
+        this.$message.error('导入失败: ' + (error.message || '未知错误'))
+      } finally {
+        this.uploading = false
       }
     }
   }

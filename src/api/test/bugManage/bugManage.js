@@ -149,51 +149,6 @@ export default {
         bugId
       }
     })
-  },
-
-  /**
-   * 根据系统ID获取开发组长列表
-   * @param {string} systemId 系统ID
-   * @returns {Promise} 开发组长列表
-   */
-  getDevLeadersBySystemId(systemId) {
-    return request({
-      url: `/test/bug/devLeaders`,
-      method: 'get',
-      params: {
-        systemId
-      }
-    })
-  },
-
-  /**
-   * 根据系统ID获取开发人员列表
-   * @param {string} systemId 系统ID
-   * @returns {Promise} 开发人员列表
-   */
-  getDevelopersBySystemId(systemId) {
-    return request({
-      url: `/test/bug/developers`,
-      method: 'get',
-      params: {
-        systemId
-      }
-    })
-  },
-
-  /**
-   * 根据系统ID获取验证人列表
-   * @param {string} systemId 系统ID
-   * @returns {Promise} 验证人列表
-   */
-  getCheckersBySystemId(systemId) {
-    return request({
-      url: `/test/bug/checkers`,
-      method: 'get',
-      params: {
-        systemId
-      }
-    })
   }
 
 }

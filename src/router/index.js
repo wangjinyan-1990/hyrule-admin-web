@@ -268,6 +268,13 @@ export const asyncRoutes = [
         hidden: true
       },
       {
+        path: 'apiRequest',
+        name: 'apiRequest',
+        component: () => import('@/components/Tools/apiRequest'),
+        meta: { title: '接口请求', icon: 'toolset' },
+        hidden: true
+      },
+      {
         path: 'networkPolicyList',
         name: 'networkPolicyList',
         component: () => import('@/components/Tools/networkPolicyList'),

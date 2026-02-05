@@ -188,6 +188,9 @@
         <el-row>
           <el-col :span="12">
             <el-button @click="handleAdd" type="primary" icon="el-icon-plus" class="search-button-small">添加</el-button>
+            <el-button @click="handleMove" type="warning" icon="el-icon-rank" class="search-button-small" style="margin-left: 10px;" :disabled="selectedRows.length === 0">移动</el-button>
+            <el-button @click="handlePlan" type="success" icon="el-icon-date" class="search-button-small" style="margin-left: 10px;" :disabled="selectedRows.length === 0">计划</el-button>
+            <el-button @click="handleBlockOrNotApplicable" type="info" icon="el-icon-warning" class="search-button-small" style="margin-left: 10px;" :disabled="selectedRows.length === 0">阻塞|不适用</el-button>
             <el-button @click="handleDelete" type="danger" icon="el-icon-delete" class="search-button-small" style="margin-left: 10px;" :disabled="selectedRows.length === 0">删除</el-button>
             <el-button @click="handleExport" type="success" icon="el-icon-download" class="search-button-small" style="margin-left: 10px;">导出</el-button>
           </el-col>
@@ -256,6 +259,118 @@
       :selected-usecase-ids="existingUsecaseIds"
       @confirm="handleUsecaseConfirm"
     />
+
+    <!-- 移动用例对话框 -->
+    <el-dialog
+      title="移动到其他目录"
+      :visible.sync="moveDialogVisible"
+      width="500px"
+      @close="handleMoveDialogClose"
+    >
+      <div style="margin-bottom: 10px;">
+        <span style="font-size: 12px; color: #909399;">请选择目标目录（只能选择当前目录的子节点目录）：</span>
+      </div>
+      <el-tree
+        ref="moveDirectoryTree"
+        :data="moveDirectoryTreeData"
+        :props="{ children: 'children', label: 'directoryName' }"
+        node-key="directoryId"
+        :default-expand-all="false"
+        highlight-current
+        @node-click="handleMoveDirectoryNodeClick"
+        style="max-height: 400px; overflow-y: auto;"
+      >
+        <span class="custom-tree-node" slot-scope="{ node, data }">
+          <span>{{ node.label }}</span>
+        </span>
+      </el-tree>
+      <div v-if="selectedMoveDirectory" style="margin-top: 10px; padding: 10px; background-color: #f5f7fa; border-radius: 4px;">
+        <span style="font-size: 12px; color: #606266;">已选择：</span>
+        <span style="font-size: 12px; color: #303133; font-weight: bold;">{{ selectedMoveDirectory.directoryName }}</span>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handleMoveDialogClose" size="small">取 消</el-button>
+        <el-button type="primary" @click="handleMoveConfirm" size="small" :disabled="!selectedMoveDirectory">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 阻塞|不适用对话框 -->
+    <el-dialog
+      title="批量设置状态"
+      :visible.sync="blockOrNotApplicableDialogVisible"
+      width="500px"
+      @close="handleBlockOrNotApplicableDialogClose"
+    >
+      <el-form :model="blockOrNotApplicableForm" label-width="100px">
+        <el-form-item label="状态" required>
+          <el-select
+            v-model="blockOrNotApplicableForm.runStatus"
+            placeholder="请选择状态"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="item in blockOrNotApplicableStatusOptions"
+              :key="item.value"
+              :label="item.label"
+              :value="item.value"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="执行备注">
+          <el-input
+            v-model="blockOrNotApplicableForm.remark"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入执行备注"
+          />
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handleBlockOrNotApplicableDialogClose" size="small">取 消</el-button>
+        <el-button type="primary" @click="handleBlockOrNotApplicableConfirm" size="small" :disabled="!blockOrNotApplicableForm.runStatus">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 计划执行对话框 -->
+    <el-dialog
+      title="批量设置计划执行"
+      :visible.sync="planDialogVisible"
+      width="500px"
+      @close="handlePlanDialogClose"
+    >
+      <el-form :model="planForm" label-width="120px">
+        <el-form-item label="计划执行人" required>
+          <el-select
+            v-model="planForm.planExecutorId"
+            placeholder="请选择计划执行人"
+            filterable
+            clearable
+            style="width: 100%"
+            :loading="testerOptionsLoading"
+          >
+            <el-option
+              v-for="item in testerOptions"
+              :key="item.userId || item.id"
+              :label="item.userName || item.name"
+              :value="item.userId || item.id"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="计划执行日期" required>
+          <el-date-picker
+            v-model="planForm.planExecutionDate"
+            type="date"
+            placeholder="请选择计划执行日期"
+            value-format="yyyy-MM-dd"
+            style="width: 100%"
+          />
+        </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="handlePlanDialogClose" size="small">取 消</el-button>
+        <el-button type="primary" @click="handlePlanConfirm" size="small" :disabled="!planForm.planExecutorId || !planForm.planExecutionDate">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -265,6 +380,8 @@ import UsecaseSelector from '@/views/test/usecaseManage/components/UsecaseSelect
 import usecaseExecutionApi from '@/api/test/usecaseManage/usecaseExecution'
 import dictionaryApi from '@/api/framework/dictionary'
 import testSystemApi from '@/api/test/baseManage/testSystem'
+import testDirectoryApi from '@/api/test/baseManage/testDirectory'
+import selectUsersApi from '@/api/test/baseManage/selectUsers'
 
 export default {
   name: 'usecaseExecution',
@@ -333,7 +450,31 @@ export default {
       runStatusOptions: [],
 
       // 用例选择器显示状态
-      selectorVisible: false
+      selectorVisible: false,
+      // 移动用例对话框
+      moveDialogVisible: false,
+      moveDirectoryTreeData: [],
+      selectedMoveDirectory: null,
+      // 阻塞|不适用对话框
+      blockOrNotApplicableDialogVisible: false,
+      blockOrNotApplicableForm: {
+        runStatus: '',
+        remark: ''
+      },
+      // 阻塞|不适用状态选项
+      blockOrNotApplicableStatusOptions: [
+        { label: '阻塞', value: '5' },
+        { label: '不适用', value: '4' }
+      ],
+      // 计划执行对话框
+      planDialogVisible: false,
+      planForm: {
+        planExecutorId: '',
+        planExecutionDate: ''
+      },
+      // 测试人员选项
+      testerOptions: [],
+      testerOptionsLoading: false
     }
   },
 
@@ -616,6 +757,307 @@ export default {
       }
     },
 
+    // 移动用例
+    async handleMove() {
+      if (!this.selectedRows || this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要移动的用例')
+        return
+      }
+
+      if (!this.selectedDirectory) {
+        this.$message.warning('请先在左侧目录树中选择一个目录节点')
+        return
+      }
+
+      // 加载当前目录的子节点目录
+      await this.loadMoveDirectoryTree()
+      this.moveDialogVisible = true
+    },
+
+    // 加载移动目录树（只显示当前目录的子节点）
+    async loadMoveDirectoryTree() {
+      if (!this.selectedDirectory) {
+        this.moveDirectoryTreeData = []
+        return
+      }
+
+      try {
+        const directoryId = this.selectedDirectory.directoryId || this.selectedDirectory.id
+        const systemId = this.selectedDirectory.systemId || this.selectedSystemId || this.searchForm.systemId
+
+        const response = await testDirectoryApi.getChildrenByParentId(
+          directoryId,
+          systemId,
+          'isUseTestset'
+        )
+
+        if (response.code === 20000 && response.data?.rows) {
+          this.moveDirectoryTreeData = response.data.rows.map(item => ({
+            directoryId: item.directoryId,
+            directoryName: item.directoryName,
+            directoryType: item.directoryType,
+            systemId: item.systemId,
+            directoryParentId: item.directoryParentId,
+            level: item.level || 1,
+            children: []
+          }))
+        } else {
+          this.moveDirectoryTreeData = []
+        }
+      } catch (error) {
+        console.error('加载子目录失败:', error)
+        this.moveDirectoryTreeData = []
+      }
+    },
+
+    // 处理移动目录节点点击
+    handleMoveDirectoryNodeClick(data) {
+      this.selectedMoveDirectory = data
+    },
+
+    // 移动对话框关闭
+    handleMoveDialogClose() {
+      this.moveDialogVisible = false
+      this.selectedMoveDirectory = null
+      this.moveDirectoryTreeData = []
+    },
+
+    // 确认移动
+    async handleMoveConfirm() {
+      if (!this.selectedMoveDirectory) {
+        this.$message.warning('请选择目标目录')
+        return
+      }
+
+      if (!this.selectedRows || this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要移动的用例')
+        return
+      }
+
+      try {
+        const usecaseExecutionIds = this.selectedRows
+          .map(row => row.usecaseExecutionId)
+          .filter(id => id)
+
+        if (usecaseExecutionIds.length === 0) {
+          this.$message.warning('选中的用例没有有效的执行ID')
+          return
+        }
+
+        const targetDirectoryId = this.selectedMoveDirectory.directoryId
+
+        // 调用移动API
+        const response = await usecaseExecutionApi.moveExecutions(
+          usecaseExecutionIds,
+          targetDirectoryId
+        )
+
+        if (response.code === 20000 || response.code === 200) {
+          this.$message.success(`成功移动 ${usecaseExecutionIds.length} 个用例`)
+          // 关闭对话框
+          this.handleMoveDialogClose()
+          // 清空选中
+          this.selectedRows = []
+          // 重新加载列表和统计
+          await this.loadExecutionList()
+          await this.loadStatistics()
+        } else {
+          this.$message.error(response.message || '移动失败')
+        }
+      } catch (error) {
+        console.error('移动用例失败:', error)
+        this.$message.error('移动失败')
+      }
+    },
+
+    // 计划执行
+    async handlePlan() {
+      if (!this.selectedRows || this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要设置的用例')
+        return
+      }
+
+      if (!this.selectedDirectory && !this.searchForm.systemId) {
+        this.$message.warning('请先在左侧目录树中选择一个目录节点，以获取系统ID')
+        return
+      }
+
+      // 获取系统ID
+      const systemId = this.selectedDirectory?.systemId || this.selectedSystemId || this.searchForm.systemId
+      if (!systemId) {
+        this.$message.warning('无法获取系统ID，请先选择目录')
+        return
+      }
+
+      // 加载测试人员列表
+      await this.loadTesterOptions(systemId)
+
+      // 重置表单
+      this.planForm = {
+        planExecutorId: '',
+        planExecutionDate: ''
+      }
+      this.planDialogVisible = true
+    },
+
+    // 加载测试人员选项
+    async loadTesterOptions(systemId) {
+      if (!systemId) {
+        this.testerOptions = []
+        return
+      }
+
+      this.testerOptionsLoading = true
+      try {
+        const response = await selectUsersApi.getTestersBySystemId(systemId)
+        if (response.code === 20000 || response.code === 200) {
+          this.testerOptions = response.data || []
+        } else {
+          this.testerOptions = []
+          this.$message.error(response.message || '加载测试人员列表失败')
+        }
+      } catch (error) {
+        console.error('加载测试人员列表失败:', error)
+        this.testerOptions = []
+        this.$message.error('加载测试人员列表失败')
+      } finally {
+        this.testerOptionsLoading = false
+      }
+    },
+
+    // 计划对话框关闭
+    handlePlanDialogClose() {
+      this.planDialogVisible = false
+      this.planForm = {
+        planExecutorId: '',
+        planExecutionDate: ''
+      }
+      this.testerOptions = []
+    },
+
+    // 确认设置计划执行
+    async handlePlanConfirm() {
+      if (!this.planForm.planExecutorId) {
+        this.$message.warning('请选择计划执行人')
+        return
+      }
+
+      if (!this.planForm.planExecutionDate) {
+        this.$message.warning('请选择计划执行日期')
+        return
+      }
+
+      if (!this.selectedRows || this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要设置的用例')
+        return
+      }
+
+      try {
+        const usecaseExecutionIds = this.selectedRows
+          .map(row => row.usecaseExecutionId)
+          .filter(id => id)
+
+        if (usecaseExecutionIds.length === 0) {
+          this.$message.warning('选中的用例没有有效的执行ID')
+          return
+        }
+
+        // 调用批量更新计划执行API
+        const response = await usecaseExecutionApi.batchUpdatePlanExecution({
+          usecaseExecutionIds: usecaseExecutionIds,
+          planExecutorId: this.planForm.planExecutorId,
+          planExecutionDate: this.planForm.planExecutionDate
+        })
+
+        if (response.code === 20000 || response.code === 200) {
+          this.$message.success(`成功设置 ${usecaseExecutionIds.length} 个用例的计划执行信息`)
+          // 关闭对话框
+          this.handlePlanDialogClose()
+          // 清空选中
+          this.selectedRows = []
+          // 重新加载列表和统计
+          await this.loadExecutionList()
+          await this.loadStatistics()
+        } else {
+          this.$message.error(response.message || '设置失败')
+        }
+      } catch (error) {
+        console.error('设置计划执行失败:', error)
+        this.$message.error('设置失败')
+      }
+    },
+
+    // 阻塞|不适用
+    handleBlockOrNotApplicable() {
+      if (!this.selectedRows || this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要设置的用例')
+        return
+      }
+
+      // 重置表单
+      this.blockOrNotApplicableForm = {
+        runStatus: '',
+        remark: ''
+      }
+      this.blockOrNotApplicableDialogVisible = true
+    },
+
+    // 阻塞|不适用对话框关闭
+    handleBlockOrNotApplicableDialogClose() {
+      this.blockOrNotApplicableDialogVisible = false
+      this.blockOrNotApplicableForm = {
+        runStatus: '',
+        remark: ''
+      }
+    },
+
+    // 确认设置阻塞|不适用
+    async handleBlockOrNotApplicableConfirm() {
+      if (!this.blockOrNotApplicableForm.runStatus) {
+        this.$message.warning('请选择状态')
+        return
+      }
+
+      if (!this.selectedRows || this.selectedRows.length === 0) {
+        this.$message.warning('请先选择要设置的用例')
+        return
+      }
+
+      try {
+        const usecaseExecutionIds = this.selectedRows
+          .map(row => row.usecaseExecutionId)
+          .filter(id => id)
+
+        if (usecaseExecutionIds.length === 0) {
+          this.$message.warning('选中的用例没有有效的执行ID')
+          return
+        }
+
+        // 调用批量更新API
+        const response = await usecaseExecutionApi.batchUpdateRunStatus({
+          usecaseExecutionIds: usecaseExecutionIds,
+          runStatus: this.blockOrNotApplicableForm.runStatus,
+          remark: this.blockOrNotApplicableForm.remark || ''
+        })
+
+        if (response.code === 20000 || response.code === 200) {
+          this.$message.success(`成功设置 ${usecaseExecutionIds.length} 个用例的状态`)
+          // 关闭对话框
+          this.handleBlockOrNotApplicableDialogClose()
+          // 清空选中
+          this.selectedRows = []
+          // 重新加载列表和统计
+          await this.loadExecutionList()
+          await this.loadStatistics()
+        } else {
+          this.$message.error(response.message || '设置失败')
+        }
+      } catch (error) {
+        console.error('设置状态失败:', error)
+        this.$message.error('设置失败')
+      }
+    },
+
     // 删除用例
     async handleDelete() {
       if (!this.selectedRows || this.selectedRows.length === 0) {
@@ -879,7 +1321,6 @@ export default {
 
 .stat-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   padding: 3px 0;
 
@@ -887,7 +1328,7 @@ export default {
     font-size: 12px;
     color: #909399;
     line-height: 16px;
-    margin-right: 8px;
+    margin-right: 4px;
   }
 
   .stat-value {

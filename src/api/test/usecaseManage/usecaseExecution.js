@@ -106,6 +106,55 @@ export default {
       url: `/test/usecase/execution/${usecaseExecutionId}`,
       method: 'delete'
     })
+  },
+
+  /**
+   * 移动执行用例到其他目录
+   * @param {Array} usecaseExecutionIds 用例执行ID数组
+   * @param {string} targetDirectoryId 目标目录ID
+   * @returns {Promise} 移动结果
+   */
+  moveExecutions(usecaseExecutionIds, targetDirectoryId) {
+    return request({
+      url: '/test/usecase/execution/move',
+      method: 'post',
+      data: {
+        usecaseExecutionIds,
+        targetDirectoryId
+      }
+    })
+  },
+
+  /**
+   * 批量更新执行状态
+   * @param {Object} data 更新数据
+   * @param {Array} data.usecaseExecutionIds 用例执行ID数组
+   * @param {string} data.runStatus 执行状态
+   * @param {string} data.remark 执行备注
+   * @returns {Promise} 更新结果
+   */
+  batchUpdateRunStatus(data) {
+    return request({
+      url: '/test/usecase/execution/batchUpdateStatus',
+      method: 'post',
+      data
+    })
+  },
+
+  /**
+   * 批量更新计划执行信息
+   * @param {Object} data 更新数据
+   * @param {Array} data.usecaseExecutionIds 用例执行ID数组
+   * @param {string} data.planExecutorId 计划执行人ID
+   * @param {string} data.planExecutionDate 计划执行日期
+   * @returns {Promise} 更新结果
+   */
+  batchUpdatePlanExecution(data) {
+    return request({
+      url: '/test/usecase/execution/batchUpdatePlan',
+      method: 'post',
+      data
+    })
   }
 
 }

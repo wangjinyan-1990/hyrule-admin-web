@@ -60,5 +60,36 @@ export default {
       url: `/test/directory/${directoryId}`,
       method: 'get'
     })
+  },
+
+  // 导出目录数据
+  exportDirectory(params) {
+    return request({
+      url: '/test/directory/export',
+      method: 'post',
+      data: params,
+      responseType: 'blob'
+    })
+  },
+
+  // 下载导入模板
+  downloadImportTemplate() {
+    return request({
+      url: '/test/directory/template',
+      method: 'get',
+      responseType: 'blob'
+    })
+  },
+
+  // 导入目录数据
+  importDirectory(formData) {
+    return request({
+      url: '/test/directory/import',
+      method: 'post',
+      data: formData,
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
   }
 }

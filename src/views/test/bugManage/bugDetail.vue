@@ -116,21 +116,14 @@
 
             <!-- 开发组长 -->
             <el-form-item label="开发组长" prop="devLeaderId">
-                <el-select
-                v-model="bugForm.devLeaderId"
+                <el-input
+                v-model="bugForm.devLeaderName"
                 placeholder="请选择开发组长"
-                filterable
-                clearable
-                  style="width: 100%"
-                @change="handleDevLeaderChange"
+                readonly
+                style="width: 100%"
                 >
-                  <el-option
-                  v-for="item in devLeaderOptions"
-                  :key="item.userId || item.id"
-                  :label="item.userName || item.name"
-                  :value="item.userId || item.id"
-                  />
-                </el-select>
+                  <el-button slot="append" icon="el-icon-more" @click="handleSelectDevLeader"></el-button>
+                </el-input>
               </el-form-item>
 
             <!-- 缺陷来源 -->
@@ -216,21 +209,14 @@
 
             <!-- 开发责任人 -->
             <el-form-item label="开发责任人" prop="developerId">
-                <el-select
-                v-model="bugForm.developerId"
+                <el-input
+                v-model="bugForm.developerName"
                 placeholder="请选择开发责任人"
-                filterable
-                clearable
-                  style="width: 100%"
-                @change="handleDeveloperChange"
+                readonly
+                style="width: 100%"
                 >
-                  <el-option
-                  v-for="item in developerOptions"
-                  :key="item.userId || item.id"
-                  :label="item.userName || item.name"
-                  :value="item.userId || item.id"
-                />
-              </el-select>
+                  <el-button slot="append" icon="el-icon-more" @click="handleSelectDeveloper"></el-button>
+                </el-input>
             </el-form-item>
 
             <!-- 验证人 -->
@@ -367,6 +353,62 @@
         <el-button type="primary" @click="handleCheckerConfirm(selectedChecker)" :disabled="!selectedChecker">确 定</el-button>
       </span>
     </el-dialog>
+
+    <!-- 开发组长选择对话框 -->
+    <el-dialog
+      title="选择开发组长"
+      :visible.sync="devLeaderSelectorVisible"
+      width="600px"
+      @close="devLeaderSelectorVisible = false"
+    >
+      <el-table
+        :data="devLeaderOptions"
+        stripe
+        style="width: 100%"
+        @current-change="handleDevLeaderChange"
+        highlight-current-row
+        ref="devLeaderTable"
+        v-loading="loading"
+      >
+        <el-table-column type="index" width="55" label="序号"></el-table-column>
+        <el-table-column prop="userId" label="用户ID" width="80" v-if="false"></el-table-column>
+        <el-table-column prop="userName" label="用户名" width="150"></el-table-column>
+        <el-table-column prop="loginName" label="登录名" width="150"></el-table-column>
+        <el-table-column prop="phone" label="电话" width="150"></el-table-column>
+      </el-table>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="devLeaderSelectorVisible = false">取 消</el-button>
+        <el-button type="primary" @click="handleDevLeaderConfirm" :disabled="!selectedDevLeader">确 定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 开发责任人选择对话框 -->
+    <el-dialog
+      title="选择开发责任人"
+      :visible.sync="developerSelectorVisible"
+      width="600px"
+      @close="developerSelectorVisible = false"
+    >
+      <el-table
+        :data="developerOptions"
+        stripe
+        style="width: 100%"
+        @current-change="handleDeveloperChange"
+        highlight-current-row
+        ref="developerTable"
+        v-loading="loading"
+      >
+        <el-table-column type="index" width="55" label="序号"></el-table-column>
+        <el-table-column prop="userId" label="用户ID" width="80" v-if="false"></el-table-column>
+        <el-table-column prop="userName" label="用户名" width="150"></el-table-column>
+        <el-table-column prop="loginName" label="登录名" width="150"></el-table-column>
+        <el-table-column prop="phone" label="电话" width="150"></el-table-column>
+      </el-table>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="developerSelectorVisible = false">取 消</el-button>
+        <el-button type="primary" @click="handleDeveloperConfirm" :disabled="!selectedDeveloper">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -377,6 +419,7 @@ import dictionaryApi from '@/api/framework/dictionary'
 import testSystemApi from '@/api/test/baseManage/testSystem'
 import usecaseRepositoryApi from '@/api/test/usecaseManage/usecaseRepository'
 import testDirectoryApi from '@/api/test/baseManage/testDirectory'
+import selectUsersApi from '@/api/test/baseManage/selectUsers'
 import { formatTime } from '@/utils/index'
 import BugHistory from './components/bugHistory.vue'
 import RelatedSystemBug from './components/relatedSystemBug.vue'
@@ -469,7 +512,13 @@ export default {
       // 验证人选择对话框
       checkerSelectorVisible: false,
       checkerOptions: [],
-      selectedChecker: null
+      selectedChecker: null,
+      // 开发组长选择对话框
+      devLeaderSelectorVisible: false,
+      selectedDevLeader: null,
+      // 开发责任人选择对话框
+      developerSelectorVisible: false,
+      selectedDeveloper: null
     }
   },
   computed: {
@@ -574,7 +623,7 @@ export default {
 
       // 查找"新建"状态（bugStateCode为"Submitted"）
       const newState = this.bugStateOptions.find(opt => opt.bugStateCode === 'Submitted' || opt.bugStateName === '新建')
-      
+
       // 设置默认值
       this.bugForm = {
         ...this.bugForm,
@@ -599,10 +648,10 @@ export default {
       try {
         // 获取用例详情
         const usecaseResponse = await usecaseRepositoryApi.getUsecaseById(this.bugForm.usecaseId)
-          
+
           // 构建缺陷描述内容
           let description = ''
-          
+
         // 从用例详情获取信息
         if (usecaseResponse.code === 20000 && usecaseResponse.data) {
           const usecaseData = usecaseResponse.data
@@ -628,7 +677,7 @@ export default {
 
         // 添加 [实际结果:] 标题（不获取执行详情数据）
         description += `[实际结果:]`
-          
+
           // 设置缺陷描述
           if (description) {
             this.bugForm.bugDescription = description.trim()
@@ -796,7 +845,7 @@ export default {
         // 如果 bugId 已存在，则执行更新操作
         const bugIdToUse = this.bugForm.bugId || this.bugId
         const isUpdate = bugIdToUse && bugIdToUse.trim() !== ''
-        
+
         if (isUpdate) {
           // bugId 存在，执行更新
           response = await bugManageApi.updateBug(bugIdToUse, this.bugForm)
@@ -807,23 +856,23 @@ export default {
 
         if (response.code === 20000) {
           let finalBugId = bugIdToUse
-          
+
           if (!isUpdate && response.data?.bugId) {
             // 创建成功，设置 bugId
             finalBugId = String(response.data.bugId)
             this.bugId = finalBugId
             this.bugForm.bugId = finalBugId
           }
-          
+
           // 保存成功后，如果有待上传的附件，先上传附件
           if (this.pendingFiles.length > 0 && finalBugId) {
             // 确保 bugId 已设置，用于上传附件
             this.bugId = finalBugId
             await this.uploadAttachments()
           }
-          
+
           this.$message.success(isUpdate ? '保存成功' : '创建成功')
-          
+
           if (!isUpdate) {
             // 创建成功，更新路由
             this.$router.replace({
@@ -949,10 +998,10 @@ export default {
     async setBugEditPermission(bugStateCode) {
       // 先清除所有动态添加的验证规则
       this.$refs.bugFormRef && this.$refs.bugFormRef.clearValidate()
-      
+
       // 根据不同的状态设置不同的必填项验证规则
       const rules = { ...this.bugRules }
-      
+
       if (bugStateCode === 'Confirmed') {
         // 已确认：开发组长必选
         rules.devLeaderId = [
@@ -965,7 +1014,7 @@ export default {
       } else {
         delete rules.devLeaderId
       }
-      
+
       if (bugStateCode === 'Rejected') {
         // 已拒绝：注释必填
         rules.remark = [
@@ -974,7 +1023,7 @@ export default {
       } else {
         delete rules.remark
       }
-      
+
       if (bugStateCode === 'Assigned') {
         // 已分配：开发责任人必选
         rules.developerId = [
@@ -987,7 +1036,7 @@ export default {
       } else {
         delete rules.developerId
       }
-      
+
       if (bugStateCode === 'Resolved') {
         // 已解决：缺陷来源必选
         rules.bugSource = [
@@ -996,7 +1045,7 @@ export default {
       } else {
         delete rules.bugSource
       }
-      
+
       if (bugStateCode === 'Closed') {
         // 已关闭：关闭原因必选
         rules.closeReason = [
@@ -1015,10 +1064,10 @@ export default {
       } else {
         delete rules.closeReason
       }
-      
+
       // 更新验证规则
       this.bugRules = rules
-      
+
       // 使用 nextTick 确保规则更新后再重新验证
       this.$nextTick(() => {
         if (this.$refs.bugFormRef) {
@@ -1034,7 +1083,7 @@ export default {
         return
       }
       try {
-        const response = await bugManageApi.getDevLeadersBySystemId(systemId)
+        const response = await selectUsersApi.getDevLeadersBySystemId(systemId)
         if (response.code === 20000 || response.code === 200) {
           this.devLeaderOptions = response.data || []
         } else {
@@ -1053,7 +1102,7 @@ export default {
         return
       }
       try {
-        const response = await bugManageApi.getDevelopersBySystemId(systemId)
+        const response = await selectUsersApi.getDevelopersBySystemId(systemId)
         if (response.code === 20000 || response.code === 200) {
           this.developerOptions = response.data || []
         } else {
@@ -1066,31 +1115,37 @@ export default {
     },
 
     // 处理开发组长选择变化
-    handleDevLeaderChange(userId) {
-      if (userId) {
-        const selectedLeader = this.devLeaderOptions.find(item => (item.userId || item.id) === userId)
-        if (selectedLeader) {
-          this.bugForm.devLeaderName = selectedLeader.userName || selectedLeader.name
-          this.bugForm.devLeaderId = userId
-        }
-      } else {
-        this.bugForm.devLeaderName = ''
-        this.bugForm.devLeaderId = ''
+    handleDevLeaderChange(currentRow) {
+      this.selectedDevLeader = currentRow
+    },
+
+    // 处理开发组长选择确认
+    handleDevLeaderConfirm() {
+      if (!this.selectedDevLeader) {
+        this.$message.warning('请先选择开发组长')
+        return
       }
+      this.bugForm.devLeaderId = this.selectedDevLeader.userId || this.selectedDevLeader.id
+      this.bugForm.devLeaderName = this.selectedDevLeader.userName || this.selectedDevLeader.name
+      this.devLeaderSelectorVisible = false
+      this.selectedDevLeader = null
     },
 
     // 处理开发责任人选择变化
-    handleDeveloperChange(userId) {
-      if (userId) {
-        const selectedDeveloper = this.developerOptions.find(item => (item.userId || item.id) === userId)
-        if (selectedDeveloper) {
-          this.bugForm.developerName = selectedDeveloper.userName || selectedDeveloper.name
-          this.bugForm.developerId = userId
-        }
-      } else {
-        this.bugForm.developerName = ''
-        this.bugForm.developerId = ''
+    handleDeveloperChange(currentRow) {
+      this.selectedDeveloper = currentRow
+    },
+
+    // 处理开发责任人选择确认
+    handleDeveloperConfirm() {
+      if (!this.selectedDeveloper) {
+        this.$message.warning('请先选择开发责任人')
+        return
       }
+      this.bugForm.developerId = this.selectedDeveloper.userId || this.selectedDeveloper.id
+      this.bugForm.developerName = this.selectedDeveloper.userName || this.selectedDeveloper.name
+      this.developerSelectorVisible = false
+      this.selectedDeveloper = null
     },
 
     // 处理缺陷来源选择变化
@@ -1116,13 +1171,29 @@ export default {
     },
 
     // 选择开发组长
-    handleSelectDevLeader() {
-      this.$message.info('选择开发组长功能开发中')
+    async handleSelectDevLeader() {
+      // 检查是否已选择系统
+      if (!this.bugForm.systemId) {
+        this.$message.warning('请先选择所属系统')
+        return
+      }
+      // 加载开发组长列表
+      await this.loadDevLeaders(this.bugForm.systemId)
+      // 显示选择对话框
+      this.devLeaderSelectorVisible = true
     },
 
     // 选择责任人
-    handleSelectDeveloper() {
-      this.$message.info('选择责任人功能开发中')
+    async handleSelectDeveloper() {
+      // 检查是否已选择系统
+      if (!this.bugForm.systemId) {
+        this.$message.warning('请先选择所属系统')
+        return
+      }
+      // 加载开发人员列表
+      await this.loadDevelopers(this.bugForm.systemId)
+      // 显示选择对话框
+      this.developerSelectorVisible = true
     },
 
     // 选择验证人
@@ -1145,7 +1216,7 @@ export default {
         return
       }
       try {
-        const response = await bugManageApi.getCheckersBySystemId(systemId)
+        const response = await selectUsersApi.getTestersBySystemId(systemId)
         if (response.code === 20000 || response.code === 200) {
           this.checkerOptions = response.data || []
         } else {
@@ -1269,7 +1340,7 @@ export default {
         this.$message.warning('您没有权限删除此附件')
         return
       }
-      
+
       this.$confirm(`确定要删除附件"${attachment.originalFileName}"吗？`, '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
@@ -1439,7 +1510,7 @@ export default {
     font-size: 11px !important;
     padding: 0 5px !important;
     color: #f56c6c;
-    
+
     &:hover {
       color: #f56c6c;
     }
