@@ -82,8 +82,8 @@
           </el-form-item>
 
           <!-- 责任人 -->
-          <el-form-item label="责任人">
-            <el-input v-model="searchForm.developerName" placeholder="请输入责任人" clearable />
+          <el-form-item label="开发责任人">
+            <el-input v-model="searchForm.developerName" placeholder="请输入开发责任人" clearable />
           </el-form-item>
 
           <!-- 关闭时间(起) -->
@@ -181,7 +181,7 @@
           <el-table-column prop="systemName" label="系统名称" width="150" show-overflow-tooltip />
           <el-table-column prop="submitterName" label="提交人" width="100" />
           <el-table-column prop="devLeaderName" label="开发组长" width="100" />
-          <el-table-column prop="developerName" label="责任人" width="100" />
+          <el-table-column prop="developerName" label="开发责任人" width="100" />
           <el-table-column prop="checkerName" label="验证人" width="100" />
           <el-table-column prop="bugSeverityLevelName" label="严重级别" width="100" align="center">
             <template slot-scope="scope">
@@ -553,10 +553,10 @@ export default {
       padding: 8px 0;
       cursor: pointer;
     }
-    
+
     tr {
       cursor: pointer;
-      
+
       &:hover {
         background-color: #f5f7fa;
       }

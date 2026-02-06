@@ -68,9 +68,6 @@
             <el-button slot="append" icon="el-icon-search" @click="handleSelectSystem"></el-button>
           </el-input>
         </el-form-item>
-        <el-form-item label="系统简称" prop="sysAbbreviation">
-          <el-input v-model="sysConfigInfoForm.sysAbbreviation" placeholder="请输入系统简称（只能为字母和数字）" maxlength="50" @input="handleSysAbbreviationInput"></el-input>
-        </el-form-item>
         <el-form-item label="访问令牌" prop="privateToken">
           <el-input v-model="sysConfigInfoForm.privateToken" placeholder="请输入访问令牌"></el-input>
         </el-form-item>
@@ -185,10 +182,6 @@ export default {
       rules: {
         systemId: [
           { required: true, message: '请选择系统', trigger: 'change' }
-        ],
-        sysAbbreviation: [
-          { required: true, message: '请输入系统简称', trigger: 'blur' },
-          { pattern: /^[a-zA-Z0-9]+$/, message: '系统简称只能为字母和数字', trigger: 'blur' }
         ],
         privateToken: [
           { required: true, message: '请输入访问令牌', trigger: 'blur' }
@@ -374,7 +367,6 @@ export default {
 
         const payload = {
           systemId: this.sysConfigInfoForm.systemId,
-          sysAbbreviation: this.sysConfigInfoForm.sysAbbreviation,
           privateToken: this.sysConfigInfoForm.privateToken,
           configurationPeopleIds: configurationPeopleIds
         };

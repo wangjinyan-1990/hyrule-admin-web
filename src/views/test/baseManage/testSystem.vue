@@ -89,6 +89,7 @@
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="systemId" label="系统ID" width="100" v-if="false"></el-table-column>
         <el-table-column prop="systemName" label="系统名称" width="200" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="sysAbbreviation" label="系统简称" width="150" show-overflow-tooltip></el-table-column>
         <el-table-column prop="orgName" label="负责机构" width="150" show-overflow-tooltip></el-table-column>
         <el-table-column prop="systemType" label="系统类型" width="100">
           <template slot-scope="scope">
@@ -144,6 +145,14 @@
               <el-input v-model="testSystemForm.systemName" placeholder="请输入系统名称"></el-input>
             </el-form-item>
           </el-col>
+          <el-col :span="12">
+            <el-form-item label="系统简称" prop="sysAbbreviation">
+              <el-input v-model="testSystemForm.sysAbbreviation" placeholder="请输入系统简称（只能为字母和数字）" maxlength="50" @input="handleSysAbbreviationInput"></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
           <el-col :span="12">
             <el-form-item label="负责机构" prop="orgId">
               <el-input
@@ -331,6 +340,7 @@ export default {
       testSystemForm: {
         systemId: '',
         systemName: '',
+        sysAbbreviation: '',
         orgId: '',
         orgName: '',
         systemType: '',
@@ -363,6 +373,10 @@ export default {
         ],
         systemStage: [
           { required: true, message: '请选择系统阶段', trigger: 'change' }
+        ],
+        sysAbbreviation: [
+          { required: true, message: '请输入系统简称', trigger: 'blur' },
+          { pattern: /^[a-zA-Z0-9]+$/, message: '系统简称只能为字母和数字', trigger: 'blur' }
         ],
         isUse: [
           { required: true, message: '请选择使用状态', trigger: 'change' }
@@ -554,6 +568,7 @@ export default {
         this.testSystemForm = {
           systemId: this.selectedRow.systemId,
           systemName: this.selectedRow.systemName,
+          sysAbbreviation: this.selectedRow.sysAbbreviation || '',
           orgId: this.selectedRow.orgId,
           orgName: this.selectedRow.orgName,
           systemType: this.selectedRow.systemType,
@@ -579,6 +594,7 @@ export default {
       this.testSystemForm = {
         systemId: '',
         systemName: '',
+        sysAbbreviation: '',
         orgId: '',
         orgName: '',
         systemType: '',
@@ -746,6 +762,11 @@ export default {
     formatDateTime(dateTime) {
       if (!dateTime) return '';
       return new Date(dateTime).toLocaleString();
+    },
+    // 系统简称输入限制（只允许字母和数字）
+    handleSysAbbreviationInput(value) {
+      // 只保留字母和数字
+      this.testSystemForm.sysAbbreviation = value.replace(/[^a-zA-Z0-9]/g, '');
     }
   }
 };
