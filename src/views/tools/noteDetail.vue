@@ -90,8 +90,85 @@
             </button>
             <div class="toolbar-separator"></div>
             <!-- 字体颜色选择器 -->
-            <div class="toolbar-group">
-              <input type="color" @change="setFontColor"  title="字体颜色" class="color-picker" value="#000000"/>
+            <div class="toolbar-group color-picker-group">
+              <el-popover
+                ref="colorPickerPopover"
+                placement="bottom-start"
+                width="280"
+                trigger="manual"
+                v-model="colorPickerVisible"
+                popper-class="color-picker-popover"
+              >
+                <div class="color-picker-panel">
+                  <!-- 自动 -->
+                  <div class="color-section">
+                    <div class="color-section-title">自动</div>
+                    <div class="color-grid automatic-colors">
+                      <div 
+                        class="color-item" 
+                        :class="{ active: currentFontColor === '#000000' }"
+                        @click="selectColor('#000000')"
+                        style="background-color: #000000"
+                        title="自动"
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <!-- 主题颜色 -->
+                  <div class="color-section">
+                    <div class="color-section-title">主题颜色</div>
+                    <div class="color-grid theme-colors">
+                      <div 
+                        v-for="(color, index) in themeColors" 
+                        :key="index"
+                        class="color-item" 
+                        :class="{ active: currentFontColor === color }"
+                        @click="selectColor(color)"
+                        :style="{ backgroundColor: color }"
+                        :title="color"
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <!-- 标准色 -->
+                  <div class="color-section">
+                    <div class="color-section-title">标准色</div>
+                    <div class="color-grid standard-colors">
+                      <div 
+                        v-for="(color, index) in standardColors" 
+                        :key="index"
+                        class="color-item" 
+                        :class="{ active: currentFontColor === color }"
+                        @click="selectColor(color)"
+                        :style="{ backgroundColor: color }"
+                        :title="color"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div slot="reference" class="color-btn-wrapper">
+                  <button 
+                    type="button" 
+                    @click.stop="applyFontColor"
+                    title="单击应用颜色" 
+                    class="color-btn-main"
+                  >
+                    <span class="color-letter">A</span>
+                    <span 
+                      class="color-underline" 
+                      :style="{ backgroundColor: currentFontColor }"
+                    ></span>
+                  </button>
+                  <button 
+                    type="button" 
+                    @click.stop="toggleColorPicker"
+                    class="color-btn-arrow"
+                    title="选择颜色"
+                  >
+                    <i class="el-icon-arrow-down"></i>
+                  </button>
+                </div>
+              </el-popover>
               <span class="toolbar-label">颜色</span>
             </div>
             <!-- 字体大小选择器 -->
@@ -135,6 +212,17 @@
                 <path d="M5.75024 3.5H4.71733L3.25 3.89317V5.44582L4.25002 5.17782L4.25018 8.5H3V10H7V8.5H5.75024V3.5ZM10 4H21V6H10V4ZM10 11H21V13H10V11ZM10 18H21V20H10V18ZM2.875 15.625C2.875 14.4514 3.82639 13.5 5 13.5C6.17361 13.5 7.125 14.4514 7.125 15.625C7.125 16.1106 6.96183 16.5587 6.68747 16.9167L6.68271 16.9229L5.31587 18.5H7V20H3.00012L2.99959 18.8786L5.4717 16.035C5.5673 15.9252 5.625 15.7821 5.625 15.625C5.625 15.2798 5.34518 15 5 15C4.67378 15 4.40573 15.2501 4.37747 15.5688L4.3651 15.875H2.875V15.625Z"></path>
               </svg>
             </button>
+            <div class="toolbar-separator"></div>
+            <button type="button" @click="handleImageUpload" title="上传图片" class="toolbar-btn">
+              <i class="el-icon-picture"></i>
+            </button>
+            <input
+              ref="imageInput"
+              type="file"
+              accept="image/*"
+              style="display: none"
+              @change="handleImageSelect"
+            />
           </div>
           <!-- 内容编辑区域 -->
           <div class="editor-content">
@@ -177,7 +265,38 @@ export default {
         content: '',
         directoryId: null,
         createTime: null
-      }
+      },
+      currentFontColor: '#000000',
+      colorPickerVisible: false,
+      // 主题颜色 - 10个基础颜色，每个颜色6行深浅变化（共60个颜色）
+      // 按行排列：10列，6行
+      themeColors: [
+        // 第1行：10个基础颜色
+        '#FFFFFF', '#000000', '#1F497D', '#4F81BD', '#C0504D', '#9BBB59', '#8064A2', '#4BACC6', '#F79646', '#808080',
+        // 第2行：第1个颜色的深浅变化
+        '#F2F2F2', '#1F1F1F', '#2E5597', '#6FA3D2', '#D16B68', '#B3D16B', '#9678B4', '#6BC4D6', '#FFAA60', '#999999',
+        // 第3行：第2个颜色的深浅变化
+        '#D9D9D9', '#3F3F3F', '#3D6BB1', '#8FC5E7', '#E28683', '#CDE77D', '#AC8CC6', '#8BDCE6', '#FFBE7A', '#B3B3B3',
+        // 第4行：第3个颜色的深浅变化
+        '#BFBFBF', '#5F5F5F', '#4C81CB', '#AFE7FC', '#F3A19E', '#E7FD8F', '#C2A0D8', '#ABF4F6', '#FFD294', '#CCCCCC',
+        // 第5行：第4个颜色的深浅变化
+        '#A6A6A6', '#7F7F7F', '#5B97E5', '#CFF9FF', '#FFBCB9', '#FFFFA1', '#D8B4EA', '#CBFFFF', '#FFE6AE', '#E6E6E6',
+        // 第6行：第5个颜色的深浅变化
+        '#7F7F7F', '#9F9F9F', '#6AADFF', '#EFFFFF', '#FFD7D4', '#FFFFB3', '#EEC8FC', '#EBFFFF', '#FFFAC8', '#FFFFFF'
+      ],
+      // 标准色
+      standardColors: [
+        '#FF0000', // 红色
+        '#FF7F00', // 橙色
+        '#FFFF00', // 黄色
+        '#92D050', // 浅绿
+        '#00B050', // 绿色
+        '#00B0F0', // 浅蓝
+        '#0070C0', // 蓝色
+        '#002060', // 深蓝
+        '#7030A0', // 紫色
+        '#C00000'  // 深红
+      ]
     }
   },
   computed: {
@@ -389,9 +508,8 @@ export default {
       return new TextEncoder().encode(content).length
     },
 
-    // 设置字体颜色
-    setFontColor(event) {
-      const color = event.target.value
+    // 应用字体颜色（单击）
+    applyFontColor() {
       const editor = this.$refs.noteEditor
       
       // 确保编辑器有焦点
@@ -401,13 +519,26 @@ export default {
         // 检查是否有选中的文本
         const selection = window.getSelection()
         if (selection.rangeCount > 0 && !selection.isCollapsed) {
-          // 有选中文本，直接设置颜色
-          document.execCommand('foreColor', false, color)
+          // 有选中文本，应用当前颜色
+          document.execCommand('foreColor', false, this.currentFontColor)
         } else {
           // 没有选中文本，提示用户
           this.$message.warning('请先选中要设置颜色的文字')
         }
       }
+    },
+
+    // 切换颜色选择弹窗
+    toggleColorPicker() {
+      this.colorPickerVisible = !this.colorPickerVisible
+    },
+
+    // 选择颜色
+    selectColor(color) {
+      // 更新当前颜色（仅选择颜色，不应用）
+      this.currentFontColor = color
+      // 选择颜色后关闭弹窗
+      this.colorPickerVisible = false
     },
 
     // 设置字体大小
@@ -547,6 +678,98 @@ export default {
       this.$router.push({
         name: 'notebook'
       })
+    },
+
+    // 触发图片上传
+    handleImageUpload() {
+      this.$refs.imageInput.click()
+    },
+
+    // 处理图片选择
+    handleImageSelect(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      // 检查文件类型
+      if (!file.type.startsWith('image/')) {
+        this.$message.error('请选择图片文件')
+        event.target.value = '' // 清空选择
+        return
+      }
+
+      // 检查文件大小（5MB限制）
+      const maxSize = 5 * 1024 * 1024 // 5MB
+      if (file.size > maxSize) {
+        this.$message.error('图片大小不能超过5MB')
+        event.target.value = '' // 清空选择
+        return
+      }
+
+      // 读取图片并转换为base64
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const imageDataUrl = e.target.result
+        this.insertImageToEditor(imageDataUrl)
+        event.target.value = '' // 清空选择，以便可以再次选择同一文件
+      }
+
+      reader.onerror = () => {
+        this.$message.error('图片读取失败')
+        event.target.value = '' // 清空选择
+      }
+
+      reader.readAsDataURL(file)
+    },
+
+    // 将图片插入到编辑器
+    insertImageToEditor(imageDataUrl) {
+      const editor = this.$refs.noteEditor
+      if (!editor) {
+        this.$message.error('编辑器未初始化')
+        return
+      }
+
+      // 确保编辑器有焦点
+      editor.focus()
+
+      // 创建img元素
+      const img = document.createElement('img')
+      img.src = imageDataUrl
+      img.style.maxWidth = '100%'
+      img.style.height = 'auto'
+      img.style.display = 'block'
+      img.style.margin = '15px auto'
+      img.style.borderRadius = '4px'
+
+      // 获取当前选择范围
+      const selection = window.getSelection()
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0)
+        // 删除选中的内容（如果有）
+        range.deleteContents()
+        // 插入图片
+        range.insertNode(img)
+        // 将光标移到图片后面
+        range.setStartAfter(img)
+        range.collapse(true)
+        selection.removeAllRanges()
+        selection.addRange(range)
+      } else {
+        // 如果没有选择，在光标位置插入
+        const range = document.createRange()
+        range.selectNodeContents(editor)
+        range.collapse(false) // 移动到末尾
+        range.insertNode(img)
+        // 将光标移到图片后面
+        range.setStartAfter(img)
+        range.collapse(true)
+        selection.removeAllRanges()
+        selection.addRange(range)
+      }
+
+      // 触发内容变化事件
+      this.handleContentChange({ target: editor })
+      this.$message.success('图片插入成功')
     }
   }
 }
@@ -807,6 +1030,72 @@ export default {
   border-color: #c0c4cc;
 }
 
+.color-picker-group {
+  position: relative;
+}
+
+.color-btn-wrapper {
+  display: flex;
+  align-items: center;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.color-btn-main {
+  padding: 4px 8px;
+  border: none;
+  border-right: 1px solid #dcdfe6;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.color-btn-main:hover {
+  background-color: #f5f7fa;
+}
+
+.color-letter {
+  font-size: 14px;
+  font-weight: bold;
+  color: #303133;
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+.color-underline {
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  display: block;
+}
+
+.color-btn-arrow {
+  padding: 4px 6px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.color-btn-arrow:hover {
+  background-color: #f5f7fa;
+}
+
+.color-btn-arrow i {
+  font-size: 12px;
+  color: #606266;
+}
+
 .color-picker {
   width: 24px;
   height: 24px;
@@ -847,6 +1136,81 @@ export default {
   font-size: 12px;
   color: #606266;
   white-space: nowrap;
+}
+
+/* 颜色选择面板样式 */
+::v-deep .color-picker-popover {
+  padding: 12px;
+}
+
+.color-picker-panel {
+  width: 100%;
+}
+
+.color-section {
+  margin-bottom: 12px;
+}
+
+.color-section:last-child {
+  margin-bottom: 0;
+}
+
+.color-section-title {
+  font-size: 12px;
+  color: #606266;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.color-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.automatic-colors {
+  grid-template-columns: repeat(10, 1fr);
+}
+
+.theme-colors {
+  grid-template-columns: repeat(10, 1fr);
+  grid-auto-rows: 1fr;
+}
+
+.standard-colors {
+  grid-template-columns: repeat(10, 1fr);
+}
+
+.color-item {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid #dcdfe6;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.color-item:hover {
+  border-color: #409eff;
+  transform: scale(1.1);
+  z-index: 1;
+}
+
+.color-item.active {
+  border: 2px solid #409eff;
+  box-shadow: 0 0 0 1px #fff, 0 0 0 3px #409eff;
+}
+
+.color-item.active::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
 }
 
 .editor-content {
