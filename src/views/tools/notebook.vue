@@ -4,9 +4,9 @@
     <div class="action-bar">
       <div class="action-buttons">
         <!-- 返回上一级按钮 -->
-        <el-button 
-          v-if="currentParentId" 
-          icon="el-icon-back" 
+        <el-button
+          v-if="currentParentId"
+          icon="el-icon-back"
           @click="handleGoBack"
           class="back-button"
         >
@@ -117,13 +117,13 @@
         <h3>附件列表</h3>
         <el-tag type="info">{{ attachmentList.length }} 个附件</el-tag>
       </div>
-      
+
       <div v-loading="attachmentLoading" class="attachment-content">
         <div v-if="attachmentList.length === 0" class="no-attachment">
           <i class="el-icon-folder-opened"></i>
           <p>暂无附件</p>
         </div>
-        
+
         <el-table v-else :data="attachmentList" stripe border>
           <el-table-column type="selection" width="55"></el-table-column>
           <el-table-column label="文件名" min-width="300">
@@ -151,25 +151,25 @@
           </el-table-column>
           <el-table-column label="操作" width="260">
             <template slot-scope="scope">
-              <el-button 
-                size="mini" 
-                type="success" 
+              <el-button
+                size="mini"
+                type="success"
                 icon="el-icon-view"
                 @click="viewAttachment(scope.row.attachmentId, scope.row.originalFileName, scope.row.attachmentSize, scope.row.uploadDate)"
               >
                 查看
               </el-button>
-              <el-button 
-                size="mini" 
-                type="primary" 
+              <el-button
+                size="mini"
+                type="primary"
                 icon="el-icon-download"
                 @click="downloadAttachment(scope.row.attachmentId, scope.row.originalFileName)"
               >
                 下载
               </el-button>
-              <el-button 
-                size="mini" 
-                type="danger" 
+              <el-button
+                size="mini"
+                type="danger"
                 icon="el-icon-delete"
                 @click="deleteAttachment(scope.row.attachmentId)"
               >
@@ -283,25 +283,25 @@ export default {
       if (!this.searchKeyword) {
         return this.directoryList
       }
-      
+
       const keyword = this.searchKeyword.trim().toLowerCase()
       if (!keyword) {
         return this.directoryList
       }
-      
+
       return this.directoryList.filter(item => {
         // 搜索目录名
         if (item.type === 'directory') {
           const directoryName = item.directoryName ? item.directoryName.toLowerCase() : ''
           return directoryName.includes(keyword)
         }
-        
+
         // 搜索笔记标题
         if (item.type === 'note') {
           const noteTitle = item.noteTitle ? item.noteTitle.toLowerCase() : ''
           return noteTitle.includes(keyword)
         }
-        
+
         return false
       })
     },
@@ -309,16 +309,16 @@ export default {
       return {
         url: '/framework/attachment/upload/batch',
         module: 'notebook',
-        relateId: this.currentParentId || ''
+        relateId: this.currentParentId
       }
     }
   },
   created() {
     this.loadDirectoryList()
   },
-  
+
   methods: {
-    
+
     // 加载目录列表和笔记
     async loadDirectoryList() {
       this.loading = true
@@ -337,11 +337,11 @@ export default {
         ])
 
         // 检查响应状态码
-        if ((directoryResponse.code !== 200 && directoryResponse.code !== 20000) || 
+        if ((directoryResponse.code !== 200 && directoryResponse.code !== 20000) ||
             (noteResponse.code !== 200 && noteResponse.code !== 20000)) {
           throw new Error('API响应状态码错误')
         }
-        
+
         // 合并目录和笔记数据
         const directories = directoryResponse.data || []
         const notes = noteResponse.data || []
@@ -452,7 +452,7 @@ export default {
     handleCreateNote() {
       // 生成一个临时ID用于新建笔记
       const tempId = 'new_' + Date.now()
-      
+
       // 跳转到编辑模式
       this.$router.push({
         name: 'noteEditor',
@@ -528,21 +528,21 @@ export default {
       try {
         // 创建下载内容
         const content = this.formatNoteForDownload(note)
-        
+
         // 创建Blob对象
         const blob = new Blob([content], { type: 'text/html;charset=utf-8' })
-        
+
         // 创建下载链接
         const url = window.URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
         link.download = `${note.noteTitle || '未命名笔记'}.html`
-        
+
         // 触发下载
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        
+
         // 清理URL对象
         window.URL.revokeObjectURL(url)
       } catch (error) {
@@ -567,18 +567,18 @@ export default {
 
     //     // 生成ZIP文件
     //     const zipBlob = await zip.generateAsync({ type: 'blob' })
-        
+
     //     // 创建下载链接
     //     const url = window.URL.createObjectURL(zipBlob)
     //     const link = document.createElement('a')
     //     link.href = url
     //     link.download = `笔记集合_${new Date().toISOString().slice(0, 10)}.zip`
-        
+
     //     // 触发下载
     //     document.body.appendChild(link)
     //     link.click()
     //     document.body.removeChild(link)
-        
+
     //     // 清理URL对象
     //     window.URL.revokeObjectURL(url)
     //   } catch (error) {
@@ -608,7 +608,7 @@ export default {
       const title = note.noteTitle || '未命名笔记'
       const content = note.noteContent || ''
       const createTime = this.formatDate(note.createTime)
-      
+
       return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -708,11 +708,11 @@ export default {
             创建时间: ${createTime}
         </div>
     </div>
-    
+
     <div class="note-content">
         ${content}
     </div>
-    
+
     <div class="note-footer">
         此文件由记事本系统导出 - ${new Date().toLocaleString('zh-CN')}
     </div>
@@ -836,7 +836,7 @@ export default {
       this.attachmentLoading = true
       try {
         const result = await fileUploadService.getAttachments('notebook', this.currentParentId)
-        
+
         if (result.success) {
           this.attachmentList = result.data || []
           console.log('加载附件列表成功:', this.attachmentList)
@@ -857,10 +857,10 @@ export default {
       // 通过路由跳转到附件预览页面
       this.$router.push({
         name: 'viewAttachment',
-        params: { 
-          attachmentId: attachmentId 
+        params: {
+          attachmentId: attachmentId
         },
-        query: { 
+        query: {
           title: `附件预览 - ${fileName}`,
           fileName: fileName,
           attachmentSize: attachmentSize,
@@ -873,7 +873,7 @@ export default {
     async downloadAttachment(attachmentId, fileName) {
       try {
         const result = await fileUploadService.downloadAttachment(attachmentId, fileName)
-        
+
         if (result.success) {
           this.$message.success('下载成功')
         } else {
@@ -895,7 +895,7 @@ export default {
         })
 
         const result = await fileUploadService.deleteAttachment(attachmentId)
-        
+
         if (result.success) {
           this.$message.success('删除成功')
           // 重新加载附件列表
@@ -914,10 +914,10 @@ export default {
     // 根据文件名获取文件图标
     getAttachmentFileIcon(fileName) {
       if (!fileName) return 'el-icon-document'
-      
+
       // 获取文件扩展名
       const ext = fileName.split('.').pop().toLowerCase()
-      
+
       const iconMap = {
         // 文档类型
         'pdf': 'el-icon-document',
@@ -947,7 +947,7 @@ export default {
         'mp3': 'el-icon-phone',
         'wav': 'el-icon-phone'
       }
-      
+
       return iconMap[ext] || 'el-icon-document'
     },
 
@@ -963,7 +963,7 @@ export default {
     // 格式化笔记内容大小
     formatNoteSize(noteContent) {
       if (!noteContent) return '0 B'
-      
+
       // 计算文本内容的字节大小（UTF-8编码）
       const bytes = new Blob([noteContent]).size
       return this.formatFileSize(bytes)
@@ -1004,14 +1004,14 @@ export default {
       // 通过路由跳转添加新的系统标签页
       const routeName = mode === 'edit' ? 'noteEditor' : 'noteViewer'
       const routeTitle = mode === 'edit' ? `编辑 - ${note.noteTitle}` : `查看 - ${note.noteTitle}`
-      
+
       // 使用 router.push 跳转到新路由，这会自动添加标签页
       this.$router.push({
         name: routeName,
         params: { noteId: note.noteId },
-        query: { 
+        query: {
           title: routeTitle,
-          mode: mode 
+          mode: mode
         }
       })
     },
