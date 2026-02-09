@@ -5,6 +5,10 @@
       <!-- 第一行：查询条件和查询、重置按钮 -->
       <el-row>
         <el-col :span="24">
+          <el-select v-model="searchModel.queryCondition" placeholder="查询条件" size="small" style="width: 120px; margin-right: 10px;">
+            <el-option label="我和相关" value="related"></el-option>
+            <el-option label="全部" value="all"></el-option>
+          </el-select>
           <el-select v-model="searchModel.systemName" placeholder="系统名称" clearable filterable size="small" style="width: 200px; margin-right: 10px;">
             <el-option
               v-for="system in systemNameOptions"
@@ -269,6 +273,7 @@ export default {
       searchModel: {
         pageNo: 1,
         pageSize: 10,
+        queryCondition: 'related', // 默认为"我和相关"
         systemName: '',
         startDate: '',
         endDate: '',
@@ -386,6 +391,7 @@ export default {
       const today = new Date()
       const todayStr = this.formatDate(today)
 
+      this.searchModel.queryCondition = 'related' // 重置为"我和相关"
       this.searchModel.systemName = ''
       this.searchModel.startDate = todayStr
       this.searchModel.endDate = todayStr
