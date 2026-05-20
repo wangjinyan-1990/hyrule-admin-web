@@ -9,6 +9,15 @@ export function getEnvironmentList(params) {
   })
 }
 
+// 获取各环境管理台信息
+export function getSmartwebList(params) {
+  return request({
+    url: `/env/environmentList/smartwebList`,
+    method: 'get',
+    params
+  })
+}
+
 // 获取环境清单详情
 export function getEnvironmentListDetail(envListId) {
   return request({
@@ -76,6 +85,7 @@ export function downloadImportTemplate() {
 
 export default {
   getEnvironmentList,
+  getSmartwebList,
   getEnvironmentListDetail,
   createEnvironmentList,
   updateEnvironmentList,

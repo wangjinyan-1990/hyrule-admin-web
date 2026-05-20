@@ -275,6 +275,20 @@ export const asyncRoutes = [
         hidden: true
       },
       {
+        path: 'microservicesInstanceQuery',
+        name: 'microservicesInstanceQuery',
+        component: () => import('@/components/Tools/microservicesInstanceQuery'),
+        meta: { title: '微服务实例查询', icon: 'toolset' },
+        hidden: true
+      },
+      {
+        path: 'dtpDataImport',
+        name: 'dtpDataImport',
+        component: () => import('@/components/Tools/dtpDataImport'),
+        meta: { title: '分布式数据导入', icon: 'toolset' },
+        hidden: true
+      },
+      {
         path: 'networkPolicyList',
         name: 'networkPolicyList',
         component: () => import('@/components/Tools/networkPolicyList'),
@@ -349,6 +363,27 @@ export const asyncRoutes = [
             name: 'testDirectory',
             component: () => import('@/views/test/baseManage/testDirectory'),
             meta: { title: '测试目录维护', icon: 'testDirectory' }
+          }
+        ]
+      },
+      {
+        path: 'sendTestManage',
+        name: 'sendTestManage',
+        component: () => import('@/views/test/sendTestManage/index'),
+        meta: {title: '送测管理', icon: 'sendTestManage'},
+        redirect: '/test/sendTestManage/sendOrder',
+        children: [
+          {
+            path: 'sendTestList',
+            name: 'sendTestList',
+            component: () => import('@/views/test/sendTestManage/sendTestList'),
+            meta: { title: '送测单', icon: 'sendTestList' }
+          },
+          {
+            path: 'taskRepository',
+            name: 'taskRepository',
+            component: () => import('@/views/test/sendTestManage/taskRepository'),
+            meta: { title: '任务库', icon: 'taskRepository' }
           }
         ]
       },

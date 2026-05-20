@@ -55,13 +55,21 @@
 
     <!-- 结果栏 -->
     <el-card>
-      <el-table :data="deployRecordList" stripe style="width: 100%" highlight-current-row class="deploy-record-table">
+      <el-table :data="deployRecordList" stripe style="width: 100%" highlight-current-row class="deploy-record-table" @row-dblclick="handleRowDblclick">
         <el-table-column type="index" width="55" label="序号"></el-table-column>
         <el-table-column prop="deployId" label="部署Id" width="30" v-if="false"></el-table-column>
         <el-table-column prop="systemName" label="系统" width="100" show-overflow-tooltip></el-table-column>
         <el-table-column prop="componentInfo" label="组件信息" min-width="70" show-overflow-tooltip></el-table-column>
         <el-table-column prop="sendTestInfo" label="送测单信息" width="150" show-overflow-tooltip></el-table-column>
-        <el-table-column prop="versionCode" label="版本号" min-width="90" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="versionCode" label="版本号" min-width="90" show-overflow-tooltip>
+          <template slot-scope="scope">
+            <span
+              @dblclick.stop="handleSelectText($event)"
+              style="cursor: text; user-select: text; display: block;">
+              {{ scope.row.versionCode }}
+            </span>
+          </template>
+        </el-table-column>
         <el-table-column prop="testStage" label="测试阶段" width="60">
           <template slot-scope="scope">
             <el-tag :type="scope.row.testStage === 'SIT' ? 'primary' : 'success'" size="small">
@@ -78,7 +86,6 @@
               popper-class="code-list-tooltip"
               :disabled="!scope.row.codeList">
               <span
-                @dblclick="handleCodeListDblClick(scope.row)"
                 :style="{
                   cursor: 'pointer',
                   color: '#409EFF',
@@ -272,7 +279,7 @@ export default {
       total: 0,
       searchModel: {
         pageNo: 1,
-        pageSize: 10,
+        pageSize: 20,
         queryCondition: 'related', // 默认为"我和相关"
         systemName: '',
         startDate: '',
@@ -412,7 +419,7 @@ export default {
     },
 
     // 双击代码清单
-    handleCodeListDblClick(row) {
+    handleRowDblclick(row) {
       this.codeListContent = row.codeList || ''
       this.codeListDialogVisible = true
     },
