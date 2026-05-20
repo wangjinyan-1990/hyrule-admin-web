@@ -130,6 +130,18 @@
             <span v-else style="color: #999;">-</span>
           </template>
         </el-table-column>
+        <el-table-column label="操作" width="80" align="center">
+          <template slot-scope="scope">
+            <el-button
+              v-if="scope.row.componentInfo && scope.row.componentInfo.includes('外呼')"
+              size="mini"
+              type="primary"
+              style="padding: 0 4px; min-width: auto; width: auto;"
+              @click="goJenkins(scope.row)">
+              构建
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
     </el-card>
     <el-pagination
@@ -305,9 +317,9 @@ export default {
     this.loadSystemNameOptions()
   },
 
-  methods:{
+  methods: {
     // 加载系统名称选项（用于查询条件下拉选择）
-    loadSystemNameOptions(){
+    loadSystemNameOptions() {
       testSystemApi.getTestSystemList({ pageNo: 1, pageSize: 1000 }).then(response => {
         let systemList = [];
 
@@ -363,17 +375,17 @@ export default {
       return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
     },
 
-    handleSizeChange(pageSize){
+    handleSizeChange(pageSize) {
       this.searchModel.pageSize = pageSize
       this.getDeployRecordList()
     },
 
-    handleCurrentChange(pageNo){
+    handleCurrentChange(pageNo) {
       this.searchModel.pageNo = pageNo
       this.getDeployRecordList()
     },
 
-    getDeployRecordList(){
+    getDeployRecordList() {
       // 构建查询参数，按部署时间点倒序
       const params = {
         ...this.searchModel,
@@ -393,7 +405,7 @@ export default {
       })
     },
 
-    resetSearch(){
+    resetSearch() {
       // 重置为当天日期
       const today = new Date()
       const todayStr = this.formatDate(today)
@@ -409,12 +421,12 @@ export default {
     },
 
     // 跳转到MR合并页面
-    handleSitDeploy(){
+    handleSitDeploy() {
       this.$router.push('/configuration/merge/MRMerge')
     },
 
     // 跳转到清单合并页面
-    handlePatDeploy(){
+    handlePatDeploy() {
       this.$router.push('/configuration/merge/listMerge')
     },
 
@@ -466,6 +478,25 @@ export default {
         this.$message.error('复制失败，请手动复制')
       }
       document.body.removeChild(textArea)
+    },
+
+    // 跳转到Jenkins构建页面
+    goJenkins(row) {
+      // 获取并URL编码参数
+      const psendInfoParse = row.sendTestInfo ? encodeURIComponent(row.sendTestInfo) : ''
+      const codeListParse = row.codeList ? encodeURIComponent(row.codeList) : ''
+      // 根据测试阶段拼接Jenkins URL
+      let jenkinsUrl = ''
+      if (row.testStage === 'SIT') {
+        jenkinsUrl = `http://9.1.70.112:8080/view/DTP/job/DTP_Compile/view/sit/job/callEtc-sit/parambuild?commit_info=${psendInfoParse}&codelist=${codeListParse}`
+      } else if (row.testStage === 'PAT') {
+        jenkinsUrl = `http://9.1.70.112:8080/view/DTP/job/DTP_Compile/view/pat/job/callEtc-pat/parambuild?commit_info=${psendInfoParse}&codelist=${codeListParse}`
+      } else {
+        this.$message.warning('未知的测试阶段，无法跳转Jenkins')
+        return
+      }
+      // 在新窗口打开
+      window.open(jenkinsUrl, '_blank')
     }
   }
 }
