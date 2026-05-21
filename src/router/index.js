@@ -296,6 +296,13 @@ export const asyncRoutes = [
         hidden: true
       },
       {
+        path: 'dtpReleaseNavigation',
+        name: 'dtpReleaseNavigation',
+        component: () => import('@/components/Tools/dtpReleaseNavigation'),
+        meta: { title: '分布式发版导航', icon: 'toolset' },
+        hidden: true
+      },
+      {
         path: 'notebook',
         name: 'notebook',
         component: () => import('@/views/tools/notebook/index'),
