@@ -26,7 +26,22 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="组件:" prop="componentInfo">
-              <el-input v-model="deployForm.componentInfo" placeholder="请输入组件信息"></el-input>
+              <el-select
+                v-model="deployForm.componentInfo"
+                placeholder="请输入或选择组件信息"
+                filterable
+                allow-create
+                default-first-option
+                clearable
+                class="no-arrow-select"
+                style="width: 100%">
+                <el-option
+                  v-for="item in componentOptions"
+                  :key="item"
+                  :label="item"
+                  :value="item">
+                </el-option>
+              </el-select>
             </el-form-item>
           </el-col>
         </el-row>
@@ -136,24 +151,38 @@
 </template>
 
 <style scoped>
-.el-card {
-  margin-bottom: 10px;
-}
+  .el-card {
+    margin-bottom: 10px;
+  }
 
-.el-form-item {
-  margin-bottom: 22px;
-}
+  .el-form-item {
+    margin-bottom: 22px;
+  }
 
-/* Gitlab URL 行间距调整 */
-.gitlab-url-item {
-  margin-bottom: 10px !important;
-}
+  /* Gitlab URL 行间距调整 */
+  .gitlab-url-item {
+    margin-bottom: 10px !important;
+  }
 
-/* 代码清单文本域滚动条样式 */
-.code-list-textarea ::v-deep .el-textarea__inner {
-  overflow-y: auto;
-  resize: vertical;
-}
+  /* 代码清单文本域滚动条样式 */
+  .code-list-textarea ::v-deep .el-textarea__inner {
+    overflow-y: auto;
+    resize: vertical;
+  }
+
+  /* 隐藏 el-select 下拉箭头，但保留清除图标 */
+  .no-arrow-select ::v-deep .el-input__suffix-inner > .el-input__icon:not(.el-icon-circle-close) {
+    display: none;
+  }
+
+  .no-arrow-select ::v-deep .el-input__suffix-inner {
+    display: flex;
+    align-items: center;
+  }
+
+  .no-arrow-select ::v-deep .el-input__inner {
+    padding-right: 15px;
+  }
 </style>
 
 <script>
@@ -272,6 +301,21 @@ export default {
     // 检查 Gitlab URL 是否为 '1'
     isGitlabUrlOne() {
       return this.deployForm.gitlabUrl === '1'
+    },
+    // 根据 systemId 返回对应的组件选项
+    componentOptions() {
+      if (this.deployForm.systemId === 'sys-003') {
+        return ['送测管理', '送测管理、外呼']
+      }
+      return []
+    }
+  },
+  watch: {
+    // 监听系统变化，当系统改变时清空组件信息
+    'deployForm.systemId'(newVal, oldVal) {
+      if (newVal !== oldVal) {
+        this.deployForm.componentInfo = ''
+      }
     }
   },
   created() {

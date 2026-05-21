@@ -4,7 +4,11 @@
       <el-form ref="deployFormRef" :model="deployForm" :rules="rules" label-width="120px">
         <!-- 第一行：Merge_Request 和解析按钮 -->
         <el-form-item label="Merge_Request:" prop="mergeRequest" class="merge-request-item">
-          <el-input v-model="deployForm.mergeRequest" placeholder="请输入Merge_Request" @input="handleMergeRequestChange" style="width: calc(100% - 110px); display: inline-block; margin-right: 10px;">
+          <el-input
+            v-model="deployForm.mergeRequest"
+            placeholder="请输入Merge_Request"
+            @input="handleMergeRequestChange"
+            style="width: calc(100% - 110px); display: inline-block; margin-right: 10px;">
           </el-input>
           <el-button type="primary" @click="handleParseMR" :loading="parsing" :disabled="isMergeRequestOne" style="vertical-align: top;">解析</el-button>
           <div style="margin-top: 5px; color: #f56c6c; font-size: 12px; margin-left: 0;">
@@ -27,7 +31,21 @@
           </el-col>
           <el-col :span="12">
             <el-form-item label="组件:" prop="componentInfo">
-              <el-input v-model="deployForm.componentInfo" placeholder="请输入组件信息"></el-input>
+              <!-- 当 systemId 为 sys-003 时使用可输入下拉框 -->
+              <el-autocomplete
+                v-if="isSys003"
+                v-model="deployForm.componentInfo"
+                :fetch-suggestions="queryComponentSearch"
+                placeholder="请选择或输入组件信息"
+                clearable
+                style="width: 100%">
+              </el-autocomplete>
+              <!-- 其他系统使用普通输入框 -->
+              <el-input
+                v-else
+                v-model="deployForm.componentInfo"
+                placeholder="请输入组件信息">
+              </el-input>
             </el-form-item>
           </el-col>
         </el-row>
@@ -45,6 +63,7 @@
             </el-form-item>
           </el-col>
         </el-row>
+
         <!-- 第四行：是否执行sql和是否更新配置 -->
         <el-row :gutter="20">
           <el-col :span="12">
@@ -116,24 +135,24 @@
 </template>
 
 <style scoped>
-.el-card {
-  margin-bottom: 10px;
-}
+  .el-card {
+    margin-bottom: 10px;
+  }
 
-.el-form-item {
-  margin-bottom: 22px;
-}
+  .el-form-item {
+    margin-bottom: 22px;
+  }
 
-/* Merge_Request 行间距调整 */
-.merge-request-item {
-  margin-bottom: 10px !important;
-}
+  /* Merge_Request 行间距调整 */
+  .merge-request-item {
+    margin-bottom: 10px !important;
+  }
 
-/* 代码清单文本域滚动条样式 */
-.code-list-textarea ::v-deep .el-textarea__inner {
-  overflow-y: auto;
-  resize: vertical;
-}
+  /* 代码清单文本域滚动条样式 */
+  .code-list-textarea ::v-deep .el-textarea__inner {
+    overflow-y: auto;
+    resize: vertical;
+  }
 </style>
 
 <script>
@@ -150,6 +169,11 @@ export default {
       parsing: false,
       submitting: false,
       systemSelectorVisible: false,
+      // sys-003 系统的组件下拉选项
+      sys003ComponentOptions: [
+        { value: '送测管理' },
+        { value: '送测管理、外呼' }
+      ],
       deployForm: {
         deployId: null,
         testStage: 'SIT', // 默认为SIT
@@ -200,6 +224,10 @@ export default {
     // 检查 Merge Request 是否为 '1'
     isMergeRequestOne() {
       return this.deployForm.mergeRequest === '1'
+    },
+    // 检查是否为 sys-003 系统
+    isSys003() {
+      return this.deployForm.systemId === 'sys-003'
     }
   },
   created() {
@@ -245,19 +273,14 @@ export default {
       })
     },
 
-    // Merge Request 变化处理
-    handleMergeRequestChange() {
-      // 触发字段验证
-      this.$nextTick(() => {
-        if (this.$refs.deployFormRef) {
-          this.$refs.deployFormRef.validateField('codeList')
-        }
-      })
-
-      if (this.deployForm.mergeRequest === '1') {
-        // 如果填的是'1'，清空代码清单
-        this.deployForm.codeList = ''
-      }
+    // 组件下拉搜索建议
+    queryComponentSearch(queryString, cb) {
+      const options = this.sys003ComponentOptions
+      const results = queryString
+        ? options.filter(item => item.value.toLowerCase().includes(queryString.toLowerCase()))
+        : options
+      // 调用 callback 返回建议列表的数据
+      cb(results)
     },
 
     // Merge Request 变化处理
@@ -350,6 +373,11 @@ export default {
         this.deployForm.systemId = systemId
         this.deployForm.systemName = systemName
       }
+
+      // 如果切换系统后不再是 sys-003，清空组件信息（可选，根据业务需求决定）
+      // if (this.deployForm.systemId !== 'sys-003') {
+      //   this.deployForm.componentInfo = ''
+      // }
     },
 
     // 版本数输入限制（1-20）
